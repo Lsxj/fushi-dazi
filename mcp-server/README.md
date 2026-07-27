@@ -35,11 +35,13 @@ The fushi-ditu 主体 code is **not modified** — zero changes to the mini-prog
 ```bash
 cd /Users/x7/fushi-ditu/mcp-server
 npm install
-npx tsx test/tools.test.ts          # 46/46 smoke test
+npm run test:coverage               # Vitest unit tests + coverage gate
+npm test                            # 46/46 smoke test
+npm run test:integration            # 11/11 end-to-end flow
 npx tsx src/index.ts                # stdio server (talks to MCP clients)
 ```
 
-Requires Node 18+.
+Requires Node 20, 22, or 24+.
 
 ## Connect to Claude Desktop
 
@@ -219,15 +221,19 @@ These are the things I'd address before shipping to real parents. None block the
 ## Running the test suite
 
 ```bash
-npx tsx test/tools.test.ts          # 46 isolated smoke tests
-npx tsx test/integration.test.ts    # 11-step end-to-end demo flow
+npm run test:unit                   # 9 Vitest unit tests
+npm run test:coverage               # 90% threshold on the initial AI/MCP boundary scope
+npm test                            # 46 isolated smoke tests
+npm run test:integration            # 11-step end-to-end demo flow
 ```
 
 The smoke test runner spawns the stdio server and fires isolated `callTool` / `readResource` / `getPrompt` calls. The integration test chains the same flow an LLM would drive in a real demo session: read profile → list recipes → generate menu → log meal → check fridge → record reaction → analyze → mark allergic → verify unsafe filter → get summary → LLM narration.
 
 Storage is reset to fixtures in `test/fixtures/seed-*.json` at the start of each run, so both suites are idempotent.
 
-Last verified result: **46/46 smoke + 11/11 integration passed**.
+The initial Vitest coverage scope is explicit in `vitest.config.ts`: the LLM provider factory, offline provider, and MCP result boundary. All four current metrics are 100%; the enforced floor is 90% so future changes cannot silently remove critical boundary tests.
+
+Last verified result: **9/9 unit + 46/46 smoke + 11/11 integration passed**.
 
 ## LLM provider (Day 8)
 

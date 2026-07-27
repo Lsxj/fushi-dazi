@@ -1,0 +1,4 @@
+interface:
+  display_name: "辅食安全变更检查"
+  short_description: "审查辅食规则、AI 工具、数据写入和不可逆操作的安全变更"
+  default_prompt: "Use $fushi-safety-change to review this feature change and implement it without weakening safety guardrails."
