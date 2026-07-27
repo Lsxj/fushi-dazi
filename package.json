@@ -5,7 +5,7 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "test": "npm run build && node test/chat-ai-history-regression.test.js && node test/backup-regression.test.js",
-    "verify": "npm test && npm --prefix mcp-server run build && npm --prefix mcp-server test && npm --prefix mcp-server run test:integration",
+    "verify": "npm test && npm --prefix mcp-server run build && npm --prefix mcp-server run test:coverage && npm --prefix mcp-server test && npm --prefix mcp-server run test:integration",
     "test:chat-ai-history": "node test/chat-ai-history-regression.test.js",
     "test:backup": "npm run build && node test/backup-regression.test.js",
     "deploy:chat-ai": "./scripts/deploy-chat-ai.sh",

@@ -12,7 +12,7 @@
 npm run verify
 ```
 
-它会依次完成小程序 TypeScript 构建与回归测试、MCP Server 构建、46 项冒烟测试和 11 步集成测试。仓库中的 GitHub Actions 配置会保留，账户恢复后可直接启用。
+它会依次完成小程序 TypeScript 构建与回归测试、MCP Server 构建、Vitest 单元测试与覆盖率门禁、46 项冒烟测试和 11 步集成测试。首批覆盖率范围聚焦 AI provider 与 MCP 工具结果边界，四项指标门槛均为 90%；后续新增模块会逐步纳入统计。仓库中的 GitHub Actions 配置会保留，账户恢复后可直接启用。
 
 ## 怎么打开它
 
