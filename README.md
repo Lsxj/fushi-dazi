@@ -1,5 +1,7 @@
 # 辅食搭子
 
+[![CI](https://github.com/Lsxj/fushi-dazi/actions/workflows/ci.yml/badge.svg)](https://github.com/Lsxj/fushi-dazi/actions/workflows/ci.yml)
+
 4-24月龄宝宝家长辅食运营系统(微信小程序)
 
 产品范围、当前完成度和发布门槛见 [PRD.md](./PRD.md)。
