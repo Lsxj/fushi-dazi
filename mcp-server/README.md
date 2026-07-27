@@ -207,7 +207,7 @@ mcp-server/
 
 These are the things I'd address before shipping to real parents. None block the interview demo.
 
-1. **Cross-repo type safety** — `fushi-ditu` is a sibling repo; we import from it via `../../../utils/*.js`. `tsc --noEmit` pulls in the `.ts` source and complains about `noUncheckedIndexedAccess` and the global `wx` symbol (~63 errors). The fix is a project reference + `.d.ts` emit in fushi-ditu. We do **not** need this for the demo because the runtime is `tsx` and our own code type-checks clean.
+1. **Cross-project type boundary** — `mcp-server` imports the mini-program domain through `../../../utils/*.js`, so TypeScript also checks those source files. The MCP config now loads the real WeChat runtime types and passes with `strict` + `noImplicitAny`; `noUncheckedIndexedAccess` remains disabled for this combined legacy graph. A future monorepo extraction should publish the domain as a declaration-emitting package so the MCP package can enable that check independently.
 2. **Storage is per-server, not synced with the WeChat mini-program** — same `fushi-ditu` is the source of truth in production, but this demo runs in isolation. An export/import protocol would be needed.
 3. **Single active baby** — `STORAGE_KEYS['babyProfile']` is a single object, no `babyId` discriminator. Documented in `fushi-types.d.ts`. Multi-baby needs a storage namespace + activeProfileId.
 4. **`record_meal_log`'s `consentToBypassSafety` is `z.boolean().optional()`** — softer than `mark_food_allergic`'s `z.literal(true)`. LLM could in principle invent `true`. The `[BYPASSED SAFETY]` audit prefix catches it after the fact, but the LLM-level invariant is not enforced.

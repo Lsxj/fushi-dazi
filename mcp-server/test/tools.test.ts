@@ -73,6 +73,20 @@ type ToolContent = Array<{ type: string; text?: string }>
 const getText = (content: unknown): string | undefined =>
   (content as ToolContent).find((c) => c.type === 'text' && c.text)?.text
 
+function localDateTime(dayOffset: number, hour: number, minute: number): Date {
+  const value = new Date()
+  value.setDate(value.getDate() + dayOffset)
+  value.setHours(hour, minute, 0, 0)
+  return value
+}
+
+function formatLocalDate(value: Date): string {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 async function run(): Promise<void> {
   const results: TestResult[] = []
 
@@ -430,7 +444,11 @@ async function run(): Promise<void> {
 
     // ---- T20: record_meal_log — safe ingredients — log written, fridge deducted ----
     // Use 西兰花 (seeded 2 份) instead of 鳕鱼 so deductions are unambiguous.
-    const logDate = '2026-07-09'
+    // Use yesterday so the meal/reaction pair is always in the 72h traceback
+    // and 7-day resource windows, independent of the day the suite is run.
+    const mealOccurredAt = localDateTime(-1, 10, 0)
+    const reactionOccurredAt = localDateTime(-1, 12, 30).toISOString()
+    const logDate = formatLocalDate(mealOccurredAt)
     const broccoliBefore = (reListParsed.items ?? []).find((i: { name: string }) => i.name === '西兰花') as { portions: number } | undefined
     const recordSafeRes = await client.callTool({
       name: 'record_meal_log',
@@ -441,6 +459,7 @@ async function run(): Promise<void> {
         portion: 'full',
         preference: 'love',
         note: '宝宝挺爱吃',
+        eatenAt: mealOccurredAt.toISOString(),
       },
     })
     const recordSafeText = getText(recordSafeRes.content)
@@ -608,8 +627,8 @@ async function run(): Promise<void> {
     }
 
     // ---- T28: record_reaction — pulls 72h traceback, finds suspect, returns recommendation ----
-    // The reaction time must be after the logDate=2026-07-09 meal log so the
-    // 72h window catches it. We also pass tracebackIngredients=['豆腐'] — not
+    // The reaction time is after yesterday's meal so the 72h window catches
+    // it. We also pass tracebackIngredients=['豆腐'] — not
     // in confirmedFoods, so analyzeSuspects flags it (the demo seed confirms
     // all common 10mo ingredients, so without a hint every suspect is skipped).
     // Type is 'rash' (not 'gut') so later start_trying_food isn't blocked by
@@ -619,7 +638,7 @@ async function run(): Promise<void> {
       arguments: {
         type: 'rash',
         severity: 'moderate',
-        occurredAt: '2026-07-09T12:30:00.000Z',
+        occurredAt: reactionOccurredAt,
         note: '红疹',
         tracebackIngredients: ['豆腐'],
       },
@@ -713,7 +732,7 @@ async function run(): Promise<void> {
     // ---- T32: get_prompt reaction_followup returns messages with role+content ----
     const followupPrompt = await (client as any).getPrompt?.({
       name: 'reaction_followup',
-      arguments: { reaction_type: 'gut', severity: 'moderate', occurred_at: '2026-07-09T12:30:00.000Z' },
+      arguments: { reaction_type: 'gut', severity: 'moderate', occurred_at: reactionOccurredAt },
     })
     const msgs = followupPrompt?.messages ?? []
     const hasSystem = msgs.some(

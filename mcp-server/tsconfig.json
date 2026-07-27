@@ -16,7 +16,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "noImplicitAny": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": false,
+    "typeRoots": ["../typings/types", "./node_modules/@types"],
+    "types": ["node", "wx"]
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist", "data"]
