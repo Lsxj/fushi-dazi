@@ -1,10 +1,18 @@
 # 辅食搭子
 
-[![CI](https://github.com/Lsxj/fushi-dazi/actions/workflows/ci.yml/badge.svg)](https://github.com/Lsxj/fushi-dazi/actions/workflows/ci.yml)
-
 4-24月龄宝宝家长辅食运营系统(微信小程序)
 
 产品范围、当前完成度和发布门槛见 [PRD.md](./PRD.md)。
+
+## 本地质量门禁
+
+无需 GitHub Actions 或付费服务，在项目根目录执行：
+
+```bash
+npm run verify
+```
+
+它会依次完成小程序 TypeScript 构建与回归测试、MCP Server 构建、46 项冒烟测试和 11 步集成测试。仓库中的 GitHub Actions 配置会保留，账户恢复后可直接启用。
 
 ## 怎么打开它
 
