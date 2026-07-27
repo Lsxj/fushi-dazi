@@ -1,0 +1,29 @@
+{
+  "name": "fushi-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server wrapping fushi-ditu (辅食搭子) capabilities for AI Agent Developer interview demo",
+  "type": "module",
+  "bin": {
+    "fushi-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "tsx test/tools.test.ts",
+    "test:integration": "tsx test/integration.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

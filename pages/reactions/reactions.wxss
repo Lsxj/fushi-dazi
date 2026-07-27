@@ -1,0 +1,224 @@
+/* ============================================
+   反应日志 · v2 时间流卡片化
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+.container { padding-bottom: 60rpx; }
+
+/* hero ============== */
+.r-hero {
+  background: linear-gradient(135deg, #FFF0E8 0%, #FFE3D3 100%);
+  border-radius: 28rpx;
+  padding: 28rpx 32rpx;
+  margin: 20rpx 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+.r-hero-left { flex: 1; min-width: 0; }
+.r-hero-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--text-h1);
+  margin-bottom: 6rpx;
+}
+.r-hero-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.r-hero-cta {
+  background: linear-gradient(135deg, #FF8C61 0%, #FF6B35 100%);
+  color: #FFFFFF;
+  padding: 14rpx 28rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.3);
+  flex-shrink: 0;
+}
+
+/* empty ============== */
+.r-empty {
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  padding: 60rpx 32rpx;
+  margin: 20rpx 0;
+  text-align: center;
+}
+.r-empty-emoji {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+.r-empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+  margin-bottom: 8rpx;
+}
+.r-empty-desc {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* 日期分组 ============== */
+.r-day-block {
+  margin-top: 24rpx;
+}
+.r-day-header {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+  padding: 0 4rpx 12rpx;
+}
+
+/* timeline ============== */
+.r-timeline { display: flex; flex-direction: column; }
+.r-line-item {
+  display: flex;
+  gap: 16rpx;
+  position: relative;
+}
+.r-line-rail {
+  position: relative;
+  width: 24rpx;
+  flex-shrink: 0;
+  padding-top: 24rpx;
+}
+.r-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 6rpx rgba(255, 107, 53, 0.12);
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.r-dot-done {
+  background: var(--green);
+  box-shadow: 0 0 0 6rpx rgba(91, 186, 71, 0.16);
+}
+.r-line {
+  position: absolute;
+  top: 40rpx;
+  bottom: -20rpx;
+  left: 50%;
+  width: 2rpx;
+  background: rgba(255, 107, 53, 0.18);
+  transform: translateX(-50%);
+}
+.r-line-item:last-child .r-line { display: none; }
+
+/* 事件卡 ============== */
+.r-event-card {
+  flex: 1;
+  background: #FFF5F5; /* 浅红底, 反应卡风格 */
+  border-radius: 22rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid rgba(229, 115, 115, 0.18);
+  box-shadow: 0 2rpx 10rpx rgba(229, 115, 115, 0.04);
+}
+.r-event-resolved {
+  background: #F7FAF6;
+  border-color: rgba(91, 186, 71, 0.18);
+  opacity: 0.85;
+}
+.r-event-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+.r-types {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  align-items: center;
+}
+.r-type-pill {
+  background: #FFFFFF;
+  color: var(--orange);
+  padding: 4rpx 12rpx;
+  border-radius: 14rpx;
+  font-size: 22rpx;
+  border: 1rpx solid rgba(255, 107, 53, 0.18);
+}
+.r-severity {
+  padding: 4rpx 12rpx;
+  border-radius: 14rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+.sev-mild     { background: #E3F2FD; color: #2196F3; }
+.sev-moderate { background: var(--warn-bg); color: var(--warn); }
+.sev-severe   { background: #FFEBEE; color: #E57373; }
+.r-time {
+  font-size: 22rpx;
+  color: var(--text-mute);
+  flex-shrink: 0;
+}
+.r-note {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10rpx;
+  padding: 10rpx 14rpx;
+  font-size: 23rpx;
+  color: var(--text-secondary);
+  margin: 10rpx 0;
+  font-style: italic;
+}
+.r-suspect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rpx;
+  margin: 8rpx 0;
+}
+.r-food-tag {
+  background: #FFEBEE;
+  color: #E57373;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+.r-trace-meta {
+  font-size: 21rpx;
+  color: var(--text-mute);
+  margin: 6rpx 0;
+}
+.r-actions {
+  display: flex;
+  gap: 10rpx;
+  margin-top: 12rpx;
+}
+.r-resolve-btn {
+  flex: 1;
+  background: var(--green-bg);
+  color: var(--green);
+  text-align: center;
+  padding: 12rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+}
+.r-resolve-btn:active { opacity: 0.7; }
+.r-del-btn {
+  background: #FFFFFF;
+  color: #E57373;
+  padding: 12rpx 20rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  border: 1rpx solid rgba(229, 115, 115, 0.24);
+}
+.r-resolved-tag {
+  flex: 1;
+  text-align: center;
+  color: var(--green);
+  font-size: 22rpx;
+  background: rgba(91, 186, 71, 0.08);
+  padding: 12rpx;
+  border-radius: 16rpx;
+}

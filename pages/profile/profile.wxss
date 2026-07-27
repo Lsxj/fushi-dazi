@@ -1,0 +1,200 @@
+/* ============================================
+   排敏档案 · v2 token baseline
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+.cat-block { border-bottom: 1rpx solid #F0F0F0; }
+.cat-block:last-child { border-bottom: none; }
+.cat-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+}
+.cat-info { flex: 1; min-width: 0; }
+.cat-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.cat-arrow {
+  font-size: 22rpx;
+  color: var(--text-mute);
+  transition: transform 0.2s;
+  width: 30rpx;
+}
+.cat-arrow.expanded { transform: rotate(90deg); }
+.cat-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--text-h1);
+}
+.allergen-badge {
+  padding: 3rpx 10rpx;
+  border-radius: 12rpx;
+  background: #FFF1E8;
+  color: var(--orange-deep);
+  font-size: 18rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.cat-meta {
+  font-size: 22rpx;
+  color: var(--text-meta);
+  margin-top: 4rpx;
+  padding-left: 42rpx;
+}
+
+/* ============ 成员列表 ============ */
+.member-list {
+  padding-left: 42rpx;
+  padding-bottom: 12rpx;
+}
+.member-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 1rpx dashed #F0F0F0;
+  gap: 14rpx;
+}
+.member-row:last-child { border-bottom: none; }
+.member-confirm {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 2rpx solid #DDDDDD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+.member-confirm.on {
+  background: var(--green);
+  border-color: var(--green);
+}
+.confirmed-badge {
+  display: inline-block;
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+  font-size: 18rpx;
+  margin-left: 8rpx;
+}
+.member-main {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
+}
+.member-del {
+  background: #FFEBEE;
+  color: #E57373;
+  padding: 6rpx 16rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+.member-trying-btn {
+  background: var(--orange-grad);
+  color: #FFFFFF;
+  padding: 6rpx 16rpx;
+  border-radius: 18rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(255, 107, 53, 0.22);
+  margin-left: 8rpx;
+}
+.member-trying-btn:active { transform: scale(0.95); opacity: 0.85; }
+.trying-badge {
+  font-size: 20rpx;
+  background: var(--bg-warm-pill);
+  color: var(--orange-deep);
+  padding: 2rpx 10rpx;
+  border-radius: 10rpx;
+  margin-left: 6rpx;
+  font-weight: 600;
+}
+.member-name {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.member-tag {
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+.tag-following     { background: #F0F0F0;        color: var(--text-mute); }
+.tag-allergic      { background: #FFEBEE;        color: #E57373; }
+.tag-observation   { background: var(--warn-bg); color: var(--warn); }
+.tag-introducing   { background: #E3F2FD;        color: #2196F3; }
+
+.custom-badge {
+  display: inline-block;
+  background: #E3F2FD;
+  color: #2196F3;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+  font-size: 18rpx;
+  margin-left: 10rpx;
+  vertical-align: middle;
+}
+
+/* ============ 自定义食材添加 ============ */
+.add-custom-row {
+  padding: 16rpx 0;
+  text-align: center;
+  color: var(--orange);
+  font-size: 24rpx;
+  border-top: 2rpx dashed #FFE0CC;
+  margin-top: 8rpx;
+}
+.reset-link {
+  display: inline-block;
+  color: #E57373;
+  font-size: 22rpx;
+  background: #FFEBEE;
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+}
+.add-custom-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 0;
+  border-top: 2rpx dashed #FFE0CC;
+  margin-top: 8rpx;
+}
+.custom-input {
+  flex: 1;
+  background: var(--bg-soft);
+  border-radius: 12rpx;
+  padding: 14rpx 18rpx;
+  font-size: 26rpx;
+}
+.custom-confirm-btn {
+  background: var(--orange);
+  color: #FFFFFF;
+  padding: 12rpx 22rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.custom-cancel-btn {
+  color: var(--text-mute);
+  padding: 12rpx;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.medical-note {
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #FFF8E8;
+  color: #8A652C;
+  font-size: 22rpx;
+  line-height: 1.6;
+}

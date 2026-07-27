@@ -1,0 +1,68 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/plan/plan",
+    "pages/fridge/fridge",
+    "pages/review/review",
+    "pages/me/me",
+    "pages/welcome/welcome",
+    "pages/onboarding/onboarding",
+    "pages/profile/profile",
+    "pages/recipe/recipe",
+    "pages/ingredient-picker/ingredient-picker",
+    "pages/journal/journal",
+    "pages/reaction-new/reaction-new",
+    "pages/reactions/reactions",
+    "pages/recipes/recipes",
+    "pages/about/about",
+    "pages/ai-chat/ai-chat"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFF4E6",
+    "navigationBarTitleText": "辅食搭子",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#9B8579",
+    "selectedColor": "#FF6B35",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "今日",
+        "iconPath": "images/tab/home.png",
+        "selectedIconPath": "images/tab/home-active.png"
+      },
+      {
+        "pagePath": "pages/plan/plan",
+        "text": "计划",
+        "iconPath": "images/tab/calendar.png",
+        "selectedIconPath": "images/tab/calendar-active.png"
+      },
+      {
+        "pagePath": "pages/ai-chat/ai-chat",
+        "text": "搭子",
+        "iconPath": "images/tab/chat.png",
+        "selectedIconPath": "images/tab/chat-active.png"
+      },
+      {
+        "pagePath": "pages/review/review",
+        "text": "记录",
+        "iconPath": "images/tab/clipboard.png",
+        "selectedIconPath": "images/tab/clipboard-active.png"
+      },
+      {
+        "pagePath": "pages/me/me",
+        "text": "我的",
+        "iconPath": "images/tab/smile.png",
+        "selectedIconPath": "images/tab/smile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

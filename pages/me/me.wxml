@@ -1,0 +1,90 @@
+<view class="page-bg">
+<view class="container">
+  <view class="card baby-card">
+    <view class="baby-avatar">
+      <image class="baby-avatar-img" src="/images/illust/baby.png" mode="aspectFit"></image>
+    </view>
+    <view class="baby-info">
+      <view class="baby-name-wrap" bindtap="editName">
+        <text wx:if="{{!editing.name}}" class="baby-name">{{babyName}}</text>
+        <text wx:if="{{!editing.name}}" class="baby-name-edit">✎</text>
+        <input wx:else class="baby-name-input" focus="{{true}}" value="{{babyName}}" bindblur="commitName" bindconfirm="commitName" confirm-type="done"/>
+      </view>
+      <view class="baby-desc">
+        <picker mode="date" value="{{birthday}}" start="2020-01-01" end="{{today}}" bindchange="commitBirthday">
+          <view class="baby-desc-editable"><text class="baby-desc-item">{{ageMonths}}月龄</text><text class="baby-desc-tap">›</text></view>
+        </picker>
+        <text class="baby-desc-dot">·</text>
+        <picker mode="selector" range="{{[1,2,3,4,5]}}" value="{{mealsPerDay - 1}}" bindchange="commitMeals">
+          <view class="baby-desc-editable"><text class="baby-desc-item">每日{{mealsPerDay}}顿</text><text class="baby-desc-tap">›</text></view>
+        </picker>
+      </view>
+    </view>
+    <view class="baby-pills" bindtap="gotoIndex">
+      <view wx:for="{{pills}}" wx:key="kind" class="pill pill-{{item.kind}}">{{item.label}}</view>
+      <text class="baby-pills-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="section-title">辅食管理</view>
+  <view class="menu-card">
+    <navigator url="/pages/profile/profile" class="menu-row">
+      <view class="menu-icon icon-green">🌱</view>
+      <view class="menu-info">
+        <view class="menu-name">排敏档案</view>
+        <view class="menu-sub">{{openCount}} 个品类已开放 · {{confirmedCount}} 个食物已确认</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </navigator>
+    <navigator url="/pages/recipes/recipes" class="menu-row">
+      <view class="menu-icon icon-orange">📖</view>
+      <view class="menu-info">
+        <view class="menu-name">食谱库</view>
+        <view class="menu-sub">浏览所有月龄食谱,搜索食材</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </navigator>
+  </view>
+
+  <view class="section-title">应用</view>
+  <view class="menu-card">
+    <view class="menu-row" bindtap="exportBackup">
+      <view class="menu-icon icon-blue">💾</view>
+      <view class="menu-info">
+        <view class="menu-name">复制数据备份</view>
+        <view class="menu-sub">保存宝宝档案、辅食记录、反应和计划</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-row" bindtap="restoreFromClipboard">
+      <view class="menu-icon icon-purple">↩</view>
+      <view class="menu-info">
+        <view class="menu-name">从备份恢复</view>
+        <view class="menu-sub">从剪贴板读取备份并恢复本机数据</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <navigator url="/pages/about/about" class="menu-row">
+      <view class="menu-icon icon-yellow">ℹ️</view>
+      <view class="menu-info">
+        <view class="menu-name">关于辅食搭子</view>
+        <view class="menu-sub">v1.0.4 · 内测中</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </navigator>
+    <view class="menu-row" bindtap="confirmReset">
+      <view class="menu-icon icon-red">🔄</view>
+      <view class="menu-info">
+        <view class="menu-name danger">重置宝宝档案</view>
+        <view class="menu-sub">清空所有数据回到欢迎页</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="tip-card">
+    <text class="tip-card-emoji">💡</text>
+    <text class="tip-card-text">本应用建议仅供参考，具体喂养请咨询儿科医生。</text>
+  </view>
+</view>
+</view>

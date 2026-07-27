@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="mb-bowl" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFD89F"/>
+      <stop offset="100%" stop-color="#FFB36B"/>
+    </linearGradient>
+    <linearGradient id="mb-rice" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFBF0"/>
+      <stop offset="100%" stop-color="#FFE9C8"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="100" cy="170" rx="70" ry="10" fill="#000" opacity="0.08"/>
+  <path d="M 30 100 Q 30 170 100 170 Q 170 170 170 100 Z" fill="url(#mb-bowl)" stroke="#FF8C61" stroke-width="3"/>
+  <path d="M 30 100 Q 100 130 170 100" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.4"/>
+  <ellipse cx="100" cy="100" rx="76" ry="20" fill="url(#mb-rice)" stroke="#FF8C61" stroke-width="3"/>
+  <path d="M 65 78 Q 100 95 135 78" stroke="#FF6B35" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="60" cy="92" r="3.5" fill="#fff" stroke="#FFD4B8" stroke-width="1"/>
+  <circle cx="80" cy="86" r="3.5" fill="#fff" stroke="#FFD4B8" stroke-width="1"/>
+  <circle cx="100" cy="84" r="4" fill="#fff" stroke="#FFD4B8" stroke-width="1"/>
+  <circle cx="120" cy="86" r="3.5" fill="#fff" stroke="#FFD4B8" stroke-width="1"/>
+  <circle cx="140" cy="92" r="3.5" fill="#fff" stroke="#FFD4B8" stroke-width="1"/>
+  <ellipse cx="100" cy="125" rx="14" ry="10" fill="#fff" opacity="0.95"/>
+  <circle cx="93" cy="123" r="2.5" fill="#2D1B0E"/>
+  <circle cx="107" cy="123" r="2.5" fill="#2D1B0E"/>
+  <circle cx="93.5" cy="122.5" r="0.8" fill="#fff"/>
+  <circle cx="107.5" cy="122.5" r="0.8" fill="#fff"/>
+  <path d="M 95 130 Q 100 134 105 130" stroke="#2D1B0E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <circle cx="84" cy="128" r="3" fill="#FFB6A8" opacity="0.7"/>
+  <circle cx="116" cy="128" r="3" fill="#FFB6A8" opacity="0.7"/>
+  <path d="M 30 60 Q 35 40 50 50" stroke="#FFB89A" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M 150 50 Q 165 40 170 60" stroke="#FFB89A" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>

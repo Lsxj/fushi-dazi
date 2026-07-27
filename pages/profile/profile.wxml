@@ -1,0 +1,58 @@
+<view class="container">
+  <view class="card">
+    <view class="text-muted" style="margin-bottom: 8rpx;">分类仅用于整理；每一种新食物都要单独引入并观察至少 3 天</view>
+    <view class="text-muted" style="margin-bottom: 8rpx;">点击 ▶ 展开，左侧 ✓ 标记“已确认稳定”（疫苗后只用已确认食物）</view>
+    <view class="reset-link" bindtap="confirmReset">重置宝宝档案 →</view>
+
+    <view wx:for="{{categoryList}}" wx:key="id" class="cat-block">
+      <view class="cat-row">
+        <view class="cat-info" bindtap="toggleExpand" data-id="{{item.id}}">
+          <view class="cat-name-wrap">
+            <text class="cat-arrow {{item.expanded ? 'expanded' : ''}}">▶</text>
+            <view class="cat-name">{{item.name}}</view>
+            <view wx:if="{{item.commonAllergen}}" class="allergen-badge">常见过敏原</view>
+          </view>
+          <view class="cat-meta text-muted">
+            <text wx:if="{{item.representative}}">代表:{{item.representative}}</text>
+            <text wx:elif="{{item.recommendedMonth}}">建议{{item.recommendedMonth}}月+</text>
+            <text wx:if="{{item.exceptionCount > 0}}" class="text-warning"> · {{item.exceptionCount}}个例外</text>
+          </view>
+          <view wx:if="{{item.note}}" class="text-warning" style="font-size: 22rpx;">{{item.note}}</view>
+        </view>
+        <view class="tag tag-{{item.state}}" catchtap="toggleCategory" data-id="{{item.id}}">{{item.stateLabel}}</view>
+      </view>
+
+      <view wx:if="{{item.expanded}}" class="member-list">
+        <view wx:for="{{item.members}}" wx:for-item="m" wx:key="name" class="member-row">
+          <view class="member-confirm {{m.isConfirmed ? 'on' : ''}}" catchtap="toggleConfirmed" data-name="{{m.name}}">
+            <text wx:if="{{m.isConfirmed}}">✓</text>
+          </view>
+          <view class="member-main" catchtap="toggleException" data-name="{{m.name}}">
+            <text class="member-name">
+              {{m.name}}
+              <text wx:if="{{m.isCustom}}" class="custom-badge">自定义</text>
+              <text wx:if="{{m.isConfirmed}}" class="confirmed-badge">已确认</text>
+              <text wx:if="{{m.isCurrentlyTrying}}" class="trying-badge">排敏中</text>
+            </text>
+            <view class="member-tag tag-{{m.exceptionState}}">{{m.exceptionLabel}}</view>
+          </view>
+          <view wx:if="{{m.canStartTrying}}" class="member-trying-btn" catchtap="startTryingMember" data-name="{{m.name}}">🚀 排敏 {{m.tryingDays}}天</view>
+          <view wx:if="{{m.isCustom}}" class="member-del" catchtap="confirmDeleteCustom" data-name="{{m.name}}">删</view>
+        </view>
+
+        <view wx:if="{{addingCatId === item.id}}" class="add-custom-input-row">
+          <input class="custom-input" focus="{{true}}" placeholder="食材名(如:核桃油)" value="{{customInputValue}}" bindinput="onCustomInput" bindconfirm="confirmCustomFood" confirm-type="done"/>
+          <view class="custom-confirm-btn" catchtap="confirmCustomFood">添加</view>
+          <view class="custom-cancel-btn" catchtap="cancelCustomFood">取消</view>
+        </view>
+        <view wx:else class="add-custom-row" catchtap="startAddCustom" data-cat-id="{{item.id}}">
+          + 添加 {{item.name}} 食材
+        </view>
+      </view>
+    </view>
+
+    <view class="medical-note">
+      有严重湿疹、已知食物过敏或既往严重反应时，首次引入常见过敏原前请咨询儿科或过敏专科医生。
+    </view>
+  </view>
+</view>

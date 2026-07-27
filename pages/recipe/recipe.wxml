@@ -1,0 +1,37 @@
+<view class="container">
+  <view wx:if="{{recipe}}">
+    <view class="card">
+      <view class="card-title">{{recipe.name}}</view>
+      <view class="text-muted">{{recipe.prepTimeMinutes}}分钟 · 适合{{recipe.applicableMonthRange[0]}}-{{recipe.applicableMonthRange[1]}}月龄</view>
+    </view>
+    <view class="card">
+      <view class="card-title">食材</view>
+      <view wx:for="{{recipe.ingredients}}" wx:key="name" class="row">
+        <text>{{item.name}}</text>
+        <text class="text-muted">{{item.portions}}份</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tabooWarnings.length > 0}}" class="card taboo-card">
+      <view class="card-title">💡 搭配小贴士</view>
+      <view wx:for="{{tabooWarnings}}" wx:key="foods" class="taboo-row">
+        <view class="taboo-foods">{{item.foods}}</view>
+        <view class="taboo-reason">{{item.reason}}</view>
+        <view class="taboo-mitigation">✓ {{item.mitigation}}</view>
+      </view>
+    </view>
+    <view class="card">
+      <view class="card-title">做法</view>
+      <view wx:for="{{recipe.steps}}" wx:key="*this" class="step">
+        <text class="step-num">{{index + 1}}.</text>
+        <text>{{item}}</text>
+      </view>
+    </view>
+    <view class="card">
+      <view class="card-title">营养标签</view>
+      <view class="tags">
+        <text wx:for="{{recipe.nutritionTags}}" wx:key="*this" class="tag tag-open">{{item}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,31 @@
+<view class="container">
+  <view class="search-bar">
+    <input class="search-input" placeholder="搜索食材名(支持拼音首字母)" value="{{keyword}}" bindinput="onSearch" focus="{{true}}"/>
+  </view>
+
+  <view wx:if="{{keyword === '' && planNeed.length > 0}}" class="card">
+    <view class="card-title">📋 本周计划要用</view>
+    <view class="quick-grid">
+      <view wx:for="{{planNeed}}" wx:key="*this" class="quick-pill" bindtap="quickAdd" data-name="{{item}}">{{item}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{keyword === '' && recent.length > 0}}" class="card">
+    <view class="card-title">⏱ 最近添加</view>
+    <view class="quick-grid">
+      <view wx:for="{{recent}}" wx:key="*this" class="quick-pill" bindtap="quickAdd" data-name="{{item}}">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">{{keyword ? '搜索结果' : '全部食材'}}</view>
+    <view wx:if="{{filtered.length === 0}}" class="text-muted" style="padding: 20rpx 0;">没找到</view>
+    <view wx:for="{{filtered}}" wx:key="name" class="ing-item" bindtap="quickAdd" data-name="{{item.name}}">
+      <view class="ing-info">
+        <text class="ing-name">{{item.name}}</text>
+        <text class="ing-cat text-muted">{{item.categoryName}} · {{item.storageLine}}</text>
+      </view>
+      <view class="add-btn">+</view>
+    </view>
+  </view>
+</view>

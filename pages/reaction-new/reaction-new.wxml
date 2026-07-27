@@ -1,0 +1,118 @@
+<view class="container rn-page">
+  <view class="rn-intro">记录宝宝当前反应,系统会自动回溯近 72 小时辅食并辅助定位可疑食材。</view>
+
+  <!-- ============ ① 选择反应 ============ -->
+  <view class="rn-card">
+    <view class="rn-card-head">
+      <view class="rn-badge">①</view>
+      <text class="rn-card-title">选择反应</text>
+      <text class="rn-required">*必填</text>
+    </view>
+
+    <view class="rn-section-label">反应类型</view>
+    <view class="rn-type-grid">
+      <view wx:for="{{typeOptions}}" wx:key="value" class="rn-type-card {{selectedTypes[item.value] ? 'rn-type-on' : ''}}" bindtap="toggleType" data-value="{{item.value}}">
+        <text class="rn-type-emoji">{{item.emoji}}</text>
+        <text class="rn-type-label">{{item.label}}</text>
+        <view wx:if="{{selectedTypes[item.value]}}" class="rn-type-check">✓</view>
+      </view>
+    </view>
+
+    <view class="rn-section-label">严重程度</view>
+    <view class="rn-pill-row">
+      <view wx:for="{{severityOptions}}" wx:key="value" class="rn-pill {{severity === item.value ? 'rn-pill-on' : ''}}" bindtap="setSeverity" data-value="{{item.value}}">{{item.label}}</view>
+    </view>
+
+    <view class="rn-section-label">发生时间</view>
+    <view class="rn-pill-row rn-pill-wrap">
+      <view wx:for="{{timeOptions}}" wx:key="value" class="rn-pill rn-pill-sm {{timeChoice === item.value ? 'rn-pill-on' : ''}}" bindtap="setTime" data-value="{{item.value}}">{{item.label}}</view>
+    </view>
+    <view wx:if="{{timeChoice === 'custom'}}" class="rn-custom-time">
+      <picker mode="multiSelector" range="{{customTimeRange}}" value="{{customTimeIndex}}" bindchange="onCustomTime">
+        <view class="rn-picker-display">{{customTimeLabel || '点击选择具体时间 ›'}}</view>
+      </picker>
+    </view>
+
+    <view class="rn-section-label">备注 (可选)</view>
+    <view class="rn-textarea-wrap">
+      <textarea class="rn-textarea" placeholder="补充说明: 持续多久、精神状态、体温等" value="{{note}}" bindinput="onNoteInput" maxlength="200"/>
+      <text class="rn-textarea-count">{{noteLength}}/200</text>
+    </view>
+  </view>
+
+  <!-- ============ ② 自动回溯餐次 ============ -->
+  <view class="rn-card">
+    <view class="rn-card-head">
+      <view class="rn-badge">②</view>
+      <text class="rn-card-title">自动回溯餐次</text>
+      <text class="rn-card-sub">系统已自动回溯近 72 小时内相关餐次</text>
+      <!-- 🔍 搜索预留入口 (MVP 占位) -->
+      <view class="rn-search-icon" aria-label="搜索更多餐次">🔍</view>
+    </view>
+
+    <view wx:if="{{traceback.length === 0}}" class="rn-empty">最近 72h 无打卡记录</view>
+
+    <view wx:if="{{traceback.length > 0}}" class="rn-timeline">
+      <view wx:for="{{traceback}}" wx:key="key" class="rn-tl-item">
+        <view class="rn-tl-rail">
+          <view class="rn-tl-dot"></view>
+          <view class="rn-tl-line"></view>
+        </view>
+        <view class="rn-tl-card">
+          <view class="rn-tl-time">{{item.timeLabel}}</view>
+          <view class="rn-tl-body">
+            <view class="rn-tl-meal">{{item.recipeName}}</view>
+            <view class="rn-tl-ings">{{item.ingsText}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ ③ 可疑食材分析 ============ -->
+  <view wx:if="{{suspects.length > 0}}" class="rn-card">
+    <view class="rn-card-head">
+      <view class="rn-badge">③</view>
+      <text class="rn-card-title">可疑食材分析</text>
+    </view>
+
+    <view class="rn-warn-banner">
+      <text class="rn-warn-icon">⚠️</text>
+      <text>基于宝宝当前反应与近期摄入,以下食材可能相关</text>
+    </view>
+
+    <view wx:for="{{suspects}}" wx:key="name" class="rn-sus-card">
+      <view class="rn-sus-head">
+        <view class="rn-sus-emoji">{{item.emoji}}</view>
+        <view class="rn-sus-info">
+          <view class="rn-sus-name-row">
+            <text class="rn-sus-name">{{item.name}}</text>
+            <text class="rn-sus-tag tag-{{item.level}}">{{item.levelLabel}}</text>
+          </view>
+          <view class="rn-sus-reason">{{item.reason}}</view>
+        </view>
+        <view class="rn-sus-checkbox {{item.action ? 'rn-sus-checked' : ''}}">
+          <text wx:if="{{item.action}}">✓</text>
+        </view>
+      </view>
+      <view class="rn-sus-actions">
+        <view class="rn-sus-act {{item.action === 'observe' ? 'rn-sus-act-on' : ''}}" bindtap="setSuspectAction" data-name="{{item.name}}" data-action="observe">加入观察期</view>
+        <view class="rn-sus-act {{item.action === 'pause3' ? 'rn-sus-act-on' : ''}}" bindtap="setSuspectAction" data-name="{{item.name}}" data-action="pause3">先暂停 3 天</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{traceback.length > 0 && suspects.length === 0}}" class="rn-card">
+    <view class="rn-empty">这次反应回溯期内没有近期才引入的食材,可能不是过敏导致</view>
+  </view>
+
+  <view wx:if="{{willDirectAllergic}}" class="rn-card">
+    <view class="rn-direct-banner">⚠️ 严重反应:勾选的食材将直接确诊为过敏(永久排除)</view>
+  </view>
+
+  <!-- sticky footer -->
+  <view class="rn-footer">
+    <view class="rn-btn rn-btn-ghost" bindtap="cancel">取消</view>
+    <view class="rn-btn rn-btn-primary" bindtap="submit">{{isEditing ? '保存修改' : '提交反应记录'}}</view>
+  </view>
+</view>

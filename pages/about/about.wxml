@@ -1,0 +1,61 @@
+<view class="container">
+  <view class="card hero">
+    <image class="hero-logo" src="/images/illust/logo.png" mode="aspectFit"></image>
+    <view class="hero-title">辅食搭子</view>
+    <view class="hero-slogan">从今天吃什么，到吃后有没有反应</view>
+    <view class="hero-version">v1.0.4 · 内测版</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">我们想解决什么</view>
+    <view class="quote">“少一点临时纠结，多一点有记录、有依据的喂养。”</view>
+    <view class="content" style="margin-top: 14rpx;">辅食搭子主要面向 6–24 月龄宝宝家庭，把菜单、食材库存、逐食物引入、进食记录和不适观察放在一条连续流程里。</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">现在可以做什么</view>
+    <view class="feat-row"><text class="feat-icon">☀️</text><view><view class="feat-name">今日安排</view><view class="feat-desc">查看、换餐并记录宝宝实际吃了什么</view></view></view>
+    <view class="feat-row"><text class="feat-icon">📅</text><view><view class="feat-name">计划与库存</view><view class="feat-desc">生成一周菜单、采购清单和备菜提醒</view></view></view>
+    <view class="feat-row"><text class="feat-icon">🌱</text><view><view class="feat-name">逐食物引入</view><view class="feat-desc">每次一种新食物，连续观察至少 3 天</view></view></view>
+    <view class="feat-row"><text class="feat-icon">📋</text><view><view class="feat-name">饮食与反应记录</view><view class="feat-desc">时间流、7 日摘要及不适前 72 小时回溯</view></view></view>
+    <view class="feat-row"><text class="feat-icon">🍄</text><view><view class="feat-name">AI 搭子</view><view class="feat-desc">结合宝宝档案、库存和记录回答喂养问题</view></view></view>
+    <view class="feat-row"><text class="feat-icon">🛡️</text><view><view class="feat-name">状态保护</view><view class="feat-desc">疫苗后或肠胃不适时减少新食物干扰</view></view></view>
+  </view>
+
+  <view class="card basis-card">
+    <view class="card-title">参考原则</view>
+    <view class="basis-row"><text class="basis-dot"></text><text>约 6 月龄、具备辅食准备信号后开始添加</text></view>
+    <view class="basis-row"><text class="basis-dot"></text><text>每次只引入一种新食物，由少到多，观察 3–5 天</text></view>
+    <view class="basis-row"><text class="basis-dot"></text><text>常见过敏原不因“高风险”而普遍延迟到 1 岁以后</text></view>
+    <view class="basis-row"><text class="basis-dot"></text><text>食物分类只用于整理，每种新食物都需单独确认</text></view>
+    <view class="source-note">主要参考国家卫健委 WS/T 678—2020、中国居民膳食指南及儿童食物过敏相关指南。</view>
+  </view>
+
+  <view class="card alert-card">
+    <view class="card-title">重要说明</view>
+    <view class="content">食谱、营养、逐食物引入和 AI 回答均<text class="bold">仅供辅助记录与参考</text>，不能用于诊断食物过敏，也不能替代医生意见。</view>
+    <view class="content" style="margin-top: 12rpx;">有严重湿疹、已知食物过敏或既往严重反应时，请在医生指导下引入常见过敏原。</view>
+    <view class="emergency">若出现呼吸困难、声音嘶哑、面唇肿胀、反复呕吐或精神状态明显变差，请立即就医或拨打 120。</view>
+  </view>
+
+  <view class="card privacy-card">
+    <view class="card-title">数据与隐私</view>
+    <view class="privacy-block">
+      <view class="privacy-title">不使用 AI 时</view>
+      <view class="content">宝宝档案、冰箱、菜单和记录主要保存在当前设备的微信小程序缓存中。清理缓存或更换设备可能导致本地数据丢失。</view>
+    </view>
+    <view class="privacy-block">
+      <view class="privacy-title">使用 AI 搭子时</view>
+      <view class="content">发送问题后，宝宝档案、冰箱、采购清单、饮食记录、不适记录、自定义食物和周计划会同步到微信云数据库，并按微信用户标识隔离保存。</view>
+      <view class="content" style="margin-top: 8rpx;">问题、最近对话和回答所需的上下文会由云函数处理，并可能发送给当前配置的 AI 模型服务商生成回答。</view>
+    </view>
+    <view class="privacy-warning">清理本地缓存不会自动删除已经同步到云端的数据。内测期间如需删除云端数据，请联系开发者。</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">反馈与共创</view>
+    <view class="content">这是一个持续迭代的内测版本。如果你遇到问题，或对食物分类、记录流程和 AI 回答有建议，欢迎联系开发者。</view>
+  </view>
+
+  <view class="footer-tip text-muted">辅食搭子 v1.0.4 · 内测中</view>
+</view>

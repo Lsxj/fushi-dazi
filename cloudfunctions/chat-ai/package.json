@@ -1,0 +1,11 @@
+{
+  "name": "chat-ai",
+  "version": "0.2.0",
+  "description": "Fushi AI assistant: parent-facing chat powered by Claude (default) or OpenAI-compatible providers (DeepSeek, Zhipu, MiniMax).",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "openai": "^4.55.0"
+  }
+}

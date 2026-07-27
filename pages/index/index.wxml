@@ -1,0 +1,512 @@
+<view class="page-bg">
+
+<!-- ============ 自定义 Nav ============ -->
+<view class="nav-fixed" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-inner" style="height: {{navBarHeight}}px;">
+    <view class="nav-brand">
+      <image class="nav-logo-img" src="/images/illust/logo.png" mode="aspectFit"></image>
+      <view class="nav-title">辅食搭子 <text class="nav-sparkle">✨</text></view>
+    </view>
+  </view>
+</view>
+
+<view class="container" style="padding-top: calc({{statusBarHeight + navBarHeight}}px + 8rpx);">
+
+  <!-- ============ ① 宝宝信息卡 (纯展示, 编辑入口在「我的」) ============ -->
+  <view class="card baby-card">
+    <view class="baby-avatar">
+      <image class="baby-avatar-img" src="/images/illust/baby.png" mode="aspectFit"></image>
+    </view>
+    <view class="baby-info">
+      <view class="baby-name-wrap">
+        <text class="baby-name">{{babyName}}</text>
+      </view>
+      <view class="baby-desc">
+        <text class="baby-desc-item">{{ageMonths}}月龄</text>
+        <text class="baby-desc-dot">·</text>
+        <text class="baby-desc-item">每日{{mealsPerDay}}顿</text>
+      </view>
+    </view>
+    <view class="baby-pills" bindtap="openStatusSheet">
+      <view wx:for="{{pills}}" wx:key="kind" class="pill pill-{{item.kind}}">{{item.label}}</view>
+      <text class="baby-pills-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- ============ Status Sheet (按需弹出) ============ -->
+  <view wx:if="{{statusSheetVisible}}" class="sheet-mask" bindtap="closeStatusSheet" catchtouchmove="noop"></view>
+  <view wx:if="{{statusSheetVisible}}" class="sheet-panel sheet-show" catchtap="noop">
+    <view class="sheet-handle"></view>
+    <view class="sheet-title">宝宝今天状态</view>
+    <view class="sheet-desc">切换后会自动调整今天起的菜单安排</view>
+    <view wx:if="{{statusReactionBanner}}" class="sheet-banner">
+      <text class="sheet-banner-text">⚠️ {{statusReactionBanner}}</text>
+      <view class="sheet-banner-cta" catchtap="gotoReviewFromBanner">去记录页处理 ›</view>
+    </view>
+    <view class="sheet-options">
+      <view class="sheet-option {{currentStatus === 'normal' ? 'sheet-option-active' : ''}}" bindtap="setStatusNormal">
+        <view class="sheet-option-icon">✓</view>
+        <view class="sheet-option-body">
+          <view class="sheet-option-name">正常</view>
+          <view class="sheet-option-desc">按计划喂养，按推荐节奏引入新食材</view>
+        </view>
+      </view>
+      <picker mode="date" value="{{today}}" start="2024-01-01" end="{{today}}" bindchange="setStatusPostVaccine">
+        <view class="sheet-option {{currentStatus === 'postVaccine' ? 'sheet-option-active' : ''}}">
+          <view class="sheet-option-icon">🛡️</view>
+          <view class="sheet-option-body">
+            <view class="sheet-option-name">疫苗后保护期</view>
+            <view class="sheet-option-desc">{{currentStatus === 'postVaccine' ? statusVaccineHint : '选择疫苗日期，3 天内不引入新食材'}}</view>
+          </view>
+        </view>
+      </picker>
+    </view>
+    <view class="sheet-cancel" bindtap="closeStatusSheet">取消</view>
+  </view>
+
+  <!-- ============ ② 今日不适追踪（双形态共用紧凑 layout） ============ -->
+  <navigator wx:if="{{reactionCard}}" url="/pages/reactions/reactions" open-type="navigate" class="card discomfort-promo" hover-class="none">
+    <image class="discomfort-promo-img" src="/images/illust/discomfort_note.png" mode="aspectFit"></image>
+    <view class="discomfort-promo-body">
+      <view class="discomfort-promo-title">已记录 <text class="discomfort-count">{{reactionCard.count}}</text> 次不适</view>
+      <view class="discomfort-promo-desc">{{reactionCard.latestNote}} · {{reactionCard.latestTime}}</view>
+    </view>
+    <view class="discomfort-promo-cta">
+      继续记录<text class="discomfort-promo-cta-arrow">›</text>
+    </view>
+  </navigator>
+
+  <navigator wx:elif="{{reactionPromo}}" url="/pages/reaction-new/reaction-new" open-type="navigate" class="card discomfort-promo" hover-class="none">
+    <image class="discomfort-promo-img" src="/images/illust/discomfort_note.png" mode="aspectFit"></image>
+    <view class="discomfort-promo-body">
+      <view class="discomfort-promo-title">{{reactionPromo.title}}</view>
+      <view class="discomfort-promo-desc">{{reactionPromo.desc}}</view>
+    </view>
+    <view class="discomfort-promo-cta">
+      立即记录<text class="discomfort-promo-cta-arrow">›</text>
+    </view>
+  </navigator>
+
+  <!-- ============ 重试 / 空状态 alert (排敏态已合并到今日建议卡) ============ -->
+  <view wx:if="{{dueRetry.length > 0}}" class="alert-card alert-green">
+    <view class="alert-header">
+      <view class="alert-icon">🔄</view>
+      <view class="alert-title">观察期可重试</view>
+    </view>
+    <view wx:for="{{dueRetry}}" wx:key="name" class="alert-row">
+      <view class="alert-meal">{{item.name}}</view>
+      <view class="alert-actions">
+        <view class="alert-btn alert-btn-pass" bindtap="retryPass" data-name="{{item.name}}">通过</view>
+        <view class="alert-btn alert-btn-abort" bindtap="retryFail" data-name="{{item.name}}">仍过敏</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{emptyDiagnosis}}" class="alert-card alert-yellow">
+    <view class="alert-header">
+      <view class="alert-icon">📋</view>
+      <view class="alert-title">当前没有菜单</view>
+    </view>
+    <view class="alert-content">{{emptyDiagnosis.reason}}</view>
+    <view class="alert-meta">建议：{{emptyDiagnosis.action}}</view>
+    <navigator wx:if="{{emptyDiagnosis.actionType === 'profile'}}" url="/pages/profile/profile" class="alert-cta">去排敏档案 →</navigator>
+    <navigator wx:elif="{{emptyDiagnosis.actionType === 'recipes'}}" url="/pages/recipes/recipes" class="alert-cta">浏览食谱库 →</navigator>
+  </view>
+
+  <!-- ============ ③ 今日辅食安排 ============ -->
+  <view wx:if="{{!emptyDiagnosis && todayMeals.length > 0}}" class="card plan-card">
+    <view class="plan-head">
+      <view class="plan-head-left">
+        <view class="plan-title-row">
+          <view class="plan-title">今日辅食安排</view>
+          <view class="date-pill">📅 {{todayDateLabel}}</view>
+        </view>
+        <view class="plan-progress-text">
+          已喂 <text class="strong">{{todayCompleted}}/{{todayMeals.length}}</text> 餐
+        </view>
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{todayProgressPct}}%"></view>
+        </view>
+      </view>
+      <image class="plan-bowl-img" src="/images/illust/meal_bowl.png" mode="widthFix"></image>
+    </view>
+
+    <view wx:for="{{todayMeals}}" wx:key="mealIndex" class="meal-item {{item.logged ? 'meal-done' : ''}}">
+      <view class="meal-head">
+        <view class="meal-head-left">
+          <image class="meal-bowl-img" src="{{item.logged ? '/images/illust/bowl_done.png' : '/images/illust/bowl_pending.png'}}" mode="widthFix" catchtap="toggleMealLogged" data-idx="{{item.mealIndex}}"></image>
+          <text class="meal-no">第 {{item.displayOrder}} 餐</text>
+          <text wx:if="{{item.logged && item.isCustomLog}}" class="meal-badge-custom">实际</text>
+          <text wx:if="{{item.logged && !item.isCustomLog}}" class="meal-badge-ok">✓ 按计划</text>
+        </view>
+        <view class="meal-head-right" catchtap="openRecipe" data-id="{{item.recipe.id}}">查看做法 ›</view>
+      </view>
+
+      <view class="meal-content" catchtap="openActualSheet" data-idx="{{item.mealIndex}}">
+        <view class="meal-name">{{item.headlineName}}</view>
+        <view wx:if="{{item.detailText}}" class="meal-ings">{{item.detailText}}</view>
+        <view wx:if="{{item.planHint}}" class="meal-plan-hint">{{item.planHint}}</view>
+        <view wx:if="{{item.logged && item.portionLabel}}" class="meal-portion-tag">{{item.portionLabel}}{{item.preference === 'love' ? ' · 😋 爱吃' : ''}}{{item.preference === 'dislike' ? ' · 😐 不太爱' : ''}}</view>
+        <view wx:if="{{item.trialIngredient}}" class="meal-trial">
+          <text class="meal-trial-tag">🆕 排敏加料</text>
+          <text class="meal-trial-text">{{item.trialIngredient}} 1 勺 · {{item.trialMethod}}</text>
+        </view>
+      </view>
+
+      <view class="meal-foot">
+        <block wx:if="{{item.logged}}">
+          <view class="meal-foot-edit" catchtap="openActualSheet" data-idx="{{item.mealIndex}}">改记录</view>
+          <view class="meal-foot-spacer"></view>
+          <view class="meal-foot-undo" catchtap="confirmUndoCheckin" data-idx="{{item.mealIndex}}">撤销</view>
+        </block>
+        <block wx:else>
+          <view class="meal-foot-secondary" catchtap="replaceMeal" data-day="today" data-idx="{{item.mealIndex}}">换计划</view>
+          <view class="meal-foot-spacer"></view>
+          <view class="meal-foot-primary" catchtap="openActualSheet" data-idx="{{item.mealIndex}}">记录吃了</view>
+        </block>
+      </view>
+    </view>
+
+    <view class="meal-add-row" bindtap="addMealManual">
+      <text class="meal-add-ico">＋</text>
+      <text class="meal-add-text">补一餐 (今日)</text>
+    </view>
+
+    <view wx:if="{{mealsTipText}}" class="plan-tip">
+      <text class="plan-tip-ico">💡</text>
+      <text class="plan-tip-text">{{mealsTipText}}</text>
+    </view>
+  </view>
+
+  <!-- ============ ④ 今日建议（差异化决策中心） ============ -->
+  <view wx:if="{{todayAdvice}}" class="card advice-card">
+    <view class="advice-head">
+      <view class="advice-h">💡 今日建议</view>
+      <view class="advice-tag">搭子说</view>
+    </view>
+    <view class="advice-body">
+      <image class="advice-mascot" src="/images/illust/advice_book.png" mode="aspectFit"></image>
+      <view class="advice-bubble">
+        <view class="advice-bubble-tail"></view>
+        <view class="advice-main">{{todayAdvice.title}}</view>
+        <view class="advice-desc">{{todayAdvice.desc}}</view>
+      </view>
+    </view>
+    <view wx:if="{{todayAdvice.chips.length > 0}}" class="advice-chips">
+      <view wx:for="{{todayAdvice.chips}}" wx:for-item="chip" wx:key="text" class="chip">
+        <text class="chip-emoji">{{chip.icon}}</text>{{chip.text}}
+      </view>
+    </view>
+    <view wx:if="{{todayAdvice.ctaPrimary || todayAdvice.ctaSecondary}}" class="advice-actions">
+      <view wx:if="{{todayAdvice.ctaSecondary}}" class="advice-cta-secondary" bindtap="triggerAdviceSecondary">{{todayAdvice.ctaSecondary.label}}</view>
+      <view wx:if="{{todayAdvice.ctaPrimary}}" class="advice-cta-primary" bindtap="triggerAdvicePrimary">{{todayAdvice.ctaPrimary.label}}</view>
+    </view>
+    <view wx:if="{{todayAdvice.moreRecsCount > 0}}" class="advice-more-link" bindtap="openMoreRecsSheet">
+      还有 {{todayAdvice.moreRecsCount}} 个建议 ›
+    </view>
+  </view>
+
+  <!-- ============ 排敏推荐展开 (按需) ============ -->
+  <view wx:if="{{recExpanded && recommendations.length > 0}}" class="card rec-detail-card">
+    <view class="rec-card-sub">每次只引入一种新食物，连续观察至少 3 天</view>
+    <view wx:for="{{recommendations}}" wx:key="category" class="rec-block">
+      <view class="rec-block-header">
+        <text class="rec-cat-name">{{item.category}}</text>
+        <text class="rec-cat-reason">{{item.reason}}</text>
+      </view>
+      <view class="rec-foods">
+        <view wx:for="{{item.foods}}" wx:for-item="f" wx:key="*this" class="rec-food-pill" catchtap="acceptRec" data-cat-id="{{item.categoryId}}" data-rep="{{f}}">
+          {{f}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ ⑤ 明日预告 ============ -->
+  <view wx:if="{{tomorrowMeals.length > 0}}" class="card tomorrow-card">
+    <view class="tomorrow-head">
+      <view class="tomorrow-head-left">
+        <view class="tomorrow-h">明日预告</view>
+        <view class="date-pill">📅 {{tomorrowDateLabel}}</view>
+      </view>
+      <view class="card-link card-link-outline" bindtap="adjustTomorrow">✏️ 调整明日</view>
+    </view>
+    <view class="meal-preview-row">
+      <view wx:for="{{tomorrowMeals}}" wx:key="mealIndex" class="meal-preview">
+        <view class="meal-preview-body" catchtap="openRecipe" data-id="{{item.recipe.id}}">
+          <view class="meal-preview-no">第 {{item.mealIndex + 1}} 餐</view>
+          <view class="meal-preview-name">{{item.recipe.name}}</view>
+          <view class="meal-preview-ings">{{item.ingredientsText}}</view>
+        </view>
+        <view class="meal-preview-foot">
+          <view class="meal-foot-secondary" catchtap="replaceMeal" data-day="tomorrow" data-idx="{{item.mealIndex}}">换</view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{tomorrowPrepText}}" class="tomorrow-bell">
+      <text class="tomorrow-bell-ico">🔔</text>
+      <text class="tomorrow-bell-text">{{tomorrowPrepText}}</text>
+    </view>
+  </view>
+
+  <view class="disclaimer">本应用建议仅供参考，具体喂养请咨询儿科医生。</view>
+</view>
+</view>
+
+<!-- ============ 换菜 sheet ============ -->
+<view wx:if="{{replaceSheetOpen}}" class="repl-mask" bindtap="closeReplaceSheet" catchtouchmove="noop"></view>
+<view wx:if="{{replaceSheetOpen}}" class="repl-sheet" catchtap="stopPropagation" catchtouchmove="noop">
+  <view class="repl-handle"></view>
+
+  <view class="repl-topbar">
+    <view class="repl-close" catchtap="closeReplaceSheet">←</view>
+    <view class="repl-titles">
+      <view class="repl-title-row">
+        <text class="repl-title">换{{replaceCtx.day === 'tomorrow' ? '明天 ' : ''}}{{replaceCtx.mealLabel}}</text>
+        <text class="repl-sub">·  原计划 {{replaceCtx.oldName}}</text>
+      </view>
+    </view>
+    <view class="repl-close repl-close-x" catchtap="closeReplaceSheet">✕</view>
+  </view>
+
+  <view class="repl-body">
+    <!-- 互换区: 紧凑文字+pill -->
+    <view wx:if="{{replaceSwapTargets.length > 0}}" class="repl-swap-inline">
+      <text class="repl-swap-inline-label">跟其他餐互换</text>
+      <view class="repl-swap-list">
+        <view wx:for="{{replaceSwapTargets}}" wx:key="idx" class="repl-swap-pill" catchtap="swapMeals" data-idx="{{item.idx}}">
+          <text class="repl-swap-no">↔ {{item.mealLabel}}</text>
+          <text class="repl-swap-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Hero 推荐卡: 信息为主, CTA 下沉 -->
+    <view wx:if="{{replaceCandidates[0]}}" class="repl-hero">
+      <view class="repl-hero-badge">🌟 {{replaceCtx.day === 'tomorrow' ? '明天' : '今天'}}更推荐</view>
+      <view class="repl-hero-name">{{replaceCandidates[0].name}}</view>
+      <view class="repl-hero-ings">{{replaceCandidates[0].ingredientsText}}</view>
+      <view wx:if="{{replaceCandidates[0].reasons.length > 0}}" class="repl-hero-reasons">
+        <view wx:for="{{replaceCandidates[0].reasons}}" wx:for-item="r" wx:key="text" class="repl-hero-reason">
+          <text class="repl-hero-reason-icon">{{r.icon}}</text>
+          <text class="repl-hero-reason-text">{{r.text}}</text>
+        </view>
+      </view>
+      <view wx:if="{{replaceCandidates[0].mitigationText}}" class="repl-hero-warn">💡 {{replaceCandidates[0].mitigationText}}</view>
+      <view wx:if="{{replaceCandidates[0].prepTime}}" class="repl-hero-meta">⏱ 预计 {{replaceCandidates[0].prepTime}} 分钟</view>
+    </view>
+
+    <!-- 备选: 默认展开, 简洁列表 -->
+    <view wx:if="{{replaceCandidates.length > 1}}" class="repl-alts-label">其它方案</view>
+    <view wx:if="{{replaceCandidates.length > 1}}" class="repl-alts-list">
+      <view wx:for="{{replaceCandidates}}" wx:key="id" wx:if="{{index > 0}}" class="repl-alt" catchtap="confirmReplacement" data-id="{{item.id}}">
+        <view class="repl-alt-body">
+          <view class="repl-alt-name">{{item.name}}</view>
+          <view class="repl-alt-ings">{{item.ingredientsText}}</view>
+        </view>
+        <view class="repl-alt-mark">
+          <text wx:if="{{item.inFridgeAll}}" class="repl-alt-mark-ok">✅</text>
+          <text wx:elif="{{item.mitigationText}}" class="repl-alt-mark-warn">⚠</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{replaceCandidates.length === 0}}" class="repl-empty">暂无候选食谱</view>
+  </view>
+
+  <!-- Sticky 底部: 链接 + 主 CTA + 取消 -->
+  <view class="repl-footer">
+    <view class="repl-footer-link" catchtap="refreshReplaceCandidates">看不到合适的？再换一组</view>
+    <view class="repl-footer-actions">
+      <view class="repl-footer-cancel" catchtap="closeReplaceSheet">取消</view>
+      <view wx:if="{{replaceCandidates[0]}}" class="repl-hero-cta" catchtap="confirmReplacement" data-id="{{replaceCandidates[0].id}}">立即替换</view>
+    </view>
+  </view>
+</view>
+
+<!-- ============ 「记录吃了」实际记录 sheet ============ -->
+<view wx:if="{{actualSheetOpen}}" class="repl-mask" bindtap="closeActualSheet" catchtouchmove="noop"></view>
+<view wx:if="{{actualSheetOpen}}" class="repl-sheet act-sheet" catchtap="stopPropagation" catchtouchmove="noop">
+  <view class="repl-handle"></view>
+  <view class="act-head">
+    <view class="act-title">{{actualSheetCtx.isEditing ? '修改这餐的记录' : '这餐实际吃了什么？'}}</view>
+    <view class="repl-close repl-close-x" catchtap="closeActualSheet">✕</view>
+  </view>
+
+  <scroll-view class="act-body" scroll-y enhanced="{{true}}" show-scrollbar="{{false}}" style="max-height: calc(82vh - 230rpx);">
+    <!-- 顶部计划餐紧凑条 -->
+    <view wx:if="{{actualSheetCtx}}" class="act-plan-bar" catchtap="openPlanRecipeFromSheet">
+      <text class="act-plan-bar-emoji">📋</text>
+      <view class="act-plan-bar-text">
+        <view class="act-plan-bar-name">{{actualSheetCtx.planName}}</view>
+        <view class="act-plan-bar-ings">{{actualSheetCtx.planIngredientsText}}</view>
+      </view>
+      <text class="act-plan-bar-link">做法 ›</text>
+    </view>
+
+    <!-- 核心信息卡: 时间 + 份量 -->
+    <view class="act-card">
+      <view class="act-field">
+        <text class="act-field-label">用餐时间</text>
+        <picker mode="time" value="{{actualTime}}" bindchange="onActualTimeChange">
+          <view class="act-field-value">{{actualTime || '点击选择'}} ›</view>
+        </picker>
+      </view>
+
+      <view class="act-divider"></view>
+
+      <view class="act-field act-field-stack">
+        <text class="act-field-label">吃了多少</text>
+        <view class="act-portions">
+          <view class="act-portion {{(actualPortion === 'taste' || actualPortion === 'small') ? 'act-portion-on' : ''}}" catchtap="setActualPortion" data-portion="taste"><text class="act-portion-emoji">😊</text>尝几口</view>
+          <view class="act-portion {{actualPortion === 'half' ? 'act-portion-on' : ''}}" catchtap="setActualPortion" data-portion="half"><text class="act-portion-emoji">🥣</text>半份</view>
+          <view class="act-portion {{actualPortion === 'full' ? 'act-portion-on' : ''}}" catchtap="setActualPortion" data-portion="full"><text class="act-portion-emoji">🍚</text>1份</view>
+        </view>
+        <view wx:if="{{actualPortion === 'taste' || actualPortion === 'small' || actualPortion === 'full'}}" class="act-portion-hint">
+          {{actualPortion === 'full' ? '吃完整份 → 记为「😋 爱吃」' : '只尝了几口 → 记为「😐 不太爱」'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 折叠态: 暖橙底入口条; 展开时此条隐藏, 用 details 卡底部的轻收起链接 -->
+    <view wx:if="{{!actualDetailsOpen}}" class="act-details-toggle" bindtap="toggleActualDetails">
+      <text class="act-details-toggle-emoji">✏️</text>
+      <text class="act-details-toggle-text">实际有调整（改菜 / 改食材 / 加备注）</text>
+      <text class="act-details-arrow">▾</text>
+    </view>
+
+    <view wx:if="{{actualDetailsOpen}}" class="act-card act-details">
+      <!-- 实际吃了哪些 (chips 点击切换; 「+ 添加」可输入自定义名) -->
+      <view class="act-field act-field-stack">
+        <text class="act-field-label">实际吃了哪些</text>
+        <view class="act-chips">
+          <view wx:for="{{actualIngredientChips}}" wx:key="name" class="act-chip {{item.selected ? 'act-chip-on' : ''}}" catchtap="toggleActualIngredient" data-name="{{item.name}}">{{item.name}}</view>
+          <view class="act-chip act-chip-add" catchtap="addCustomIngredient">+ 添加</view>
+        </view>
+      </view>
+
+      <view class="act-divider"></view>
+
+      <!-- 菜名 (起个特别的名字, 会显示在首页/回顾页) -->
+      <view class="act-field act-field-stack">
+        <text class="act-field-label">起个菜名（可选）</text>
+        <view class="act-input-wrap">
+          <input class="act-input" placeholder="如 鳕鱼宝宝拌饭、自配创意餐" value="{{actualDishName}}" bindinput="inputActualDishName" maxlength="40"/>
+          <view wx:if="{{actualDishName}}" class="act-input-clear" catchtap="clearActualDishName">×</view>
+        </view>
+      </view>
+
+      <view class="act-divider"></view>
+
+      <!-- 备注 (只用于补充说明, 不当菜名) -->
+      <view class="act-field act-field-stack">
+        <text class="act-field-label">备注（可选）</text>
+        <view class="act-note-wrap">
+          <textarea class="act-note" placeholder="如 自制浓汤宝里有鸡肉、或精神状态备注" value="{{actualNote}}" bindinput="inputActualNote" maxlength="80"/>
+          <view class="act-note-counter">{{actualNote.length}}/80</view>
+        </view>
+      </view>
+
+      <!-- 卡底轻收起入口 -->
+      <view class="act-details-collapse" bindtap="toggleActualDetails">
+        <text class="act-details-collapse-text">▲ 收起</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="repl-footer">
+    <view class="repl-footer-actions">
+      <view class="repl-footer-cancel" catchtap="closeActualSheet">取消</view>
+      <view class="repl-hero-cta" catchtap="saveActualRecord">保存记录</view>
+    </view>
+  </view>
+</view>
+
+<!-- ============ 全部推荐 sheet ============ -->
+<view wx:if="{{moreRecsSheetOpen}}" class="repl-mask" bindtap="closeMoreRecsSheet" catchtouchmove="noop"></view>
+<view wx:if="{{moreRecsSheetOpen}}" class="repl-sheet" catchtap="stopPropagation" catchtouchmove="noop">
+  <view class="repl-handle"></view>
+  <view class="repl-head">
+    <view class="repl-title">全部排敏建议</view>
+    <view class="repl-sub">选一个开始，每次只能排一个食材</view>
+  </view>
+  <view class="repl-list">
+    <view wx:for="{{moreRecsList}}" wx:key="food" class="repl-card" catchtap="pickRecFromSheet" data-cat-id="{{item.catId}}" data-food="{{item.food}}" data-days="{{item.daysRequired}}">
+      <view class="repl-card-head">
+        <view class="repl-rank">{{item.isInCategory ? '🔁 同类补充' : '✨ 新品类'}}</view>
+        <view class="repl-reason">{{item.daysRequired}}天观察</view>
+      </view>
+      <view class="repl-name">{{item.food}}</view>
+      <view class="repl-ings">{{item.category}} · {{item.reason}}</view>
+    </view>
+    <view wx:if="{{moreRecsList.length === 0}}" class="repl-empty">
+      暂无推荐
+    </view>
+  </view>
+  <view class="repl-actions">
+    <view class="btn-soft repl-action" bindtap="closeMoreRecsSheet">取消</view>
+  </view>
+</view>
+
+<!-- ============ 补一餐 sheet (与回顾页 manualSheet 同款) ============ -->
+<view wx:if="{{manualOpen}}" class="repl-mask" bindtap="closeManualSheet" catchtouchmove="noop"></view>
+<view wx:if="{{manualOpen}}" class="manual-sheet" catchtap="stopPropagation">
+  <view class="manual-handle"></view>
+  <view class="manual-head">
+    <view class="manual-title">{{manualIsEditing ? '修改记录' : '补一餐'}}</view>
+    <view class="manual-sub">{{manualIsEditing ? '只改你想改的部分,其它字段保持原样' : '记录一餐宝宝实际吃了什么'}}</view>
+  </view>
+
+  <view class="manual-body">
+    <view class="manual-row">
+      <text class="manual-label">日期</text>
+      <picker mode="date" value="{{manualDate}}" start="2024-01-01" end="{{todayStr}}" bindchange="onManualDateChange">
+        <view class="manual-pick">{{manualDate || '选择日期'}} ›</view>
+      </picker>
+    </view>
+
+    <view class="manual-row">
+      <text class="manual-label">时间</text>
+      <picker mode="time" value="{{manualTime}}" bindchange="onManualTimeChange">
+        <view class="manual-pick">{{manualTime}} ›</view>
+      </picker>
+    </view>
+
+    <view class="manual-section-label">菜名（可选）</view>
+    <input class="manual-input" placeholder="如 鳕鱼泥+米糊 / 自配餐" value="{{manualDishName}}" bindinput="onManualDishInput" maxlength="40"/>
+
+    <view class="manual-section-label">食材</view>
+    <view wx:if="{{manualIngChips.length > 0}}" class="ing-chips">
+      <view wx:for="{{manualIngChips}}" wx:key="*this" class="ing-chip" bindtap="removeIngChip" data-name="{{item}}">
+        <text>{{item}}</text>
+        <text class="ing-chip-x">✕</text>
+      </view>
+    </view>
+    <view class="ing-input-row">
+      <input class="manual-input ing-input" placeholder="输入食材后点 + 或按完成" placeholder-style="color:#9B8579;font-size:24rpx;line-height:76rpx;" value="{{manualIngInput}}" bindinput="onManualIngsInput" bindconfirm="onManualIngsConfirm" confirm-type="done" maxlength="20" adjust-position="{{false}}"/>
+      <view class="ing-add-btn" bindtap="addIngChipFromInput">＋</view>
+    </view>
+    <view wx:if="{{manualIngSuggestions.length > 0}}" class="ing-sugs">
+      <text class="ing-sugs-label">最近常吃:</text>
+      <view wx:for="{{manualIngSuggestions}}" wx:key="*this" class="ing-sug" bindtap="pickIngSuggestion" data-name="{{item}}">{{item}}</view>
+    </view>
+
+    <view class="manual-section-label">份量</view>
+    <view class="manual-portions">
+      <view class="manual-portion {{(manualPortion === 'taste' || manualPortion === 'small') ? 'on' : ''}}" bindtap="setManualPortion" data-portion="taste">😊 尝几口</view>
+      <view class="manual-portion {{manualPortion === 'half' ? 'on' : ''}}" bindtap="setManualPortion" data-portion="half">🥣 半份</view>
+      <view class="manual-portion {{manualPortion === 'full' ? 'on' : ''}}" bindtap="setManualPortion" data-portion="full">🍚 1份</view>
+    </view>
+    <view wx:if="{{manualPortion === 'taste' || manualPortion === 'small' || manualPortion === 'full'}}" class="manual-portion-hint">
+      {{manualPortion === 'full' ? '吃完整份 → 记为「😋 爱吃」' : '只尝了几口 → 记为「😐 不太爱」'}}
+    </view>
+
+    <view class="manual-section-label">备注（可选）</view>
+    <textarea class="manual-textarea" placeholder="如 自制浓汤宝里有鸡肉" value="{{manualNote}}" bindinput="onManualNoteInput" maxlength="60"/>
+  </view>
+
+  <view class="manual-footer">
+    <view class="manual-cancel" bindtap="closeManualSheet">取消</view>
+    <view class="manual-save" bindtap="saveManualLog">保存记录</view>
+  </view>
+</view>

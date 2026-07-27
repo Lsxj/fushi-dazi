@@ -1,0 +1,7 @@
+[
+  { "name": "鳕鱼", "portions": 2, "storageLocation": "refrigerated", "purchaseDate": "2026-07-05", "expiryDate": "2026-07-12", "prepStatus": "raw" },
+  { "name": "鸡蛋", "portions": 3, "storageLocation": "refrigerated", "purchaseDate": "2026-07-06", "expiryDate": "2026-07-20", "prepStatus": "raw" },
+  { "name": "西兰花", "portions": 2, "storageLocation": "refrigerated", "purchaseDate": "2026-07-06", "expiryDate": "2026-07-10", "prepStatus": "raw" },
+  { "name": "牛肉", "portions": 2, "storageLocation": "frozen", "purchaseDate": "2026-07-04", "expiryDate": "2026-10-02", "prepStatus": "raw" },
+  { "name": "土豆", "portions": 2, "storageLocation": "refrigerated", "purchaseDate": "2026-07-06", "expiryDate": "2026-07-20", "prepStatus": "raw" }
+]

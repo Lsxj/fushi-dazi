@@ -1,0 +1,405 @@
+/* ============================================
+   记录不适 · v2 单页设计稿 1:1 实现
+   ============================================ */
+
+.rn-page {
+  background: #FFF5EB;
+  padding-bottom: 200rpx; /* 给 sticky footer 让位 */
+}
+
+.rn-intro {
+  font-size: 24rpx;
+  color: #6B5A4C;
+  line-height: 1.6;
+  padding: 0 8rpx 16rpx;
+}
+
+/* 通用卡片 */
+.rn-card {
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 107, 53, 0.05);
+}
+
+.rn-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 20rpx;
+  flex-wrap: wrap;
+}
+.rn-badge {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF8C61 0%, #FF6B35 100%);
+  color: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 8rpx rgba(255, 107, 53, 0.3);
+}
+.rn-card-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1A1815;
+}
+.rn-required {
+  font-size: 22rpx;
+  color: #F45A20;
+  margin-left: -6rpx;
+}
+.rn-card-sub {
+  font-size: 22rpx;
+  color: #9B8579;
+  flex: 1;
+  min-width: 0;
+}
+.rn-search-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #FFF5EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.rn-section-label {
+  font-size: 24rpx;
+  color: #5C463A;
+  font-weight: 600;
+  margin: 22rpx 0 14rpx;
+}
+.rn-section-label:first-of-type { margin-top: 0; }
+
+/* ============ ① 反应类型 5 卡 grid ============ */
+.rn-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+}
+.rn-type-card {
+  position: relative;
+  background: #FFFAF4;
+  border: 2rpx solid transparent;
+  border-radius: 22rpx;
+  padding: 22rpx 8rpx 18rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  transition: background 0.15s;
+}
+.rn-type-card:active { opacity: 0.7; }
+.rn-type-on {
+  background: #FFEFE2;
+  border-color: #FF6B35;
+}
+.rn-type-emoji { font-size: 48rpx; line-height: 1; }
+.rn-type-label {
+  font-size: 24rpx;
+  color: #1A1815;
+}
+.rn-type-check {
+  position: absolute;
+  right: 10rpx;
+  bottom: 10rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  background: #FF6B35;
+  color: #FFFFFF;
+  font-size: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============ pill 行 (严重度 / 时间) ============ */
+.rn-pill-row {
+  display: flex;
+  gap: 12rpx;
+}
+.rn-pill-wrap { flex-wrap: wrap; }
+.rn-pill {
+  flex: 1;
+  text-align: center;
+  background: #FFFAF4;
+  padding: 22rpx 0;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #5C463A;
+  border: 2rpx solid transparent;
+}
+.rn-pill-sm {
+  flex: 0 0 auto;
+  padding: 14rpx 24rpx;
+  font-size: 24rpx;
+  border-radius: 30rpx;
+}
+.rn-pill-on {
+  background: #FFEFE2;
+  border-color: #FF6B35;
+  color: #FF6B35;
+  font-weight: 600;
+}
+
+.rn-custom-time { margin-top: 14rpx; }
+.rn-picker-display {
+  background: #FFFAF4;
+  border: 2rpx dashed rgba(255, 107, 53, 0.3);
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+  color: #5C463A;
+}
+
+/* ============ 备注 textarea ============ */
+.rn-textarea-wrap {
+  position: relative;
+  background: #FFFAF4;
+  border-radius: 18rpx;
+  padding: 18rpx 20rpx 38rpx;
+}
+.rn-textarea {
+  width: 100%;
+  min-height: 100rpx;
+  font-size: 26rpx;
+  color: #1A1815;
+}
+.rn-textarea-count {
+  position: absolute;
+  right: 20rpx;
+  bottom: 14rpx;
+  font-size: 20rpx;
+  color: #9B8579;
+}
+
+/* ============ ② 时间流 ============ */
+.rn-empty {
+  text-align: center;
+  padding: 30rpx 0;
+  color: #9B8579;
+  font-size: 24rpx;
+}
+.rn-timeline { display: flex; flex-direction: column; }
+.rn-tl-item {
+  display: flex;
+  gap: 14rpx;
+}
+.rn-tl-rail {
+  position: relative;
+  width: 22rpx;
+  flex-shrink: 0;
+  padding-top: 24rpx;
+}
+.rn-tl-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #FF6B35;
+  box-shadow: 0 0 0 5rpx rgba(255, 107, 53, 0.14);
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.rn-tl-line {
+  position: absolute;
+  top: 38rpx;
+  bottom: -16rpx;
+  left: 50%;
+  width: 2rpx;
+  background: rgba(255, 107, 53, 0.18);
+  transform: translateX(-50%);
+}
+.rn-tl-item:last-child .rn-tl-line { display: none; }
+.rn-tl-card {
+  flex: 1;
+  background: #FFFAF4;
+  border-radius: 18rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  gap: 16rpx;
+  align-items: flex-start;
+}
+.rn-tl-time {
+  font-size: 22rpx;
+  color: #FF6B35;
+  flex-shrink: 0;
+  padding-top: 4rpx;
+  width: 130rpx;
+}
+.rn-tl-body { flex: 1; min-width: 0; }
+.rn-tl-meal {
+  font-size: 28rpx;
+  color: #1A1815;
+  margin-bottom: 4rpx;
+}
+.rn-tl-ings {
+  font-size: 22rpx;
+  color: #9B8579;
+  line-height: 1.5;
+}
+
+/* ============ ③ 可疑食材卡 ============ */
+.rn-warn-banner {
+  background: #FFF8E8;
+  border: 1rpx solid rgba(232, 154, 44, 0.24);
+  border-radius: 18rpx;
+  padding: 14rpx 18rpx;
+  display: flex;
+  gap: 10rpx;
+  font-size: 24rpx;
+  color: #B17B2E;
+  line-height: 1.5;
+  margin-bottom: 16rpx;
+}
+.rn-warn-icon { flex-shrink: 0; }
+
+.rn-sus-card {
+  background: #FFFAF4;
+  border: 1rpx solid rgba(255, 107, 53, 0.12);
+  border-radius: 22rpx;
+  padding: 20rpx;
+  margin-bottom: 14rpx;
+}
+.rn-sus-card:last-child { margin-bottom: 0; }
+.rn-sus-head {
+  display: flex;
+  gap: 14rpx;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+}
+.rn-sus-emoji {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  flex-shrink: 0;
+  box-shadow: 0 2rpx 6rpx rgba(255, 107, 53, 0.08);
+}
+.rn-sus-info { flex: 1; min-width: 0; }
+.rn-sus-name-row {
+  display: flex;
+  gap: 10rpx;
+  align-items: center;
+  margin-bottom: 6rpx;
+  flex-wrap: wrap;
+}
+.rn-sus-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1815;
+}
+.rn-sus-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+.rn-sus-tag.tag-high   { background: #FFEBEE; color: #E57373; }
+.rn-sus-tag.tag-medium { background: #FFF3DC; color: #E89A2C; }
+.rn-sus-tag.tag-low    { background: #E3F2FD; color: #2196F3; }
+.rn-sus-reason {
+  font-size: 22rpx;
+  color: #6B5A4C;
+  line-height: 1.5;
+}
+.rn-sus-checkbox {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #DDD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 26rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #FFFFFF;
+}
+.rn-sus-checked {
+  background: #FF6B35;
+  border-color: #FF6B35;
+}
+
+.rn-sus-actions {
+  display: flex;
+  gap: 10rpx;
+}
+.rn-sus-act {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  background: #FFFFFF;
+  border: 1rpx solid rgba(255, 107, 53, 0.18);
+  border-radius: 14rpx;
+  font-size: 24rpx;
+  color: #FF6B35;
+}
+.rn-sus-act:active { opacity: 0.7; }
+.rn-sus-act-on {
+  background: linear-gradient(135deg, #FFEFE2 0%, #FFD9BD 100%);
+  border-color: #FF6B35;
+  color: #FF6B35;
+  font-weight: 600;
+}
+
+.rn-direct-banner {
+  background: #FFEBEE;
+  color: #E57373;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+/* ============ sticky footer ============ */
+.rn-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 14rpx;
+  padding: 20rpx 32rpx 44rpx;
+  background: rgba(255, 245, 235, 0.96);
+  backdrop-filter: blur(8rpx);
+  border-top: 1rpx solid rgba(255, 107, 53, 0.08);
+  z-index: 100;
+}
+.rn-btn {
+  text-align: center;
+  padding: 24rpx 12rpx;
+  border-radius: 28rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+.rn-btn-ghost {
+  flex: 0 0 30%;
+  background: #FFFFFF;
+  color: #1A1815;
+  border: 1rpx solid rgba(0, 0, 0, 0.08);
+}
+.rn-btn-ghost:active { opacity: 0.7; }
+.rn-btn-primary {
+  flex: 1;
+  background: linear-gradient(135deg, #FF8C61 0%, #FF6B35 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6rpx 16rpx rgba(255, 107, 53, 0.35);
+}
+.rn-btn-primary:active { opacity: 0.85; }

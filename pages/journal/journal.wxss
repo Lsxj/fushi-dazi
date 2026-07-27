@@ -1,0 +1,72 @@
+/* ============================================
+   饮食日记 · v2 token baseline
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+.alert { border-left: 8rpx solid var(--warn); }
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.alert-row:last-child { border-bottom: none; }
+.alert-emoji { font-size: 36rpx; }
+.alert-info { flex: 1; min-width: 0; }
+.alert-meal {
+  font-size: 28rpx;
+  color: var(--text-h1);
+}
+.alert-date {
+  font-size: 22rpx;
+  color: var(--text-meta);
+  display: block;
+  margin-top: 4rpx;
+}
+
+.day-card { padding: 24rpx 28rpx; }
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 2rpx solid #FFF3E0;
+}
+.day-date {
+  font-weight: 600;
+  font-size: 30rpx;
+  color: var(--text-h1);
+}
+.day-week {
+  color: var(--orange);
+  font-size: 26rpx;
+}
+
+.log-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.log-row:last-child { border-bottom: none; }
+.meal-label {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 6rpx 14rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.log-info { flex: 1; min-width: 0; }
+.log-name {
+  font-size: 28rpx;
+  color: var(--text-h1);
+}
+.log-meta {
+  font-size: 22rpx;
+  color: var(--text-meta);
+  margin-top: 4rpx;
+}

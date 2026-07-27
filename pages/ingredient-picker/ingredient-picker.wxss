@@ -1,0 +1,69 @@
+/* ============================================
+   食材选择器 · v2 token baseline
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+/* sticky 搜索栏（撑破全局 .container 32rpx 左右 padding） */
+.search-bar {
+  position: sticky;
+  top: 0;
+  background: var(--bg-page);
+  margin: 0 -32rpx 24rpx;
+  padding: 16rpx 32rpx;
+  z-index: 10;
+}
+.search-input {
+  background: #FFFFFF;
+  border-radius: 36rpx;
+  padding: 18rpx 28rpx;
+  font-size: 28rpx;
+  color: var(--text-h1);
+  box-shadow: var(--shadow-card);
+}
+
+/* ============ 快捷食材网格 ============ */
+.quick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.quick-pill {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 12rpx 24rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+}
+
+/* ============ 食材列表行 ============ */
+.ing-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.ing-item:last-child { border-bottom: none; }
+.ing-info { flex: 1; }
+.ing-name {
+  font-size: 30rpx;
+  color: var(--text-h1);
+}
+.ing-cat {
+  font-size: 22rpx;
+  color: var(--text-meta);
+  display: block;
+  margin-top: 4rpx;
+}
+.add-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: 600;
+  box-shadow: var(--shadow-orange-soft);
+}

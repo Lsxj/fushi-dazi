@@ -1,0 +1,369 @@
+/* ============================================
+   计划 · v2 token baseline
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+.fridge-entry {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 22rpx 26rpx;
+}
+.fridge-entry-active { background: #FFF8F1; }
+.fridge-entry-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  background: var(--green-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+.fridge-entry-body { flex: 1; min-width: 0; }
+.fridge-entry-title {
+  color: var(--text-h1);
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 4rpx;
+}
+.fridge-entry-desc {
+  color: var(--text-secondary);
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+.fridge-entry-arrow {
+  color: var(--text-mute);
+  font-size: 42rpx;
+  flex-shrink: 0;
+}
+
+.btn-mini {
+  background: var(--orange);
+  color: #FFFFFF;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+.btn-mini-share {
+  background: var(--green);
+  color: #FFFFFF;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+.btn-mini-preview {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  border: 1rpx solid rgba(255, 107, 53, 0.18);
+}
+.header-actions { display: flex; gap: 10rpx; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ============ 日历卡 ============ */
+.day-card { padding: 24rpx 28rpx; }
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 2rpx solid #FFF3E0;
+}
+.day-date {
+  font-weight: 600;
+  font-size: 30rpx;
+  color: var(--text-h1);
+}
+.day-week {
+  color: var(--orange);
+  font-size: 26rpx;
+}
+
+/* ============ 餐次行 ============ */
+.meal-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.meal-row:last-child { border-bottom: none; }
+.meal-label {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.meal-info { flex: 1; min-width: 0; }
+.meal-name {
+  font-size: 30rpx;
+  color: var(--text-h1);
+  margin-bottom: 4rpx;
+}
+.meal-ingredients {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+.meal-action {
+  color: var(--text-mute);
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+/* 已喂态弱化: 紧凑一行(无食材), 整体淡灰, 菜名删除线 */
+.meal-row-logged {
+  opacity: 0.55;
+  padding: 10rpx 0;
+}
+.meal-row-logged .meal-label {
+  background: transparent;
+  color: var(--text-mute);
+  padding: 6rpx 0;
+}
+.meal-row-logged .meal-name {
+  color: var(--text-secondary);
+  font-weight: 400;
+  text-decoration: line-through;
+  text-decoration-color: var(--text-mute);
+}
+.meal-action-done {
+  color: var(--text-mute);
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+
+/* ============ 日期 picker ============ */
+.day-picker {
+  display: flex;
+  gap: 8rpx;
+  background: var(--bg-soft);
+  border-radius: 20rpx;
+  padding: 4rpx;
+}
+.day-pill {
+  padding: 6rpx 18rpx;
+  border-radius: 18rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+.day-pill.active {
+  background: #FFFFFF;
+  color: var(--orange);
+  font-weight: 500;
+}
+
+/* ============ 采购清单 ============ */
+.shop-group { margin-bottom: 16rpx; }
+.shop-group-header {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  margin: 12rpx 0 8rpx;
+  font-weight: 500;
+  display: inline-block;
+}
+.shop-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.shop-row:last-child { border-bottom: none; }
+.shop-info { flex: 1; min-width: 0; }
+.shop-name {
+  font-size: 28rpx;
+  color: var(--text-h1);
+}
+.shop-meta {
+  font-size: 22rpx;
+  color: var(--text-meta);
+}
+.shop-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.shop-need {
+  font-size: 26rpx;
+  color: var(--orange);
+  font-weight: 500;
+}
+.shop-have-btn {
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 8rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+.empty {
+  text-align: center;
+  color: var(--text-meta);
+  padding: 40rpx 24rpx;
+}
+
+/* ============ 下周菜单预览 sheet ============ */
+.prev-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 999;
+}
+.prev-sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: #FFF5EB; /* 暖蜜桃底, 与全局保持一致 */
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  height: 86vh; /* scroll-view 需要明确父容器高度才能滚, 故用 height 而非 max-height */
+  padding: 16rpx 0 0;
+  box-sizing: border-box;
+}
+.prev-handle, .prev-header, .prev-footer { flex-shrink: 0; }
+.prev-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background: #E5E0D8;
+  border-radius: 4rpx;
+  margin: 0 auto 12rpx;
+}
+.prev-header {
+  padding: 0 32rpx 16rpx;
+  border-bottom: 1rpx solid rgba(255, 107, 53, 0.08);
+}
+.prev-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.prev-arrow {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: var(--orange);
+  box-shadow: 0 2rpx 8rpx rgba(255, 107, 53, 0.08);
+}
+.prev-arrow:active { opacity: 0.7; }
+.prev-title-block {
+  flex: 1;
+  text-align: center;
+}
+.prev-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-h1);
+}
+.prev-range {
+  font-size: 24rpx;
+  color: var(--orange);
+  margin-top: 4rpx;
+  font-weight: 500;
+}
+.prev-tip {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-mute);
+  margin-top: 12rpx;
+}
+.prev-body {
+  flex: 1;
+  min-height: 0; /* 关键: flex item 默认 min-height:auto, 会撑破容器导致 scroll 不生效 */
+  height: 100%; /* scroll-view 内部需要明确高度 */
+  padding: 16rpx 28rpx 8rpx;
+  box-sizing: border-box;
+}
+.prev-day-card {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 107, 53, 0.04);
+}
+.prev-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12rpx;
+  margin-bottom: 8rpx;
+  border-bottom: 2rpx solid #FFF3E0;
+}
+.prev-day-date {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+}
+.prev-day-week {
+  font-size: 24rpx;
+  color: var(--orange);
+}
+.prev-meal-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #F4EFE8;
+}
+.prev-meal-row:last-child { border-bottom: none; }
+.prev-meal-label {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 4rpx 14rpx;
+  border-radius: 18rpx;
+  font-size: 22rpx;
+  margin-right: 14rpx;
+  flex-shrink: 0;
+}
+.prev-meal-info { flex: 1; min-width: 0; }
+.prev-meal-name {
+  font-size: 28rpx;
+  color: var(--text-h1);
+  margin-bottom: 4rpx;
+}
+.prev-meal-ingredients {
+  font-size: 22rpx;
+}
+.prev-empty {
+  text-align: center;
+  padding: 60rpx 24rpx;
+  color: var(--text-mute);
+  font-size: 26rpx;
+}
+.prev-footer {
+  display: flex;
+  gap: 12rpx;
+  padding: 16rpx 28rpx 44rpx;
+  background: #FFF5EB;
+  border-top: 1rpx solid rgba(255, 107, 53, 0.08);
+}
+.prev-btn {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 12rpx;
+  border-radius: 22rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+.prev-btn-ghost {
+  background: #FFFFFF;
+  color: var(--text-h1);
+}
+.prev-btn-ghost:active { opacity: 0.7; }
+.prev-btn-primary {
+  background: linear-gradient(135deg, #FF8C61 0%, #FF6B35 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 53, 0.3);
+}
+.prev-btn-primary:active { opacity: 0.85; }

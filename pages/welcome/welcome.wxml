@@ -1,0 +1,94 @@
+<view class="container">
+  <view wx:if="{{step === 0}}" class="welcome-page">
+    <image class="welcome-poster" src="/images/welcome-hero-v3.jpg" mode="widthFix"/>
+    <view class="welcome-cta-fixed" bindtap="next">
+      <text class="welcome-cta-text">开启宝宝辅食之旅(3 步设置)</text>
+      <view class="welcome-cta-arrow">→</view>
+    </view>
+  </view>
+
+  <view wx:elif="{{step === 1}}">
+    <view class="step-header">
+      <view class="step-tag">第 1 / 3 步</view>
+      <view class="step-title">👶 宝宝信息</view>
+    </view>
+    <view class="card">
+      <view class="form-row">
+        <text class="form-label">昵称</text>
+        <input class="form-input" placeholder="不填默认叫宝宝" value="{{babyName}}" bindinput="onName"/>
+      </view>
+      <view class="form-row">
+        <text class="form-label">生日 *</text>
+        <picker mode="date" value="{{birthday}}" start="2020-01-01" end="{{today}}" bindchange="onBirthday">
+          <view class="picker {{birthday ? '' : 'placeholder'}}">{{birthday || '点击选择(必填)'}}</view>
+        </picker>
+      </view>
+      <view wx:if="{{birthday}}" class="form-row text-muted">
+        <text class="form-label">月龄</text>
+        <text>{{ageMonths}} 月</text>
+      </view>
+      <view class="form-row">
+        <text class="form-label">每日餐次</text>
+        <picker mode="selector" range="{{[1,2,3,4,5]}}" value="{{mealsPerDay - 1}}" bindchange="onMeals">
+          <view class="picker">{{mealsPerDay}} 顿 / 天</view>
+        </picker>
+      </view>
+      <view class="recommend-tip text-muted">
+        系统建议:{{recommendedMeals}} 顿 / 天 ({{recommendBasis}})
+      </view>
+    </view>
+    <view class="btn-primary big-btn" bindtap="confirmStep1">下一步</view>
+    <view class="btn-secondary big-btn" bindtap="prev">返回</view>
+  </view>
+
+  <view wx:elif="{{step === 2}}">
+    <view class="step-header">
+      <view class="step-tag">第 2 / 3 步</view>
+      <view class="step-title">🌱 已经吃过的食物</view>
+      <view class="step-sub text-muted">勾选已经稳定吃过、没过敏的食物。系统会自动开放对应的整个品类。</view>
+    </view>
+
+    <view wx:for="{{groups}}" wx:key="id" wx:for-item="group" class="cat-card">
+      <view class="cat-header">
+        <view class="cat-info" catchtap="toggleGroup" data-id="{{group.id}}">
+          <text class="cat-name">{{group.name}}</text>
+          <text wx:if="{{group.checkedCount > 0}}" class="cat-checked">{{group.checkedCount}} 已选</text>
+          <text wx:if="{{group.recommendedMonth > ageMonths && ageMonths > 0}}" class="cat-warn">{{group.recommendedMonth}}月+建议</text>
+        </view>
+        <view class="cat-quick {{group.allChecked ? 'on' : ''}}" catchtap="toggleAllInGroup" data-id="{{group.id}}">
+          {{group.allChecked ? '✓ 全选' : '整类全选'}}
+        </view>
+        <text class="cat-arrow {{group.expanded ? 'expanded' : ''}}" catchtap="toggleGroup" data-id="{{group.id}}">▶</text>
+      </view>
+      <view wx:if="{{group.expanded}}" class="cat-body">
+        <view wx:for="{{group.items}}" wx:for-item="ing" wx:key="name" class="ing-row" bindtap="toggleIng" data-name="{{ing.name}}">
+          <view class="ing-checkbox {{ing.checked ? 'checked' : ''}}">
+            <text wx:if="{{ing.checked}}">✓</text>
+          </view>
+          <text class="ing-name">{{ing.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="step-stat text-muted">已勾选 {{totalChecked}} 种食物 → {{openedCats}} 个品类将开放</view>
+    <view class="btn-primary big-btn" bindtap="confirmStep2">下一步</view>
+    <view class="btn-secondary big-btn" bindtap="prev">返回</view>
+  </view>
+
+  <view wx:elif="{{step === 3}}">
+    <view class="step-header">
+      <view class="step-tag">第 3 / 3 步</view>
+      <view class="step-title">🧊 冰箱里现有食材</view>
+      <view class="step-sub text-muted">可选,跳过也行,以后随时可以加。点击进入批量录入页。</view>
+    </view>
+
+    <view class="card">
+      <view class="text-muted" style="text-align: center; padding: 40rpx 0;">
+        如果家里冰箱已经有食材,加进来后{{'\n'}}系统会自动算采购清单
+      </view>
+      <view class="btn-primary big-btn" bindtap="goFridgeOnboarding">去批量录入</view>
+      <view class="btn-secondary big-btn" bindtap="finishSkipFridge">跳过,直接进首页</view>
+    </view>
+    <view class="btn-secondary big-btn" bindtap="prev">返回</view>
+  </view>
+</view>

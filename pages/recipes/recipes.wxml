@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="card">
+    <view class="search-bar">
+      <input class="search-input" placeholder="搜食谱名或食材" value="{{keyword}}" bindinput="onSearch"/>
+    </view>
+    <view class="filter-row">
+      <view class="filter-pill {{filterTab === 'safe' ? 'active' : ''}}" bindtap="setTab" data-tab="safe">可吃</view>
+      <view class="filter-pill {{filterTab === 'all' ? 'active' : ''}}" bindtap="setTab" data-tab="all">全部</view>
+      <view class="filter-pill {{filterTab === 'staple' ? 'active' : ''}}" bindtap="setTab" data-tab="staple">主食</view>
+      <view class="filter-pill {{filterTab === 'protein' ? 'active' : ''}}" bindtap="setTab" data-tab="protein">蛋白</view>
+      <view class="filter-pill {{filterTab === 'veg' ? 'active' : ''}}" bindtap="setTab" data-tab="veg">蔬菜</view>
+      <view class="filter-pill {{filterTab === 'fruit' ? 'active' : ''}}" bindtap="setTab" data-tab="fruit">水果</view>
+    </view>
+    <view class="text-muted" style="margin-top: 8rpx; font-size: 22rpx;">共 {{filtered.length}} / {{total}} 道</view>
+  </view>
+
+  <view wx:if="{{filtered.length === 0}}" class="card">
+    <view class="text-muted" style="text-align: center; padding: 40rpx 0;">没有匹配的食谱</view>
+  </view>
+
+  <view wx:for="{{filtered}}" wx:key="id" class="card recipe-card" bindtap="openDetail" data-id="{{item.id}}">
+    <view class="recipe-header">
+      <view class="recipe-name">{{item.name}}</view>
+      <view wx:if="{{!item.safe}}" class="recipe-warn">{{item.unsafeReason}}</view>
+    </view>
+    <view class="recipe-meta">
+      <text class="meta-pill">{{item.applicableMonthRange[0]}}-{{item.applicableMonthRange[1]}}月</text>
+      <text class="meta-pill">{{item.prepTimeMinutes}}分钟</text>
+      <text wx:for="{{item.mealCategories}}" wx:for-item="cat" wx:key="*this" class="meta-pill cat-{{cat}}">{{item.catLabels[index]}}</text>
+    </view>
+    <view class="recipe-ingredients text-muted">{{item.ingredientsText}}</view>
+    <view wx:if="{{item.nutritionTags.length > 0}}" class="recipe-tags">
+      <text wx:for="{{item.nutritionTags}}" wx:for-item="tag" wx:key="*this" class="nutri-tag">{{tag}}</text>
+    </view>
+  </view>
+</view>

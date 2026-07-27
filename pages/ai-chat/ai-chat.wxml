@@ -1,0 +1,93 @@
+<!--
+  AI 助手聊天界面。
+  - 上方:消息流(用户 + AI)
+  - AI 消息如果带了 tool_calls,会显示一个 "工具调用 trace" 折叠区
+  - 下方:输入框 + 发送按钮
+  - 4 个 quick-reply 快捷问句(降冷启动摩擦)
+-->
+<view class="page">
+  <scroll-view
+    class="messages"
+    scroll-y
+    scroll-into-view="{{scrollIntoView}}"
+    enable-back-to-top
+  >
+    <block wx:for="{{messages}}" wx:key="id" wx:for-item="msg">
+      <!-- 用户消息 -->
+      <view wx:if="{{msg.role === 'user'}}" id="msg-{{msg.id}}" class="row row-user">
+        <view class="bubble bubble-user">{{msg.content}}</view>
+        <view class="avatar avatar-user">我</view>
+      </view>
+
+      <!-- AI 消息 -->
+      <view wx:elif="{{msg.role === 'assistant'}}" id="msg-{{msg.id}}" class="row row-ai">
+        <view class="avatar avatar-ai">🍄</view>
+        <view class="bubble bubble-ai">
+          <rich-text nodes="{{msg.contentHtml}}" class="ai-text"></rich-text>
+
+          <!-- 失败重试按钮(只在有 error 字段时显示) -->
+          <view wx:if="{{msg.error}}" class="retry-row" bindtap="onRetry" data-id="{{msg.id}}">
+            <text class="retry-icon">↻</text>
+            <text class="retry-text">重试</text>
+          </view>
+
+          <!-- 工具调用 trace(折叠) -->
+          <view wx:if="{{msg.toolCalls && msg.toolCalls.length}}" class="trace">
+            <view class="trace-header" bindtap="onToggleTrace" data-id="{{msg.id}}">
+              <text class="trace-title">🔧 调了 {{msg.toolCalls.length}} 个工具</text>
+              <text class="trace-toggle">{{msg.traceExpanded ? '收起' : '展开'}}</text>
+            </view>
+            <view wx:if="{{msg.traceExpanded}}" class="trace-body">
+              <view wx:for="{{msg.toolCalls}}" wx:key="name" wx:for-item="tc" class="trace-item">
+                <view class="trace-item-header">
+                  <text class="trace-status {{tc.ok ? 'ok' : 'err'}}">{{tc.ok ? '✓' : '✗'}}</text>
+                  <text class="trace-name">{{tc.name}}</text>
+                </view>
+                <view class="trace-input">{{tc.inputJson}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- loading 状态 -->
+    <view wx:if="{{loading}}" id="loading" class="row row-ai">
+      <view class="avatar avatar-ai">🍄</view>
+      <view class="bubble bubble-ai loading">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- Quick replies (shown when no messages yet) -->
+  <view wx:if="{{messages.length === 0 && !loading}}" class="quick">
+    <view class="quick-title">试试问我</view>
+    <view class="quick-grid">
+      <view class="quick-chip" bindtap="onQuickTap" data-text="今天中午吃什么?">🍱 今天吃什么</view>
+      <view class="quick-chip" bindtap="onQuickTap" data-text="想试试虾,可以吗?">🦐 试试虾</view>
+      <view class="quick-chip" bindtap="onQuickTap" data-text="宝宝拉稀了,可能是什么引起的?">💩 拉稀了</view>
+      <view class="quick-chip" bindtap="onQuickTap" data-text="这周辅食怎么样?">📊 这周总结</view>
+    </view>
+  </view>
+
+  <!-- Input bar -->
+  <view class="composer">
+    <input
+      class="composer-input"
+      value="{{draft}}"
+      bindinput="onInput"
+      bindconfirm="onSend"
+      placeholder="问点什么…"
+      confirm-type="send"
+      hold-keyboard
+      disabled="{{loading}}"
+    />
+    <view
+      class="composer-send {{draft.trim() ? 'active' : ''}} {{loading ? 'loading' : ''}} {{!draft.trim() || loading ? 'disabled' : ''}}"
+      bindtap="onSend"
+    >{{loading ? '发送中…' : '发送'}}</view>
+  </view>
+</view>

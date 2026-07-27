@@ -1,0 +1,236 @@
+/* ============================================
+   辅食搭子 · 全局视觉系统（v2 token baseline）
+   暖蜜桃底 + 大圆角 + 几乎平的阴影 + 主橙 #FF6B35
+   --
+   规则：v2 token 当全局 baseline。页面 wxss 仅写「页面独有」样式，
+        要覆盖时用页面命名空间 class，避免再次重写 .card/.pill/.btn-* 同名规则。
+   ============================================ */
+
+page {
+  /* ---- 颜色 token ---- */
+  --bg-page: #FFF5EB;
+  --bg-card: #FFFFFF;
+  --bg-soft: #FFFCF8;
+  --bg-promo: #FFEDD9;
+  --bg-tip: #FFF8E8;
+  --bg-warm: #FFF5EC;
+  --bg-warm-pill: #FFF1E0;
+  --bg-progress: #FFEAD5;
+
+  --text-h1: #1A1815;
+  --text-body: #2D1B0E;
+  --text-secondary: #6E6A65;
+  --text-meta: #8A847E;
+  --text-mute: #A6A19B;
+  --text-faint: #BFB8B0;
+  --text-yellow: #B17B2E;
+
+  --orange: #FF6B35;
+  --orange-light: #FF8C61;
+  --orange-deep: #F45A20;
+  --orange-grad: linear-gradient(135deg, #FF8C61 0%, #FF6B35 100%);
+
+  --green: #5BBA47;
+  --green-bg: #E6F7E0;
+  --warn: #E89A2C;
+  --warn-bg: #FFF3DC;
+
+  /* ---- 圆角 / 阴影 token ---- */
+  --radius-card: 32rpx;
+  --radius-pill: 24rpx;
+  --radius-btn: 38rpx;
+  --shadow-card: 0 4rpx 16rpx rgba(255, 107, 53, 0.04);
+  --shadow-orange: 0 8rpx 24rpx rgba(255, 107, 53, 0.28);
+  --shadow-orange-soft: 0 4rpx 12rpx rgba(255, 107, 53, 0.25);
+
+  background-color: var(--bg-page);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: var(--text-body);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.container {
+  padding: 0 32rpx 24rpx;
+}
+
+/* ============ 页面外壳（min-height + bg） ============ */
+.page-bg {
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+/* ============ 通用卡片（v2 紧凑） ============ */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: 24rpx 28rpx;
+  margin-bottom: 16rpx;
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-bottom: 16rpx;
+  color: var(--text-h1);
+}
+
+/* ============ Pill（语义色） ============ */
+.pill {
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: var(--radius-pill);
+  font-size: 22rpx;
+  line-height: 48rpx;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+}
+.pill-warn        { background: var(--warn-bg);     color: var(--warn); }
+.pill-gut         { background: #FFEFE2;            color: var(--orange-deep); }
+.pill-postVaccine { background: #FFEFE2;            color: var(--orange-deep); }
+.pill-normal      { background: var(--green-bg);    color: var(--green); }
+.pill-link        { background: var(--bg-warm);     color: var(--orange); }
+.pill-link-arrow  { margin-left: 2rpx; }
+
+.date-pill {
+  height: 44rpx;
+  padding: 0 16rpx;
+  border-radius: 22rpx;
+  background: var(--bg-warm-pill);
+  color: var(--orange-deep);
+  font-size: 22rpx;
+  line-height: 44rpx;
+  font-weight: 600;
+  letter-spacing: 0.2rpx;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ============ 提示行（plan-tip / tomorrow-bell 通用） ============ */
+.tip-row {
+  margin-top: 12rpx;
+  padding: 10rpx 16rpx;
+  background: var(--bg-tip);
+  border-radius: 16rpx;
+  font-size: 20rpx;
+  color: var(--text-yellow);
+  display: flex;
+  gap: 6rpx;
+  align-items: center;
+  line-height: 1.4;
+}
+
+/* ============ 主按钮 / 次按钮 / 小按钮 ============ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 76rpx;
+  padding: 0 36rpx;
+  border-radius: var(--radius-btn);
+  background: linear-gradient(135deg, #FF7A45 0%, #FF6B35 100%);
+  color: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  box-shadow: var(--shadow-orange);
+}
+.btn-primary:active,
+.btn-primary-active {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+.btn-block {
+  width: 100%;
+  box-sizing: border-box;
+}
+/* 连续两个 btn-block 自动间距, 避免贴在一起 */
+.btn-block + .btn-block { margin-top: 14rpx; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 76rpx;
+  padding: 0 36rpx;
+  border-radius: var(--radius-btn);
+  background: #FFFFFF;
+  color: var(--orange);
+  border: 2rpx solid #FFD4B8;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.btn-soft {
+  width: 120rpx;
+  height: 56rpx;
+  padding: 0;
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  border: 2rpx solid rgba(20, 16, 12, 0.12);
+  color: var(--text-secondary);
+  font-size: 24rpx;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.btn-mini-primary {
+  width: 120rpx;
+  height: 56rpx;
+  padding: 0;
+  border-radius: 28rpx;
+  background: var(--orange);
+  color: #FFFFFF;
+  font-size: 24rpx;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-orange-soft);
+}
+.btn-mini-primary:active { transform: scale(0.97); }
+
+/* ============ 旧 tag 系列（其他 13 页过渡期保留，迁移完移除） ============ */
+.tag {
+  display: inline-block;
+  padding: 6rpx 18rpx;
+  border-radius: 22rpx;
+  font-size: 22rpx;
+  margin-right: 10rpx;
+}
+.tag-open        { background: var(--green-bg);   color: var(--green); }
+.tag-trying      { background: #E3F2FD;           color: #2196F3; }
+.tag-untried     { background: #F5F0E8;           color: #A89888; }
+.tag-observation { background: var(--warn-bg);    color: var(--warn); }
+.tag-locked      { background: #FFEBEE;           color: #E57373; }
+
+/* ============ Utility ============ */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+}
+.text-muted   { color: var(--text-secondary); font-size: 24rpx; }
+.text-warning { color: var(--warn); }
+.text-danger  { color: #E57373; }
+.divider {
+  height: 1rpx;
+  background: #F5EBE0;
+  margin: 12rpx 0;
+}
+.disclaimer {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-faint);
+  padding: 30rpx 24rpx 20rpx;
+  line-height: 1.5;
+}

@@ -1,0 +1,276 @@
+/* ============================================
+   Onboarding · v2 token baseline
+   全局 .card / token / .btn-* 见 app.wxss
+   ============================================ */
+
+.alert-danger { border-left: 8rpx solid #E57373; }
+
+/* ============ 顶部 hero 卡 ============ */
+.hero {
+  background: linear-gradient(135deg, #FFF0E8 0%, #FFE3D3 100%);
+  padding: 28rpx 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255, 107, 53, 0.08);
+}
+.hero-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--text-h1);
+  margin-bottom: 6rpx;
+}
+.hero-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ============ 分组卡 ============ */
+.group { padding: 0; overflow: hidden; }
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 24rpx 28rpx;
+  background: var(--bg-soft);
+}
+.group-header:active { opacity: 0.7; }
+.group-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+.group-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+}
+.group-count {
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 4rpx 14rpx;
+  border-radius: 14rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+.group-arrow {
+  color: var(--text-mute);
+  font-size: 22rpx;
+  transition: transform 0.2s;
+}
+.group-arrow.expanded { transform: rotate(90deg); }
+.group-body { padding: 4rpx 28rpx 14rpx; }
+
+/* ============ 食材行 ============ */
+.ing-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F4EFE8;
+}
+.ing-row:last-child { border-bottom: none; }
+.ing-checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 2rpx solid #DDDDDD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.ing-checkbox.checked {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+.ing-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+.ing-name {
+  font-size: 28rpx;
+  color: var(--text-h1);
+}
+.ing-meta {
+  font-size: 20rpx;
+  color: var(--text-meta);
+}
+
+/* ============ 份数加减控件 ============ */
+.portion-control {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: #FFFFFF;
+  border: 1rpx solid rgba(255, 107, 53, 0.18);
+  border-radius: 28rpx;
+  padding: 4rpx 8rpx;
+  flex-shrink: 0;
+}
+.step-btn {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-btn:active { opacity: 0.7; }
+.portion-num {
+  min-width: 36rpx;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+}
+
+/* ============ 引导提示卡（v2 promo 浅橙桃） ============ */
+.onboard-hint {
+  background: var(--bg-promo);
+  box-shadow: none;
+  text-align: center;
+  padding: 40rpx 24rpx;
+}
+.onboard-hint .card-title {
+  font-size: 36rpx;
+  color: var(--text-h1);
+}
+
+.add-pill {
+  background: var(--orange);
+  color: #FFFFFF;
+  padding: 12rpx 28rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+}
+
+/* ============ 分段 tab（对齐 review 风格） ============ */
+.seg-tabs {
+  display: flex;
+  background: var(--bg-card);
+  border-radius: 32rpx;
+  padding: 6rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--shadow-card);
+}
+.seg-tab {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  border-radius: 28rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.seg-tab.active {
+  background: var(--orange-grad);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* ============ 列表行 ============ */
+.item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.item:last-child { border-bottom: none; }
+.item-main { flex: 1; min-width: 0; }
+.item-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--text-h1);
+}
+.item-meta {
+  font-size: 22rpx;
+  color: var(--text-meta);
+  margin-top: 6rpx;
+}
+.item-actions {
+  display: flex;
+  gap: 12rpx;
+}
+.btn-mini {
+  background: var(--orange);
+  color: #FFFFFF;
+  padding: 10rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+.btn-mini-danger {
+  background: #E57373;
+  color: #FFFFFF;
+  padding: 10rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+.empty {
+  text-align: center;
+  color: var(--text-meta);
+  padding: 30rpx 0;
+}
+
+.item-block { border-bottom: 1rpx solid #F0F0F0; }
+.item-block:last-child { border-bottom: none; }
+.item-block .item { border-bottom: none; }
+
+.tip-icon {
+  font-size: 22rpx;
+  margin-left: 6rpx;
+  opacity: 0.7;
+}
+
+/* ============ Tip 卡（左边竖橙条引导） ============ */
+.tip-card {
+  background: var(--bg-warm);
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  margin: 0 0 16rpx;
+  border-left: 4rpx solid var(--orange);
+}
+.tip-line {
+  font-size: 24rpx;
+  color: var(--orange);
+  font-weight: 500;
+  margin-bottom: 6rpx;
+}
+.tip-content {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ============ 底部 sticky 操作栏 ============ */
+.footer {
+  position: sticky;
+  bottom: 0;
+  background: #FFFFFF;
+  padding: 24rpx;
+  margin: 0 -32rpx -24rpx;
+  border-top: 1rpx solid #F0F0F0;
+}
+.footer-stat {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 12rpx;
+}
+.footer-actions {
+  display: flex;
+  gap: 16rpx;
+}
+.footer-actions .btn-primary,
+.footer-actions .btn-secondary {
+  flex: 1;
+  margin: 0;
+  height: 76rpx;
+}

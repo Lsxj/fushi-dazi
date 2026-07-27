@@ -1,0 +1,29 @@
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+!.env.local.example
+project.private.config.json
+
+# Dependencies
+node_modules/
+
+# Build and test output
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Generated cloud-function bundle and local runtime data
+cloudfunctions/chat-ai/fushi-ditu/
+cloudfunctions/chat-ai/_localdata/
+cloudfunctions/chat-ai/wx-shim.js
+backups/
+
+# Local recovery snapshots may contain user data
+recovery/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/

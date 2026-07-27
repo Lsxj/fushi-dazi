@@ -1,0 +1,27 @@
+<view class="container">
+  <view class="card">
+    <view class="card-title">📖 饮食日记</view>
+    <view class="text-muted">共记录 {{totalCount}} 餐</view>
+  </view>
+
+  <view wx:if="{{groupedLogs.length === 0}}" class="card">
+    <view class="text-muted" style="text-align: center; padding: 40rpx 0;">还没打卡过~</view>
+  </view>
+
+  <view wx:for="{{groupedLogs}}" wx:key="date" wx:for-item="day" class="card day-card">
+    <view class="day-header">
+      <text class="day-date">{{day.dateLabel}}</text>
+      <text class="day-week">周{{day.weekday}}</text>
+    </view>
+    <view wx:for="{{day.logs}}" wx:for-item="log" wx:key="mealIndex" class="log-row">
+      <view class="meal-label">第{{log.mealIndex + 1}}餐</view>
+      <view class="log-info">
+        <view class="log-name">{{log.recipeName}}</view>
+        <view class="log-meta text-muted">
+          <text wx:if="{{log.prefLabel}}">{{log.prefEmoji}} {{log.prefLabel}}</text>
+          <text wx:else>—</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

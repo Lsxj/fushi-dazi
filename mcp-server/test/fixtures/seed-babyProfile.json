@@ -1,0 +1,90 @@
+{
+  "babyName": "小蘑菇",
+  "birthday": "2025-09-06",
+  "ageMonths": 10,
+  "mealsPerDay": 3,
+  "currentStatus": "normal",
+  "statusSince": "2026-04-01",
+  "categoryAllergies": {
+    "root": {
+      "state": "open",
+      "representative": "土豆",
+      "passedDate": "2025-12-01"
+    },
+    "leafy": {
+      "state": "open",
+      "representative": "菠菜",
+      "passedDate": "2025-12-15"
+    },
+    "cruciferous": {
+      "state": "open",
+      "representative": "西兰花",
+      "passedDate": "2026-01-10"
+    },
+    "gourd": {
+      "state": "open",
+      "representative": "南瓜",
+      "passedDate": "2025-12-01"
+    },
+    "mushroom": {
+      "state": "locked"
+    },
+    "fruitLow": {
+      "state": "untried"
+    },
+    "redMeat": {
+      "state": "open",
+      "representative": "猪肉",
+      "passedDate": "2025-12-20"
+    },
+    "whiteMeat": {
+      "state": "untried"
+    },
+    "fish": {
+      "state": "open",
+      "representative": "鳕鱼",
+      "passedDate": "2026-02-01"
+    },
+    "shrimp": {
+      "state": "locked"
+    },
+    "egg": {
+      "state": "observation",
+      "note": "2026-03 红疹冷却中",
+      "cooldownUntil": "2026-04-15"
+    },
+    "tofu": {
+      "state": "untried"
+    },
+    "nut": {
+      "state": "locked"
+    },
+    "grainLow": {
+      "state": "open",
+      "representative": "大米",
+      "passedDate": "2025-11-01"
+    },
+    "grainHigh": {
+      "state": "untried"
+    }
+  },
+  "individualExceptions": {},
+  "confirmedFoods": [
+    "土豆",
+    "胡萝卜",
+    "红薯",
+    "菠菜",
+    "西兰花",
+    "南瓜",
+    "猪肉",
+    "牛肉",
+    "鳕鱼",
+    "三文鱼",
+    "大米",
+    "小米",
+    "高铁米粉"
+  ],
+  "recentlyAddedFoods": [
+    { "name": "三文鱼", "addedAt": "2026-03-10" }
+  ]
+}

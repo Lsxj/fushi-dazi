@@ -1,0 +1,15 @@
+{
+  "version": "2.0",
+  "envId": "cloud1-d8g02cdnld86f3823",
+  "functionRoot": "cloudfunctions",
+  "functions": [
+    {
+      "name": "chat-ai",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 30,
+      "memorySize": 256,
+      "installDependency": true
+    }
+  ]
+}

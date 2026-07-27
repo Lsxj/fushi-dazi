@@ -1,0 +1,224 @@
+/* ============================================
+   Welcome（onboarding 入口） · v2 token baseline
+   全局 token 见 app.wxss
+   ============================================ */
+
+/* ============ Step 0: 全屏 poster + 底部 CTA ============ */
+.welcome-page {
+  /* 撑破全局 .container 的左右 32rpx padding 让 poster 满屏 */
+  margin: 0 -32rpx;
+  padding: 0 0 200rpx;
+  background: var(--bg-page);
+  font-size: 0;
+}
+.welcome-poster {
+  width: 100%;
+  display: block;
+}
+
+.welcome-cta-fixed,
+.welcome-cta {
+  position: fixed;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 50rpx;
+  background: var(--orange-grad);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 600;
+  padding: 26rpx 32rpx;
+  border-radius: 60rpx;
+  box-shadow: 0 12rpx 32rpx rgba(255, 107, 53, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+  z-index: 100;
+}
+.welcome-cta-text { font-size: 30rpx; }
+.welcome-cta-arrow,
+.cta-arrow {
+  width: 46rpx;
+  height: 46rpx;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+}
+.welcome-cta-wrap {
+  position: fixed;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 50rpx;
+  z-index: 10;
+}
+
+/* ============ 步骤页通用 ============ */
+.big-btn {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  height: auto;
+  font-size: 30rpx;
+  padding: 24rpx;
+  border-radius: 50rpx;
+  margin-bottom: 16rpx;
+}
+.big-btn:last-child { margin-bottom: 0; }
+.step-header {
+  text-align: center;
+  margin-top: 24rpx;
+  margin-bottom: 24rpx;
+}
+.step-tag {
+  display: inline-block;
+  background: var(--bg-warm-pill);
+  color: var(--orange);
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  margin-bottom: 12rpx;
+}
+.step-title {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+  margin-bottom: 8rpx;
+}
+.step-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  padding: 0 20rpx;
+}
+.step-stat {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin: 20rpx 0;
+}
+
+/* ============ 表单 ============ */
+.form-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.form-row:last-child { border-bottom: none; }
+.form-label {
+  width: 160rpx;
+  color: var(--text-secondary);
+}
+.form-input {
+  flex: 1;
+  font-size: 28rpx;
+  text-align: right;
+}
+.picker {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+}
+.picker.placeholder { color: var(--text-faint); }
+.recommend-tip {
+  text-align: right;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--text-meta);
+}
+
+/* ============ 排敏品类卡 ============ */
+.cat-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  margin-bottom: 16rpx;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.cat-header {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: var(--bg-soft);
+  gap: 12rpx;
+}
+.cat-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.cat-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--text-h1);
+}
+.cat-checked {
+  background: var(--orange);
+  color: #FFFFFF;
+  padding: 4rpx 14rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+}
+.cat-warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  padding: 4rpx 14rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+}
+.cat-quick {
+  background: #FFFFFF;
+  color: var(--orange);
+  border: 2rpx solid var(--orange);
+  padding: 8rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+.cat-quick.on {
+  background: var(--orange);
+  color: #FFFFFF;
+}
+.cat-arrow {
+  font-size: 24rpx;
+  color: var(--text-mute);
+  transition: transform 0.2s;
+}
+.cat-arrow.expanded { transform: rotate(90deg); }
+.cat-body { padding: 0 24rpx 12rpx; }
+
+/* ============ 食材行 ============ */
+.ing-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+  gap: 20rpx;
+}
+.ing-row:last-child { border-bottom: none; }
+.ing-checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 2rpx solid #DDDDDD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+.ing-checkbox.checked {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+.ing-name {
+  font-size: 28rpx;
+  flex: 1;
+  color: var(--text-h1);
+}

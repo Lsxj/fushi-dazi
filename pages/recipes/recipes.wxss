@@ -1,0 +1,91 @@
+/* ============================================
+   食谱库 · v2 token baseline
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+/* ============ 搜索 + 筛选 ============ */
+.search-bar { margin-bottom: 16rpx; }
+.search-input {
+  background: var(--bg-soft);
+  border-radius: 30rpx;
+  padding: 16rpx 24rpx;
+  font-size: 26rpx;
+  color: var(--text-h1);
+}
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+.filter-pill {
+  padding: 10rpx 22rpx;
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+.filter-pill.active {
+  background: var(--orange);
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* ============ 食谱卡 ============ */
+.recipe-card { padding: 24rpx 28rpx; }
+.recipe-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+.recipe-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-h1);
+}
+.recipe-warn {
+  background: #FFEBEE;
+  color: #E57373;
+  padding: 6rpx 14rpx;
+  border-radius: 14rpx;
+  font-size: 20rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  max-width: 240rpx;
+}
+.recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+.meta-pill {
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}
+.cat-staple  { background: var(--warn-bg);  color: var(--warn); }
+.cat-protein { background: #FFEBEE;         color: #E57373; }
+.cat-veg     { background: var(--green-bg); color: var(--green); }
+.cat-fruit   { background: #FCE4EC;         color: #EC407A; }
+
+.recipe-ingredients {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-bottom: 12rpx;
+  line-height: 1.5;
+}
+.recipe-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+.nutri-tag {
+  background: #E3F2FD;
+  color: #2196F3;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+}

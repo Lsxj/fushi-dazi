@@ -1,0 +1,110 @@
+<view class="container">
+  <navigator url="/pages/fridge/fridge" class="card fridge-entry" hover-class="fridge-entry-active">
+    <view class="fridge-entry-icon">🧺</view>
+    <view class="fridge-entry-body">
+      <view class="fridge-entry-title">食材库存</view>
+      <view class="fridge-entry-desc">管理家中食材，计划与采购清单会自动扣减</view>
+    </view>
+    <view class="fridge-entry-arrow">›</view>
+  </navigator>
+
+  <view class="card">
+    <view class="row">
+      <text class="card-title" style="margin-bottom: 0;">📅 本周计划</text>
+      <view class="header-actions">
+        <view class="btn-mini-preview" bindtap="openPreview">📆 看下周</view>
+        <view class="btn-mini-share" bindtap="copyFullPlan">📤 分享</view>
+        <view class="btn-mini" bindtap="regenerate">重新生成</view>
+      </view>
+    </view>
+    <view class="text-muted">{{plan.length}}天 × 每天{{mealsPerDay}}顿 · 点"看下周"周末备菜</view>
+  </view>
+
+  <view wx:for="{{plan}}" wx:key="date" class="card day-card">
+    <view class="day-header">
+      <text class="day-date">{{item.dateLabel}}</text>
+      <text class="day-week">周{{item.weekday}}</text>
+    </view>
+    <view wx:for="{{item.meals}}" wx:for-item="meal" wx:key="mealIndex" class="meal-row {{meal.logged ? 'meal-row-logged' : ''}}">
+      <view class="meal-label">第{{meal.mealIndex + 1}}餐</view>
+      <view class="meal-info" catchtap="openRecipe" data-id="{{meal.recipe.id}}">
+        <view class="meal-name">{{meal.recipe.name}}</view>
+        <view wx:if="{{!meal.logged}}" class="meal-ingredients text-muted">{{meal.ingredientsText}}</view>
+      </view>
+      <view wx:if="{{meal.logged}}" class="meal-action-done">✓ 已喂</view>
+      <view wx:else class="meal-action" catchtap="replaceMeal" data-date="{{item.date}}" data-idx="{{meal.mealIndex}}">点击替换</view>
+    </view>
+  </view>
+
+  <view wx:if="{{plan.length === 0}}" class="card empty">
+    <view class="text-muted">未生成计划</view>
+    <view class="btn-primary btn-block" bindtap="regenerate">立即生成</view>
+  </view>
+
+  <view class="card">
+    <view class="row">
+      <text class="card-title" style="margin-bottom: 0;">🛒 采购清单</text>
+      <view class="day-picker">
+        <view wx:for="{{[3, 5, 7]}}" wx:key="*this" class="day-pill {{shopDays === item ? 'active' : ''}}" bindtap="setShopDays" data-days="{{item}}">{{item}}天</view>
+      </view>
+    </view>
+    <view class="text-muted" style="margin: 12rpx 0;">未来{{shopDays}}天需要 - 冰箱已有 = 还要买</view>
+
+    <view wx:for="{{shoppingGroups}}" wx:key="area" wx:for-item="group" class="shop-group">
+      <view class="shop-group-header">{{group.area}}</view>
+      <view wx:for="{{group.items}}" wx:for-item="item" wx:key="name" class="shop-row">
+        <view class="shop-info">
+          <text class="shop-name">{{item.name}}</text>
+          <text wx:if="{{item.haveInFridge > 0}}" class="text-muted shop-meta"> · 冰箱已有 {{item.haveInFridge}}份</text>
+        </view>
+        <view class="shop-actions">
+          <text class="shop-need">还要 {{item.toBuy}}份</text>
+          <view class="shop-have-btn" catchtap="markHave" data-name="{{item.name}}">家里有+1</view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{shoppingList.length === 0}}" class="text-muted" style="padding: 20rpx 0; text-align: center;">采购清单为空 ✓</view>
+
+    <view class="btn-secondary btn-block" bindtap="copyShoppingList">复制清单</view>
+  </view>
+</view>
+
+<!-- ============ 下周菜单预览 sheet ============ -->
+<view wx:if="{{previewVisible}}" class="prev-mask" bindtap="closePreview" catchtouchmove="noop"></view>
+<view wx:if="{{previewVisible}}" class="prev-sheet" catchtap="noop">
+  <view class="prev-handle"></view>
+  <view class="prev-header">
+    <view class="prev-title-row">
+      <view class="prev-arrow" catchtap="shiftPreview" data-dir="prev">‹</view>
+      <view class="prev-title-block">
+        <view class="prev-title">下周菜单预览</view>
+        <view class="prev-range">{{previewRangeLabel}}</view>
+      </view>
+      <view class="prev-arrow" catchtap="shiftPreview" data-dir="next">›</view>
+    </view>
+    <view class="prev-tip">仅预览,不会改你正式的计划</view>
+  </view>
+
+  <scroll-view scroll-y class="prev-body" enhanced="{{true}}" show-scrollbar="{{false}}" style="height: 100%;">
+    <view wx:for="{{previewPlan}}" wx:key="date" class="prev-day-card">
+      <view class="prev-day-header">
+        <text class="prev-day-date">{{item.dateLabel}}</text>
+        <text class="prev-day-week">周{{item.weekday}}</text>
+      </view>
+      <view wx:for="{{item.meals}}" wx:for-item="meal" wx:key="mealIndex" class="prev-meal-row">
+        <view class="prev-meal-label">第{{meal.mealIndex + 1}}餐</view>
+        <view class="prev-meal-info">
+          <view class="prev-meal-name">{{meal.recipe.name}}</view>
+          <view class="prev-meal-ingredients text-muted">{{meal.ingredientsText}}</view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{previewPlan.length === 0}}" class="prev-empty">这周凑不出菜单,试试下周或重新生成</view>
+  </scroll-view>
+
+  <view class="prev-footer">
+    <view class="prev-btn prev-btn-ghost" bindtap="regeneratePreview">🔀 再换一组</view>
+    <view class="prev-btn prev-btn-ghost" bindtap="copyPreview">📋 复制</view>
+    <view class="prev-btn prev-btn-primary" bindtap="closePreview">完成</view>
+  </view>
+</view>

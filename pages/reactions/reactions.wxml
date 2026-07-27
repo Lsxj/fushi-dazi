@@ -1,0 +1,53 @@
+<view class="container">
+  <!-- hero ============== -->
+  <view class="r-hero">
+    <view class="r-hero-left">
+      <view class="r-hero-title">不适追踪 📋</view>
+      <view class="r-hero-sub">{{total === 0 ? '没有反应记录,愿宝宝一直健康' : (unresolvedCount > 0 ? '当前观察中 ' + unresolvedCount + ' 条 · 共 ' + total + ' 条' : '全部已消退 · 共 ' + total + ' 条')}}</view>
+    </view>
+    <navigator url="/pages/reaction-new/reaction-new" class="r-hero-cta">+ 记录</navigator>
+  </view>
+
+  <!-- 空态 ============== -->
+  <view wx:if="{{days.length === 0}}" class="r-empty">
+    <view class="r-empty-emoji">🌿</view>
+    <view class="r-empty-title">还没有反应记录</view>
+    <view class="r-empty-desc">如果宝宝出现拉肚子/红疹/呕吐等情况,点右上「+ 记录」让搭子帮你回溯食材</view>
+  </view>
+
+  <!-- 时间流 ============== -->
+  <view wx:for="{{days}}" wx:key="date" wx:for-item="day" class="r-day-block">
+    <view class="r-day-header">{{day.dateLabel}}</view>
+    <view class="r-timeline">
+      <view wx:for="{{day.events}}" wx:for-item="r" wx:key="id" class="r-line-item">
+        <view class="r-line-rail">
+          <view class="r-dot {{r.resolved ? 'r-dot-done' : ''}}"></view>
+          <view class="r-line"></view>
+        </view>
+        <view class="r-event-card {{r.resolved ? 'r-event-resolved' : ''}}" bindtap="editReaction" data-id="{{r.id}}">
+          <view class="r-event-head">
+            <view class="r-types">
+              <text wx:for="{{r.typesDisplay}}" wx:for-item="t" wx:key="*this" class="r-type-pill">{{t}}</text>
+              <text class="r-severity sev-{{r.severity}}">{{r.severityLabel}}</text>
+            </view>
+            <view class="r-time">{{r.timeOnly}} ›</view>
+          </view>
+
+          <view wx:if="{{r.note}}" class="r-note">"{{r.note}}"</view>
+
+          <view wx:if="{{r.suspectedFoods.length > 0}}" class="r-suspect">
+            <text wx:for="{{r.suspectedFoods}}" wx:for-item="f" wx:key="*this" class="r-food-tag">⚠️ {{f}}</text>
+          </view>
+
+          <view wx:if="{{r.tracebackCount > 0}}" class="r-trace-meta">回溯 {{r.tracebackCount}} 餐 · 点卡片可修改</view>
+
+          <view class="r-actions">
+            <view wx:if="{{!r.resolved}}" class="r-resolve-btn" catchtap="markResolved" data-id="{{r.id}}">✓ 标记消退</view>
+            <view wx:else class="r-resolved-tag" catchtap="undoResolved" data-id="{{r.id}}">✓ {{r.resolvedLabel}} 已消退 · 撤销</view>
+            <view class="r-del-btn" catchtap="confirmDelete" data-id="{{r.id}}">删除</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

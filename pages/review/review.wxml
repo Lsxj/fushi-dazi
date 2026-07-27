@@ -1,0 +1,235 @@
+<view class="page-bg">
+<view class="container">
+  <!-- ============ 顶部 hero ============ -->
+  <view class="hero-head">
+    <view class="hero-titles">
+      <view class="hero-title">饮食记录 <text class="hero-sparkle">✨</text></view>
+      <view class="hero-sub">每一次尝试都在帮宝宝建立辅食地图</view>
+    </view>
+    <view class="hero-actions">
+      <view class="hero-icon-btn" bindtap="openSearch">🔍</view>
+      <view class="hero-icon-btn" bindtap="exportRecords">📤</view>
+    </view>
+  </view>
+
+  <!-- ============ 最近 7 天饮食摘要 ============ -->
+  <view wx:if="{{summary}}" class="card summary-card">
+    <view class="summary-head">
+      <view class="summary-title">最近7天饮食摘要</view>
+      <view class="summary-range">{{summary.rangeLabel}} 📅</view>
+    </view>
+    <view class="summary-grid">
+      <view class="summary-cell">
+        <view class="summary-cell-head">
+          <view class="summary-icon icon-love">😊</view>
+          <view class="summary-num">{{summary.loveCount}} <text class="summary-unit">次</text></view>
+        </view>
+        <view class="summary-label">爱吃</view>
+        <view class="summary-delta">{{summary.loveDeltaText}}</view>
+      </view>
+      <view class="summary-cell">
+        <view class="summary-cell-head">
+          <view class="summary-icon icon-new">🆕</view>
+          <view class="summary-num">{{summary.newFoodCount}} <text class="summary-unit">种</text></view>
+        </view>
+        <view class="summary-label">新引入食材</view>
+        <view class="summary-delta">{{summary.newFoodDeltaText}}</view>
+      </view>
+      <view class="summary-cell">
+        <view class="summary-cell-head">
+          <view class="summary-icon icon-alert">⚠️</view>
+          <view class="summary-num">{{summary.reactionCount}} <text class="summary-unit">次</text></view>
+        </view>
+        <view class="summary-label">出现观察</view>
+        <view class="summary-delta">{{summary.reactionDeltaText}}</view>
+      </view>
+      <view class="summary-cell">
+        <view class="summary-cell-head">
+          <view class="summary-icon icon-leaf">{{summary.nutritionEmoji}}</view>
+          <view class="summary-num">{{summary.nutritionDays}} <text class="summary-unit">天</text></view>
+        </view>
+        <view class="summary-label">{{summary.nutritionLabel}}</view>
+        <view class="summary-delta summary-delta-{{summary.nutritionState}}">{{summary.nutritionHint || '保持留意'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ============ 当前搜索条件 (有 keyword 才显示) ============ -->
+  <view wx:if="{{searchKeyword}}" class="search-active">
+    <text class="search-active-icon">🔍</text>
+    <text class="search-active-text">搜索「{{searchKeyword}}」</text>
+    <view class="search-active-clear" bindtap="clearSearch">× 清除</view>
+  </view>
+
+  <!-- ============ 筛选 tabs ============ -->
+  <scroll-view class="filter-tabs" scroll-x="{{true}}">
+    <view wx:for="{{tabs}}" wx:key="key" class="filter-tab {{activeTab === item.key ? 'active' : ''}}" bindtap="setTab" data-key="{{item.key}}">{{item.label}}</view>
+  </scroll-view>
+
+  <!-- ============ 时间流 ============ -->
+  <view wx:if="{{days.length === 0}}" class="card empty">
+    <view class="empty-emoji">📝</view>
+    <view class="empty-title">这里还没有记录</view>
+    <view class="empty-sub">在首页打卡或记一次反应，会自动出现在这里</view>
+  </view>
+
+  <view wx:for="{{days}}" wx:key="date" wx:for-item="day" class="day-section">
+    <view class="day-header">
+      <text class="day-date">{{day.dateLabel}}</text>
+      <text class="day-week">周{{day.weekday}}</text>
+    </view>
+
+    <view class="timeline">
+      <view wx:for="{{day.events}}" wx:for-item="ev" wx:key="*this" class="timeline-row">
+        <view class="timeline-axis">
+          <view class="timeline-dot {{ev.type === 'reaction' ? 'timeline-dot-alert' : ''}}"></view>
+          <view class="timeline-line"></view>
+        </view>
+        <view class="timeline-time">
+          <block wx:if="{{ev.type === 'meal'}}">
+            <picker mode="time" value="{{ev.timeLabel}}" bindchange="onLogTimeChange" data-date="{{ev.date}}" data-idx="{{ev.mealIndex}}">
+              <view class="timeline-time-text">{{ev.timeLabel}}</view>
+            </picker>
+          </block>
+          <block wx:else>
+            <view class="timeline-time-text">{{ev.timeLabel}}</view>
+          </block>
+        </view>
+
+        <!-- 饮食卡 -->
+        <view wx:if="{{ev.type === 'meal'}}" class="event-card meal-event">
+          <view class="event-head">
+            <view class="event-title-row">
+              <text class="event-title">{{ev.displayName}}</text>
+              <text wx:if="{{ev.hasNewFood}}" class="badge-new">新食材</text>
+            </view>
+            <view class="event-menu" catchtap="openLogMenu" data-date="{{ev.date}}" data-idx="{{ev.mealIndex}}">⋯</view>
+          </view>
+          <view wx:if="{{ev.ingEmojis.length > 0}}" class="ing-emojis">
+            <view wx:for="{{ev.ingEmojis}}" wx:for-item="ing" wx:key="name" class="ing-emoji-chip">
+              <text class="ing-emoji">{{ing.emoji}}</text>
+              <text class="ing-name">{{ing.name}}</text>
+            </view>
+          </view>
+          <view wx:if="{{ev.note}}" class="event-note">{{ev.note}}</view>
+          <view wx:if="{{ev.portionLabel || ev.prefLabel}}" class="event-meta">
+            <text wx:if="{{ev.portionLabel}}">{{ev.portionEmoji}} {{ev.portionLabel}}</text>
+            <text wx:if="{{ev.portionLabel && ev.prefLabel}}"> · </text>
+            <text wx:if="{{ev.prefLabel}}" class="event-meta-pref-{{ev.log.preference}}">{{ev.prefEmoji}} {{ev.prefLabel}}</text>
+          </view>
+        </view>
+
+        <!-- 反应卡 (浅红底) -->
+        <view wx:else class="event-card reaction-event" catchtap="openReactionMenu" data-id="{{ev.reaction.id}}">
+          <view class="event-head">
+            <view class="event-title-row">
+              <text class="event-title">{{ev.typeLabel}}</text>
+              <text class="reaction-severity sev-{{ev.reaction.severity}}">{{ev.severityLabel}}</text>
+              <text wx:if="{{ev.resolved}}" class="reaction-resolved">已消退</text>
+            </view>
+            <view class="event-menu">⋯</view>
+          </view>
+          <view wx:if="{{ev.note}}" class="event-note">{{ev.note}}</view>
+          <view wx:if="{{ev.suspectedFoods.length > 0}}" class="reaction-suspects">
+            <text class="reaction-suspect-label">可疑食材</text>
+            <text wx:for="{{ev.suspectedFoods}}" wx:for-item="f" wx:key="*this" class="reaction-suspect-pill">{{f}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="end-hint" wx:if="{{days.length > 0}}">没有更多记录啦 ~</view>
+</view>
+
+<!-- ============ FAB ============ -->
+<view wx:if="{{fabMenuOpen}}" class="fab-mask" bindtap="toggleFabMenu"></view>
+<view wx:if="{{fabMenuOpen}}" class="fab-menu" catchtap="noop">
+  <view class="fab-menu-item" bindtap="fabAddMeal">
+    <text class="fab-menu-emoji">🍽</text>
+    <text class="fab-menu-text">补记一餐</text>
+  </view>
+  <view class="fab-menu-item" bindtap="fabAddReaction">
+    <text class="fab-menu-emoji">📋</text>
+    <text class="fab-menu-text">记一次观察</text>
+  </view>
+</view>
+<view class="fab" bindtap="toggleFabMenu">
+  <text class="fab-icon">{{fabMenuOpen ? '×' : '+'}}</text>
+  <text class="fab-text">记一餐 / 观察</text>
+</view>
+
+<!-- ============ 补记一餐 sheet ============ -->
+<view wx:if="{{manualOpen}}" class="search-mask" bindtap="closeManualSheet" catchtouchmove="noop"></view>
+<view wx:if="{{manualOpen}}" class="manual-sheet" catchtap="noop">
+  <view class="manual-handle"></view>
+  <view class="manual-head">
+    <view class="manual-title">{{manualIsEditing ? '修改记录' : '补一餐'}}</view>
+    <view class="manual-sub">{{manualIsEditing ? '只改你想改的部分,其它字段保持原样' : '记录一餐宝宝实际吃了什么'}}</view>
+  </view>
+
+  <view class="manual-body">
+    <view class="manual-row">
+      <text class="manual-label">日期</text>
+      <picker mode="date" value="{{manualDate}}" start="2024-01-01" end="{{todayStr}}" bindchange="onManualDateChange">
+        <view class="manual-pick">{{manualDate || '选择日期'}} ›</view>
+      </picker>
+    </view>
+
+    <view class="manual-row">
+      <text class="manual-label">时间</text>
+      <picker mode="time" value="{{manualTime}}" bindchange="onManualTimeChange">
+        <view class="manual-pick">{{manualTime}} ›</view>
+      </picker>
+    </view>
+
+    <view class="manual-section-label">菜名（可选）</view>
+    <input class="manual-input" placeholder="如 鳕鱼泥+米糊 / 自配餐" value="{{manualDishName}}" bindinput="onManualDishInput" maxlength="40"/>
+
+    <view class="manual-section-label">食材</view>
+    <view wx:if="{{manualIngChips.length > 0}}" class="ing-chips">
+      <view wx:for="{{manualIngChips}}" wx:key="*this" class="ing-chip" bindtap="removeIngChip" data-name="{{item}}">
+        <text>{{item}}</text>
+        <text class="ing-chip-x">✕</text>
+      </view>
+    </view>
+    <view class="ing-input-row">
+      <input class="manual-input ing-input" placeholder="输入食材后点 + 或按完成" placeholder-style="color:#9B8579;font-size:24rpx;line-height:76rpx;" value="{{manualIngInput}}" bindinput="onManualIngsInput" bindconfirm="onManualIngsConfirm" confirm-type="done" maxlength="20" adjust-position="{{false}}"/>
+      <view class="ing-add-btn" bindtap="addIngChipFromInput">＋</view>
+    </view>
+    <view wx:if="{{manualIngSuggestions.length > 0}}" class="ing-sugs">
+      <text class="ing-sugs-label">最近常吃:</text>
+      <view wx:for="{{manualIngSuggestions}}" wx:key="*this" class="ing-sug" bindtap="pickIngSuggestion" data-name="{{item}}">{{item}}</view>
+    </view>
+
+    <view class="manual-section-label">份量</view>
+    <view class="manual-portions">
+      <view class="manual-portion {{(manualPortion === 'taste' || manualPortion === 'small') ? 'on' : ''}}" bindtap="setManualPortion" data-portion="taste">😊 尝几口</view>
+      <view class="manual-portion {{manualPortion === 'half' ? 'on' : ''}}" bindtap="setManualPortion" data-portion="half">🥣 半份</view>
+      <view class="manual-portion {{manualPortion === 'full' ? 'on' : ''}}" bindtap="setManualPortion" data-portion="full">🍚 1份</view>
+    </view>
+    <view wx:if="{{manualPortion === 'taste' || manualPortion === 'small' || manualPortion === 'full'}}" class="manual-portion-hint">
+      {{manualPortion === 'full' ? '吃完整份 → 记为「😋 爱吃」' : '只尝了几口 → 记为「😐 不太爱」'}}
+    </view>
+
+    <view class="manual-section-label">备注（可选）</view>
+    <textarea class="manual-textarea" placeholder="如 自制浓汤宝里有鸡肉" value="{{manualNote}}" bindinput="onManualNoteInput" maxlength="60"/>
+  </view>
+
+  <view class="manual-footer">
+    <view class="manual-cancel" bindtap="closeManualSheet">取消</view>
+    <view class="manual-save" bindtap="saveManualLog">保存记录</view>
+  </view>
+</view>
+
+<!-- ============ 搜索 sheet ============ -->
+<view wx:if="{{searchOpen}}" class="search-mask" bindtap="closeSearch" catchtouchmove="noop"></view>
+<view wx:if="{{searchOpen}}" class="search-sheet" catchtap="noop">
+  <view class="search-head">
+    <input class="search-input" placeholder="搜食材 / 菜名 / 备注" value="{{searchKeyword}}" bindinput="onSearchInput" focus="{{true}}" confirm-type="search" bindconfirm="doSearch"/>
+    <view class="search-cancel" bindtap="closeSearch">取消</view>
+  </view>
+  <view class="search-tip">输入关键词，按完成键开始搜索</view>
+  <view class="search-do" bindtap="doSearch">搜索</view>
+</view>
+</view>

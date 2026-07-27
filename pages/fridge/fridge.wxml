@@ -1,0 +1,213 @@
+<view class="page-bg">
+<view class="container">
+
+  <!-- ============ Onboard hint（空冰箱） ============ -->
+  <view wx:if="{{showOnboardHint}}" class="card onboard-hint">
+    <view class="card-title">🧊 还没有食材</view>
+    <view class="text-muted" style="margin-bottom: 20rpx;">第一次用?可以批量勾选家里现有的食材,一次搞定</view>
+    <navigator url="/pages/onboarding/onboarding" class="btn-primary btn-block">批量初始化</navigator>
+    <view class="btn-secondary btn-block" bindtap="dismissOnboard">手动一个个加</view>
+  </view>
+
+  <view wx:else>
+    <!-- ============ Hero 卡 ============ -->
+    <view class="card hero-card">
+      <view class="hero-top">
+        <view class="hero-title-wrap">
+          <text class="hero-title">冰箱库存</text>
+          <text class="hero-count">{{totalKinds}}</text>
+          <text class="hero-unit">种食材</text>
+        </view>
+        <navigator url="/pages/ingredient-picker/ingredient-picker" class="hero-cta" hover-class="none">+ 添加食材</navigator>
+      </view>
+      <view class="hero-pills">
+        <view class="hero-pill hero-pill-urgent" bindtap="filterByUrgent">
+          <text class="hero-pill-ico">⏱️</text>
+          <text class="hero-pill-label">临期</text>
+          <text class="hero-pill-num">{{urgentCount}}</text>
+        </view>
+        <view class="hero-pill hero-pill-low" bindtap="filterByLow">
+          <text class="hero-pill-ico">📦</text>
+          <text class="hero-pill-label">库存少</text>
+          <text class="hero-pill-num">{{lowStockCount}}</text>
+        </view>
+        <view class="hero-pill hero-pill-advice" bindtap="showTodayAdvice">
+          <text class="hero-pill-ico">💡</text>
+          <text class="hero-pill-label">今日建议</text>
+          <text class="hero-pill-num">{{todayAdviceCount}}</text>
+        </view>
+      </view>
+      <view class="hero-tagline">
+        <text class="hero-tagline-ico">☀️</text>
+        <text>合理管理食材，让宝宝每一餐都新鲜安心</text>
+      </view>
+    </view>
+
+    <!-- ============ 搜索 + 批量管理 ============ -->
+    <view class="toolbar-row">
+      <view class="search-box">
+        <text class="search-ico">🔍</text>
+        <input class="search-input" placeholder="搜索食材名称" value="{{searchKey}}" bindinput="onSearch"/>
+      </view>
+      <view class="batch-btn {{batchMode ? 'batch-btn-on' : ''}}" bindtap="toggleBatch">
+        <text class="batch-ico">{{batchMode ? '✓' : '☰'}}</text>
+        <text>{{batchMode ? '完成' : '批量管理'}}</text>
+      </view>
+    </view>
+
+    <!-- ============ 位置 segment tabs ============ -->
+    <view class="loc-tabs">
+      <view class="loc-tab {{locationTab === 'all' ? 'loc-tab-active' : ''}}" bindtap="setLocationTab" data-tab="all">全部</view>
+      <view class="loc-tab {{locationTab === 'frozen' ? 'loc-tab-active' : ''}}" bindtap="setLocationTab" data-tab="frozen">冷冻</view>
+      <view class="loc-tab {{locationTab === 'refrigerated' ? 'loc-tab-active' : ''}}" bindtap="setLocationTab" data-tab="refrigerated">冷藏</view>
+      <view class="loc-tab {{locationTab === 'room' ? 'loc-tab-active' : ''}}" bindtap="setLocationTab" data-tab="room">常温</view>
+    </view>
+
+    <!-- ============ 筛选 chips + 排序 ============ -->
+    <view class="chip-row">
+      <view class="chip-scroll">
+        <view class="filter-chip {{filterChip === 'urgent' ? 'filter-chip-active' : ''}}" bindtap="setChip" data-chip="urgent">临期优先</view>
+        <view class="filter-chip {{filterChip === 'low' ? 'filter-chip-active' : ''}}" bindtap="setChip" data-chip="low">库存少</view>
+        <view class="filter-chip {{filterChip === 'recent' ? 'filter-chip-active' : ''}}" bindtap="setChip" data-chip="recent">最近添加</view>
+      </view>
+      <view class="sort-btn" bindtap="showSort">
+        <text class="sort-ico">↕</text>
+        <text>排序</text>
+      </view>
+    </view>
+
+    <!-- ============ 优先处理分组 ============ -->
+    <view wx:if="{{priorityItems.length > 0 && filterChip !== 'low' && filterChip !== 'recent'}}" class="card priority-card">
+      <view class="priority-head">
+        <view class="priority-title">
+          <text class="priority-ico">🔔</text>
+          <text>优先处理</text>
+          <text class="priority-num">({{priorityItems.length}})</text>
+        </view>
+        <text class="priority-link">建议尽快食用 ›</text>
+      </view>
+      <block wx:for="{{priorityItems}}" wx:key="key" wx:for-item="it">
+        <view class="fr-item-block">
+          <view class="fr-item">
+            <view wx:if="{{batchMode}}" class="select-box {{selectedKeys.indexOf(it.key) >= 0 ? 'select-box-on' : ''}}" catchtap="toggleSelect" data-key="{{it.key}}">
+              {{selectedKeys.indexOf(it.key) >= 0 ? '✓' : ''}}
+            </view>
+            <view class="fr-item-main" catchtap="toggleTip" data-key="{{it.key}}">
+              <view class="fr-item-name-row">
+                <text class="fr-item-name">{{it.name}}</text>
+                <text class="loc-pill loc-pill-{{it.storageLocation}}">{{it.locationLabel}}</text>
+                <text wx:if="{{it.tip}}" class="tip-icon">💡</text>
+              </view>
+              <view class="fr-item-meta">
+                <text>{{it.portions}} 份</text>
+                <text class="meta-dot">·</text>
+                <text class="fr-item-expiry {{it.isExpired ? 'expiry-expired' : (it.isUrgent ? 'expiry-urgent' : '')}}">{{it.expiryHint}}</text>
+              </view>
+            </view>
+            <view wx:if="{{it.statusBadge}}" class="status-badge status-badge-{{it.statusBadgeColor}}">
+              <text class="status-badge-ico">{{it.statusBadgeColor === 'urgent' ? '⚠️' : '📦'}}</text>
+              <text>{{it.statusBadge}}</text>
+            </view>
+            <view class="stepper">
+              <view class="step-btn" catchtap="stepDec" data-key="{{it.key}}" data-name="{{it.name}}">−</view>
+              <text class="step-num">{{it.portions}} 份</text>
+              <view class="step-btn" catchtap="stepInc" data-key="{{it.key}}" data-name="{{it.name}}" data-loc="{{it.storageLocation}}">+</view>
+            </view>
+            <view wx:if="{{!batchMode}}" class="more-trigger" catchtap="openMore" data-key="{{it.key}}">⋯</view>
+          </view>
+          <view wx:if="{{it.tipExpanded && it.tip}}" class="tip-card">
+            <view class="tip-line">📦 {{it.shortLine}}</view>
+            <view class="tip-content">{{it.tip}}</view>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- ============ 普通列表 ============ -->
+    <view wx:if="{{filteredItems.length > 0}}" class="card list-card">
+      <view wx:if="{{filteredItems.length === 0}}" class="empty">
+        <text class="text-muted">这个分类暂无</text>
+      </view>
+      <block wx:for="{{filteredItems}}" wx:key="key" wx:for-item="it">
+        <view wx:if="{{!(it.isUrgent || it.isExpired) || filterChip !== 'none'}}" class="fr-item-block">
+          <view class="fr-item">
+            <view wx:if="{{batchMode}}" class="select-box {{selectedKeys.indexOf(it.key) >= 0 ? 'select-box-on' : ''}}" catchtap="toggleSelect" data-key="{{it.key}}">
+              {{selectedKeys.indexOf(it.key) >= 0 ? '✓' : ''}}
+            </view>
+            <view class="fr-item-main" catchtap="toggleTip" data-key="{{it.key}}">
+              <view class="fr-item-name-row">
+                <text class="fr-item-name">{{it.name}}</text>
+                <text class="loc-pill loc-pill-{{it.storageLocation}}">{{it.locationLabel}}</text>
+                <text wx:if="{{it.tip}}" class="tip-icon">💡</text>
+              </view>
+              <view class="fr-item-meta">
+                <text>{{it.portions}} 份</text>
+                <text class="meta-dot">·</text>
+                <text class="fr-item-expiry {{it.isExpired ? 'expiry-expired' : (it.isUrgent ? 'expiry-urgent' : (it.daysToExpiry > 30 ? 'expiry-far' : ''))}}">{{it.expiryHint}}</text>
+              </view>
+            </view>
+            <view wx:if="{{it.statusBadge}}" class="status-badge status-badge-{{it.statusBadgeColor}}">
+              <text class="status-badge-ico">{{it.statusBadgeColor === 'urgent' ? '⚠️' : '📦'}}</text>
+              <text>{{it.statusBadge}}</text>
+            </view>
+            <view class="stepper">
+              <view class="step-btn" catchtap="stepDec" data-key="{{it.key}}" data-name="{{it.name}}">−</view>
+              <text class="step-num">{{it.portions}} 份</text>
+              <view class="step-btn" catchtap="stepInc" data-key="{{it.key}}" data-name="{{it.name}}" data-loc="{{it.storageLocation}}">+</view>
+            </view>
+            <view wx:if="{{!batchMode}}" class="more-trigger" catchtap="openMore" data-key="{{it.key}}">⋯</view>
+          </view>
+          <view wx:if="{{it.tipExpanded && it.tip}}" class="tip-card">
+            <view class="tip-line">📦 {{it.shortLine}}</view>
+            <view class="tip-content">{{it.tip}}</view>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view wx:if="{{filteredItems.length === 0 && priorityItems.length === 0}}" class="card empty">
+      <text class="text-muted">这个筛选下暂无食材</text>
+    </view>
+
+  </view>
+
+</view>
+</view>
+
+<!-- ============ More 菜单 popover ============ -->
+<view wx:if="{{moreOpenKey}}" class="more-mask" bindtap="closeMore" catchtouchmove="noop"></view>
+<view wx:if="{{moreOpenKey}}" class="more-sheet" catchtap="stopPropagation">
+  <view class="more-handle"></view>
+  <view class="more-list">
+    <view class="more-row" catchtap="actionAdjustExpiry" data-key="{{moreOpenKey}}">
+      <text class="more-row-ico">📅</text><text>调整保质期</text>
+    </view>
+    <view class="more-row" catchtap="actionMoveLocation" data-key="{{moreOpenKey}}">
+      <text class="more-row-ico">📂</text><text>移动分类</text>
+    </view>
+    <view class="more-row" catchtap="actionAddToShopList" data-key="{{moreOpenKey}}" data-name="{{moreOpenName}}">
+      <text class="more-row-ico">🛒</text><text>加入采购清单</text>
+    </view>
+    <view class="more-row" catchtap="actionAddToTomorrow" data-name="{{moreOpenName}}">
+      <text class="more-row-ico">🗓</text><text>加入明日计划</text>
+    </view>
+    <view class="more-row" catchtap="actionViewRecipes" data-name="{{moreOpenName}}">
+      <text class="more-row-ico">👩‍🍳</text><text>查看推荐食谱</text>
+    </view>
+    <view class="more-row more-row-danger" catchtap="actionDiscard" data-key="{{moreOpenKey}}" data-name="{{moreOpenName}}">
+      <text class="more-row-ico">🗑</text><text>丢弃并移除</text>
+    </view>
+  </view>
+  <view class="more-cancel" bindtap="closeMore">取消</view>
+</view>
+
+<!-- ============ 批量底部操作栏 ============ -->
+<view wx:if="{{batchMode}}" class="batch-bar">
+  <text class="batch-count">已选 {{selectedKeys.length}} 项</text>
+  <view class="batch-actions">
+    <view class="batch-link" bindtap="selectAll">全选</view>
+    <view class="batch-link" bindtap="clearSelection">清空</view>
+    <view class="batch-action-btn" bindtap="batchToShopList">🛒 加入采购</view>
+    <view class="batch-action-btn batch-action-danger" bindtap="batchDiscard">🗑 丢弃</view>
+  </view>
+</view>

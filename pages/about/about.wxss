@@ -1,0 +1,150 @@
+/* ============================================
+   关于 · v2 token baseline
+   全局 .card / token 见 app.wxss
+   ============================================ */
+
+.hero {
+  background: var(--orange-grad);
+  color: #FFFFFF;
+  text-align: center;
+  padding: 40rpx 24rpx;
+  border-radius: var(--radius-card);
+  margin-top: 24rpx;
+  box-shadow: var(--shadow-orange);
+}
+.hero-logo {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 30rpx;
+  margin-bottom: 14rpx;
+}
+.hero-title {
+  font-size: 48rpx;
+  font-weight: 600;
+}
+.hero-version {
+  font-size: 24rpx;
+  opacity: 0.9;
+  margin-top: 8rpx;
+}
+.hero-slogan {
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  opacity: 0.96;
+}
+
+.alert-card {
+  border-left: 8rpx solid #E57373;
+}
+.alert-card .card-title { color: #E57373; }
+
+.feat-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  color: var(--text-body);
+  border-bottom: 1rpx solid #F8F8F8;
+}
+.feat-row:last-child { border-bottom: none; }
+.feat-icon {
+  width: 52rpx;
+  flex-shrink: 0;
+  font-size: 32rpx;
+  line-height: 1.4;
+  text-align: center;
+}
+.feat-name {
+  color: var(--text-h1);
+  font-size: 27rpx;
+  font-weight: 600;
+}
+.feat-desc {
+  color: var(--text-meta);
+  font-size: 23rpx;
+  line-height: 1.5;
+  margin-top: 3rpx;
+}
+
+.content {
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.quote {
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: var(--bg-warm-pill);
+  color: var(--orange-deep);
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.bold {
+  color: var(--text-h1);
+  font-weight: 600;
+}
+.basis-card { border-left: 8rpx solid var(--green); }
+.basis-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 8rpx 0;
+  color: var(--text-secondary);
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+.basis-dot {
+  width: 10rpx;
+  height: 10rpx;
+  margin-top: 14rpx;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.source-note {
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #F0ECE6;
+  color: var(--text-meta);
+  font-size: 21rpx;
+  line-height: 1.55;
+}
+.emergency {
+  margin-top: 14rpx;
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: #FFF1F1;
+  color: #C14F4F;
+  font-size: 23rpx;
+  line-height: 1.55;
+  font-weight: 600;
+}
+.privacy-card { border-left: 8rpx solid #5C8FC9; }
+.privacy-block {
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+.privacy-block:last-of-type { border-bottom: none; }
+.privacy-title {
+  color: var(--text-h1);
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+.privacy-warning {
+  margin-top: 14rpx;
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: #F1F6FC;
+  color: #52769F;
+  font-size: 22rpx;
+  line-height: 1.55;
+}
+
+.footer-tip {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-meta);
+  margin: 30rpx 0;
+}

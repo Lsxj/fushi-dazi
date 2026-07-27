@@ -1,0 +1,42 @@
+<view class="container">
+  <view class="card hero">
+    <view class="hero-title">🧊 你家冰箱有什么?</view>
+    <view class="hero-sub">勾选已有的食材,默认每样1份</view>
+  </view>
+
+  <view wx:for="{{groups}}" wx:key="id" wx:for-item="group" class="card group">
+    <view class="group-header" bindtap="toggleGroup" data-id="{{group.id}}">
+      <view class="group-info">
+        <text class="group-name">{{group.name}}</text>
+        <text class="group-count text-muted" wx:if="{{group.checkedCount > 0}}">已选 {{group.checkedCount}}</text>
+      </view>
+      <text class="group-arrow {{group.expanded ? 'expanded' : ''}}">▶</text>
+    </view>
+    <view wx:if="{{group.expanded}}" class="group-body">
+      <view wx:for="{{group.items}}" wx:for-item="ing" wx:key="name" class="ing-row" bindtap="toggleIngredient" data-name="{{ing.name}}">
+        <view class="ing-checkbox {{ing.checked ? 'checked' : ''}}">
+          <text wx:if="{{ing.checked}}">✓</text>
+        </view>
+        <view class="ing-info">
+          <text class="ing-name">{{ing.name}}</text>
+          <text class="ing-meta text-muted">{{ing.storageLabel}} · {{ing.servingGramsPerPortion}}g/份</text>
+        </view>
+        <view wx:if="{{ing.checked}}" class="portion-control" catchtap="noop">
+          <view class="step-btn" catchtap="decPortions" data-name="{{ing.name}}">-</view>
+          <text class="portion-num">{{ing.portions}}</text>
+          <view class="step-btn" catchtap="incPortions" data-name="{{ing.name}}">+</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer">
+    <view class="footer-stat">
+      <text class="text-muted">已选 {{totalChecked}} 种食材</text>
+    </view>
+    <view class="footer-actions">
+      <view class="btn-secondary" bindtap="skipAll">先跳过</view>
+      <view class="btn-primary" bindtap="finish">完成 ({{totalChecked}})</view>
+    </view>
+  </view>
+</view>
