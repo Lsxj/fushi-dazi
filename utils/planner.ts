@@ -20,6 +20,16 @@ export interface BabyProfile {
   categorySchemaVersion?: number
 }
 
+export type FoodSafetyProfile = Pick<
+  BabyProfile,
+  | 'ageMonths'
+  | 'currentStatus'
+  | 'statusSince'
+  | 'categoryAllergies'
+  | 'individualExceptions'
+  | 'confirmedFoods'
+>
+
 export interface CategoryAllergyState {
   state: string
   representative?: string
@@ -181,7 +191,7 @@ export function hasActiveConstipation(): boolean {
   )
 }
 
-export function isFoodSafeForBaby(foodName: string, profile: BabyProfile): { safe: boolean; reason?: string } {
+export function isFoodSafeForBaby(foodName: string, profile: FoodSafetyProfile): { safe: boolean; reason?: string } {
   const exception = profile.individualExceptions[foodName]
   if (exception?.state === 'allergic') return { safe: false, reason: `${foodName}已标记过敏` }
   if (exception?.state === 'observation') return { safe: false, reason: `${foodName}处于观察期` }

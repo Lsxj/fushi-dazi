@@ -1,0 +1,16 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+catalog:
+  '@orpc/contract': ^1.14.12
+  '@orpc/openapi': ^1.14.12
+  '@orpc/server': ^1.14.12
+  '@orpc/zod': ^1.14.12
+  '@types/node': ^22.0.0
+  typescript: ^6.0.3
+  vitest: ^4.1.10
+  zod: ^4.4.3
+
+onlyBuiltDependencies:
+  - esbuild

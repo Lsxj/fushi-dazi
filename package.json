@@ -1,11 +1,16 @@
 {
   "name": "fushi-ditu",
   "private": true,
+  "packageManager": "pnpm@10.31.0",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
     "test": "npm run build && node test/chat-ai-history-regression.test.js && node test/backup-regression.test.js",
-    "verify": "npm test && npm --prefix mcp-server run build && npm --prefix mcp-server run test:coverage && npm --prefix mcp-server test && npm --prefix mcp-server run test:integration",
+    "verify": "npm test && pnpm run workspace:verify && npm --prefix mcp-server run build && npm --prefix mcp-server run test:coverage && npm --prefix mcp-server test && npm --prefix mcp-server run test:integration",
+    "workspace:build": "pnpm --filter @fushi/contracts build && pnpm --filter @fushi/api-server build",
+    "workspace:test": "pnpm --filter @fushi/api-server test:coverage",
+    "workspace:verify": "pnpm run workspace:build && pnpm run workspace:test",
+    "api:dev": "pnpm --filter @fushi/api-server dev",
     "test:chat-ai-history": "node test/chat-ai-history-regression.test.js",
     "test:backup": "npm run build && node test/backup-regression.test.js",
     "deploy:chat-ai": "./scripts/deploy-chat-ai.sh",

@@ -8,6 +8,7 @@ export interface CustomFood {
 }
 
 export function getCustomFoods(): CustomFood[] {
+  if (typeof wx === 'undefined') return []
   return wx.getStorageSync('customFoods') || []
 }
 

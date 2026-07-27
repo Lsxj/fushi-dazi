@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "typeRoots": ["../../typings/types", "./node_modules/@types"],
+    "types": ["node", "wx"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "../../data/**/*.ts", "../../utils/**/*.ts"],
+  "references": [{ "path": "../../packages/contracts" }]
+}

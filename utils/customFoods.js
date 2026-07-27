@@ -6,6 +6,8 @@ exports.addCustomFood = addCustomFood;
 exports.removeCustomFood = removeCustomFood;
 exports.renameCustomFood = renameCustomFood;
 function getCustomFoods() {
+    if (typeof wx === 'undefined')
+        return [];
     return wx.getStorageSync('customFoods') || [];
 }
 function setCustomFoods(items) {
