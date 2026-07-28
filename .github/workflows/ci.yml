@@ -50,7 +50,7 @@ jobs:
         run: npm test
 
   contract-api:
-    name: Contract API · Node ${{ matrix.node-version }}
+    name: Contract API + Web · Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -76,7 +76,7 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build and test contract API
+      - name: Build and test contract API and React console
         run: pnpm run workspace:verify
 
   mcp-server:

@@ -12,12 +12,13 @@
 npm run verify
 ```
 
-它会依次完成小程序 TypeScript 构建与回归测试、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、MCP Server 构建、Vitest 单元测试与覆盖率门禁、46 项冒烟测试和 11 步集成测试。API 边界当前四项覆盖率为 100%，MCP 首批覆盖范围四项门槛均为 90%。仓库中的 GitHub Actions 配置会保留，账户恢复后可直接启用。
+它会依次完成小程序 TypeScript 构建与回归测试、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 前端测试、MCP Server 构建、Vitest 单元测试与覆盖率门禁、46 项冒烟测试和 11 步集成测试。API 边界当前四项覆盖率为 100%，React 控制台行覆盖率超过 95%，MCP 首批覆盖范围四项门槛均为 90%。仓库中的 GitHub Actions 配置会保留，账户恢复后可直接启用。
 
 ## AI 工程作品集
 
 - [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow。
 - [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
+- [React Solution Console](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW，提供架构叙事和可交互安全实验室。
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
 - [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
 - Mock provider：无模型密钥也能离线演示，且调用方可以明确识别 mock / live 状态。
@@ -64,7 +65,8 @@ npm run verify
 ```
 fushi-ditu/
 ├── apps/
-│   └── api-server/             # Express + oRPC contract-first API
+│   ├── api-server/             # Express + oRPC contract-first API
+│   └── web-console/            # React AI solution portfolio console
 ├── packages/
 │   └── contracts/              # 共享 Zod/oRPC 输入输出契约
 ├── app.ts                    # 入口,云能力与档案结构初始化
