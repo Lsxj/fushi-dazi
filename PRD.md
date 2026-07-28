@@ -1,9 +1,9 @@
 # 辅食搭子产品需求文档（PRD）
 
-> 文档版本：v0.8-draft
-> 更新日期：2026-07-27
+> 文档版本：v0.9-draft
+> 更新日期：2026-07-28
 > 产品阶段：内测版，核心闭环已实现，进入发布前核验与测试收口  
-> 适用范围：微信小程序；MCP Server 为开发者演示能力，不属于家长端正式交付范围
+> 适用范围：微信小程序；Contract API、React Solution Console 与 MCP Server 为开发者作品集和方案验证能力，不属于家长端正式交付范围
 
 ## 1. 产品概述
 
@@ -28,9 +28,17 @@
 - 不做电商购买、社区内容、达人食谱或广告推荐。
 - 当前版本不支持多宝宝、多照护者实时同步。
 
+### 1.4 AI 工程作品集目标
+
+- 用同一个真实业务问题展示“用户体验—AI 编排—安全边界—质量交付”的完整解决方案。
+- 通过共享 Zod/oRPC 合约证明前后端类型安全与 contract-first API 设计能力。
+- 通过 MCP、Skills 和 provider adapter 展示可组合、可审计的 agentic workflow。
+- 在没有模型密钥、云部署或付费 GitHub 能力时，仍能在本地完整演示确定性规则、API、Web 交互与自动化测试。
+- 所有作品集界面必须清楚区分真实业务能力、mock 状态与规划能力，避免用静态页面冒充已实现功能。
+
 ## 2. 当前进度摘要
 
-截至 2026-07-27，产品已具备完整的本地使用闭环，当前判断为“功能型 MVP 基本完成，发布条件尚未满足”。本次核验确认小程序与 MCP Server TypeScript 构建均通过，MCP 冒烟测试恢复为 46/46，集成测试为 11/11；剩余发布风险主要集中在真机 AI 链路和正式隐私/删除机制。
+截至 2026-07-28，家长端已具备完整的本地使用闭环，当前判断为“功能型 MVP 基本完成，发布条件尚未满足”。开发者作品集已形成 MCP Server、Contract-first API 和 React Solution Console 三个互相连接的演示面。最新完整质量门禁确认小程序回归、API、React、MCP 构建与测试均通过；剩余家长端发布风险主要集中在真机 AI 链路和正式隐私/删除机制。
 
 | 模块 | 状态 | 当前实现 |
 |---|---|---|
@@ -46,6 +54,8 @@
 | AI 搭子 | 🟡 已实现待真机核验 | 小程序聊天 UI、5 个安全工具、云函数、多模型适配、本地 mock 降级；CloudBase preflight 通过，正式 provider 真机回答待确认 |
 | 云端数据同步 | 🟠 部分实现 | AI 首次会话会把 7 类本地数据备份到按 openid 隔离的 cloudDB；“关于”页已披露；尚不是小程序全局双向同步，也缺少用户自助删除入口 |
 | MCP Server | ✅ 演示可用 | 23 个工具、10 个资源、3 个提示词；TypeScript 构建通过，冒烟测试 46/46，集成测试 11/11 |
+| Contract-first API | ✅ 演示可用 | pnpm workspace、共享 Zod/oRPC 合约、Express OpenAPI Handler；9 项测试通过，语句/分支/函数/行覆盖率均为 100% |
+| React Solution Console | ✅ 演示可用 | React 19 架构总览与安全规则实验室；支持日常、疫苗后、个体过敏场景；8 项 MSW 测试通过，行覆盖率 96.55% |
 
 当前内容资产：29 个食物分类、32 种基础食材、127 道食谱、9 条搭配禁忌。
 
@@ -168,6 +178,15 @@
 - 工具调用循环最多 5 次，对话历史最多 20 轮。
 - 回答默认使用中文、控制篇幅，并可展开查看工具轨迹。
 
+### 5.7 React Solution Console（作品集，不进入家长端）
+
+- 提供“方案总览”，解释 Experience、AI Orchestration、Safety Boundary、Quality & Delivery 四层架构。
+- 提供“安全规则实验室”，允许切换日常、疫苗后和个体过敏三类演示档案，并提交最多 10 种食材。
+- 结果必须展示总体结论、逐食材 PASS/BLOCK、可解释原因、搭配提醒、档案快照和 `decisionSource`。
+- 页面必须明确标注“仅展示软件决策边界，不构成医疗建议”。
+- API 加载、连接失败和重试状态必须对用户可见；没有模型 API Key 时仍可运行完整安全检查。
+- 桌面端和移动端均需可用，不得出现横向溢出或依赖微信运行时。
+
 ## 6. 数据与技术边界
 
 ### 6.1 当前存储
@@ -183,6 +202,15 @@
 - LLM 负责意图理解、工具编排和自然语言解释，不进入安全判定路径。
 - 家长端 AI 不提供永久过敏写入工具。
 
+### 6.3 作品集技术架构
+
+- 仓库使用 pnpm monorepo 管理 `packages/contracts`、`apps/api-server` 与 `apps/web-console`，现有微信小程序保持原目录和构建方式。
+- `packages/contracts` 使用 Zod 定义输入输出并生成 oRPC contract，是 HTTP 服务端和 React 客户端的唯一边界类型来源。
+- `apps/api-server` 使用 Express + oRPC OpenAPI Handler 暴露 `/api/v1/safety/check` 与 `/openapi.json`，实现层复用 `utils/safety.ts`，不复制安全规则。
+- `apps/web-console` 通过 oRPC `OpenAPILink` 消费共享 contract；TanStack Query 管理服务端请求状态，Zustand 只管理本地实验场景与输入。
+- React 测试使用 Vitest、Testing Library 与 MSW 覆盖成功、拦截、空输入、连接失败和重试路径。
+- GitHub Actions 配置覆盖 Node 20/22 的 workspace 构建和测试；远程 CI 未作为当前验收证据，本地 `npm run verify` 是现阶段权威质量门禁。
+
 ## 7. 非功能需求
 
 ### 7.1 安全与合规
@@ -195,6 +223,9 @@
 
 - 核心规则单元/链路测试必须全部通过。
 - TypeScript 构建必须无错误。
+- API 边界覆盖率门槛不得低于语句/行/函数 90%、分支 85%；当前四项均为 100%。
+- React 控制台覆盖率门槛为语句/行/函数 85%、分支 80%，并必须覆盖请求失败与安全拦截路径。
+- 共享 contract 发生变更时，API 和 React 构建必须在同一次 workspace 门禁中通过。
 - 云函数在无模型密钥时可降级，但正式环境必须显式显示当前服务不可用，不能把 mock 回答伪装成真实 AI。
 
 ### 7.3 性能与可用性
@@ -233,6 +264,13 @@
 - [ ] 扩充真实家庭场景测试：早产、医生禁忌、多种过敏、连续漏打卡。
 - [ ] 完善预处理工序合并与多人协作分享。
 
+### P1：作品集增强
+
+- [ ] 增加 AI 可观测性与评估面板，展示 request/trace ID、规则轨迹、模型/provider 状态、延迟、token/成本、降级与错误信息。
+- [ ] 为 agentic workflow 建立可重复评估集，量化工具选择正确率、安全拦截率、回答 groundedness 和端到端成功率。
+- [ ] 增加企业集成示例，演示认证/RBAC、审计日志、外部业务系统适配与环境配置，但不引入真实个人数据。
+- [ ] 形成一份面试用 Architecture Decision Record 和 5–8 分钟演示脚本，明确业务价值、关键取舍、风险和扩展路径。
+
 ### P2：后续规划
 
 - [ ] 多宝宝与多照护者协作。
@@ -241,14 +279,19 @@
 
 ## 10. 本次核验记录
 
-2026-07-27 本地核验结果：
+2026-07-28 最新完整本地核验结果：
 
-- 小程序 `npm run build`：通过。
+- 根目录 `npm run verify`：通过。
+- 小程序 TypeScript 构建、聊天历史回归和备份回归：通过。
+- Contract-first API：9/9 测试通过，语句/分支/函数/行覆盖率均为 100%。
+- React Solution Console：生产构建通过，8/8 测试通过；语句 96.77%、分支 85.93%、函数 97.36%、行 96.55%。
+- React 与真实 API 联调：日常场景返回确定性结论与搭配提醒；个体过敏场景成功触发拦截。
+- React 浏览器验收：桌面端与 390px 移动端完成检查，无横向溢出，浏览器控制台无应用错误。
 - MCP Server `npm run build`：通过。
-- `cloudfunctions/chat-ai/dryrun.js`：通过。
-- `scripts/deploy-chat-ai.sh --check`：通过，CloudBase CLI 已登录，目标环境为 `cloud1-d8g02cdnld86f3823`；本次未执行部署。
+- MCP 单元测试：9/9 通过，当前纳入覆盖范围的语句/分支/函数/行均为 100%。
 - MCP 集成测试：11/11 通过。
-- MCP 冒烟测试：46/46 通过；日期相关用例已改为相对当前日期，不再随时间失效。
+- MCP 冒烟测试：46/46 通过。
+- 2026-07-27 已确认 `cloudfunctions/chat-ai/dryrun.js` 和 `scripts/deploy-chat-ai.sh --check` 通过，目标 CloudBase 环境为 `cloud1-d8g02cdnld86f3823`；本轮未执行云函数部署。
 - 应用内版本号：`我的` 与 `关于` 已统一为 v1.0.4。
 - “关于”页隐私说明：已披露不使用 AI 时本地缓存、使用 AI 时 7 类数据同步 cloudDB、问题与上下文可能发送给模型服务商、清理本地缓存不自动删除云端数据。
 - 飞书正式 PRD：本次只更新本地 `PRD.md`，未同步外部文档。
@@ -257,6 +300,7 @@
 
 | 日期 | 版本 | 说明 |
 |---|---|---|
+| 2026-07-28 | v0.9-draft | 新增 AI 工程作品集目标、Contract-first API 与 React Solution Console 范围；补充 monorepo 技术边界、前端/API 覆盖率门禁、真实联调证据和可观测性/评估增强路线 |
 | 2026-07-27 | v0.8-draft | 修复 MCP 跨项目 TypeScript 编译边界和日期相关测试；确认小程序与 MCP 构建通过、冒烟测试 46/46、集成测试 11/11 |
 | 2026-07-11 | v0.7-draft | 更新到 `/Users/x7/fushi-ditu` 当前状态；确认小程序构建、云函数 dryrun 和 CloudBase preflight 通过；修正内容规模、AI 隐私披露、版本统一与 MCP 测试状态 |
 | 2026-07-10 | v0.6-draft | 按当前代码重建 PRD；补齐完整产品闭环、AI 架构、真实完成度、发布门槛与验收口径 |
