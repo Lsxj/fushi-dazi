@@ -54,8 +54,8 @@
 | AI 搭子 | 🟡 已实现待真机核验 | 小程序聊天 UI、5 个安全工具、云函数、多模型适配、本地 mock 降级；CloudBase preflight 通过，正式 provider 真机回答待确认 |
 | 云端数据同步 | 🟠 部分实现 | AI 首次会话会把 7 类本地数据备份到按 openid 隔离的 cloudDB；“关于”页已披露；尚不是小程序全局双向同步，也缺少用户自助删除入口 |
 | MCP Server | ✅ 演示可用 | 23 个工具、10 个资源、3 个提示词；TypeScript 构建通过，冒烟测试 46/46，集成测试 11/11 |
-| Contract-first API | ✅ 演示可用 | pnpm workspace、共享 Zod/oRPC 合约、Express OpenAPI Handler、summary-only trace 与固定安全评测；13 项测试通过，四项覆盖率均为 100% |
-| React Solution Console | ✅ 演示可用 | React 19 架构总览、安全规则实验室、可观测性与评估控制台；12 项 MSW 测试通过，行覆盖率 97.22% |
+| Contract-first API | ✅ 演示可用 | 共享 Zod/oRPC 合约、Express OpenAPI Handler、summary-only trace、安全评测与治理接口；21 项测试通过，四项覆盖率均为 100% |
+| React Solution Console | ✅ 演示可用 | React 19 架构总览、安全实验室、可观测性评估及权限审计控制台；17 项 MSW 测试通过，行覆盖率 98.16% |
 
 当前内容资产：29 个食物分类、32 种基础食材、127 道食谱、9 条搭配禁忌。
 
@@ -188,6 +188,9 @@
 - 提供“可观测性与评估”页面，展示执行次数、阻断率、平均延迟、trace ID、provider 状态与固定回归案例。
 - Trace 只保存数量、档案状态和结果计数，不保存食材名、宝宝姓名或备注；页面必须标明 `summary-only` 和进程重启后清空。
 - 评测只复用现有确定性规则，不产生线上 trace，不将测试结果包装为模型能力。
+- 提供“权限与审计”页面，用 mock IdP 演示 Viewer / Operator / Safety Admin / Auditor 的确定性 RBAC 策略。
+- 永久过敏标记授权必须由绑定的 Safety Admin 申请，并使用五分钟、一次性、绑定申请人的确认令牌；确认入参必须为字面量 `true`。
+- 治理演示只记录 metadata-only 审计，不保存反应证据正文，也不写入真实档案；必须显示 `executionMode: simulation` 与 `externalMutationPerformed: false`。
 - 桌面端和移动端均需可用，不得出现横向溢出或依赖微信运行时。
 
 ## 6. 数据与技术边界
@@ -271,7 +274,8 @@
 
 - [x] 增加第一阶段可观测性与评估面板，展示 trace ID、规则执行汇总、provider 状态、延迟和错误恢复；确定性路径无 token/模型成本，明确显示 `provider: none`。
 - [ ] 为 agentic workflow 建立可重复评估集，量化工具选择正确率、安全拦截率、回答 groundedness 和端到端成功率。
-- [ ] 增加企业集成示例，演示认证/RBAC、审计日志、外部业务系统适配与环境配置，但不引入真实个人数据。
+- [x] 增加企业治理第一阶段演示：mock IdP、确定性 RBAC、一次性显式确认和 metadata-only 审计；不引入真实个人数据、不伪装真实认证。
+- [ ] 接入真实 OIDC/SSO、持久化审计存储、外部业务系统适配和环境配置管理。
 - [ ] 形成一份面试用 Architecture Decision Record 和 5–8 分钟演示脚本，明确业务价值、关键取舍、风险和扩展路径。
 
 ### P2：后续规划
@@ -286,8 +290,8 @@
 
 - 根目录 `npm run verify`：通过。
 - 小程序 TypeScript 构建、聊天历史回归和备份回归：通过。
-- Contract-first API：13/13 测试通过，语句/分支/函数/行覆盖率均为 100%。
-- React Solution Console：生产构建通过，12/12 测试通过；语句 97.36%、分支 88.17%、函数 97.87%、行 97.22%。
+- Contract-first API：21/21 测试通过，语句/分支/函数/行覆盖率均为 100%。
+- React Solution Console：生产构建通过，17/17 测试通过；语句 98.23%、分支 85.93%、函数 98.43%、行 98.16%。
 - React 与真实 API 联调：日常场景返回确定性结论与搭配提醒；个体过敏场景成功触发拦截。
 - React 浏览器验收：桌面端与 390px 移动端完成检查，无横向溢出，浏览器控制台无应用错误。
 - MCP Server `npm run build`：通过。
@@ -303,6 +307,7 @@
 
 | 日期 | 版本 | 说明 |
 |---|---|---|
+| 2026-07-30 | v0.11-draft | 新增 mock IdP、确定性 RBAC、一次性显式确认、metadata-only 审计及权限控制台；明确模拟执行不会写入外部档案 |
 | 2026-07-30 | v0.10-draft | 新增 summary-only 执行 trace、固定安全回归评测、React 可观测性控制台及成功/空状态/失败恢复测试 |
 | 2026-07-28 | v0.9-draft | 新增 AI 工程作品集目标、Contract-first API 与 React Solution Console 范围；补充 monorepo 技术边界、前端/API 覆盖率门禁、真实联调证据和可观测性/评估增强路线 |
 | 2026-07-27 | v0.8-draft | 修复 MCP 跨项目 TypeScript 编译边界和日期相关测试；确认小程序与 MCP 构建通过、冒烟测试 46/46、集成测试 11/11 |

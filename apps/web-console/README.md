@@ -7,6 +7,7 @@
 - **方案总览**：用四层蓝图说明 Experience、AI Orchestration、Safety Boundary 与 Quality & Delivery 的职责。
 - **安全规则实验室**：切换日常、疫苗后、个体过敏三类档案，通过真实 API 观察可解释决策。
 - **可观测性与评估**：展示规则 trace、阻断率、延迟、provider 状态和固定安全回归集；明确显示 summary-only 隐私模式。
+- **权限与审计**：通过 mock IdP 演示 Viewer 与 Safety Admin 的 RBAC 差异、一次性显式确认和 metadata-only 审计轨迹。
 - **端到端类型安全**：直接消费 `@fushi/contracts`，使用 oRPC `OpenAPILink` 调用 Express OpenAPI Handler。
 - **服务端与客户端状态分离**：TanStack Query 管理请求状态，Zustand 管理本地实验输入。
 - **离线前端测试**：MSW 模拟真实 HTTP 边界，覆盖成功、拦截、空输入、失败与重试路径。

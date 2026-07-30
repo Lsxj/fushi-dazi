@@ -9,6 +9,7 @@ export default defineConfig({
       include: [
         'src/app.ts',
         'src/evaluation.ts',
+        'src/governance.ts',
         'src/observability.ts',
         'src/openapi.ts',
         'src/router.ts',

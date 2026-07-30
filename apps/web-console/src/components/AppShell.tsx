@@ -7,6 +7,7 @@ const navigation = [
   { to: '/', label: '方案总览', end: true },
   { to: '/safety', label: '安全规则实验室', end: false },
   { to: '/observability', label: '可观测性与评估', end: false },
+  { to: '/governance', label: '权限与审计', end: false },
 ]
 
 export function AppShell() {
@@ -54,7 +55,7 @@ export function AppShell() {
           </nav>
 
           <a
-            className="hidden items-center gap-2 text-sm font-semibold text-[#183f35] hover:text-[#df5c34] sm:flex"
+            className="hidden items-center gap-2 text-sm font-semibold text-[#183f35] hover:text-[#df5c34] lg:flex"
             href="https://github.com/Lsxj/fushi-dazi"
             rel="noreferrer"
             target="_blank"

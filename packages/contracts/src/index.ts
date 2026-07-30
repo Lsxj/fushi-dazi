@@ -128,6 +128,119 @@ export const SafetyEvaluationOutputSchema = z.object({
   cases: z.array(SafetyEvaluationCaseSchema),
 })
 
+export const GovernanceRoleSchema = z.enum([
+  'viewer',
+  'operator',
+  'safety-admin',
+  'auditor',
+])
+
+export const GovernanceActionSchema = z.enum([
+  'safety.report.read',
+  'profile.mark-allergic',
+  'audit.export',
+])
+
+export const GovernancePolicyOutputSchema = z.object({
+  identityProvider: z.literal('mock-demo'),
+  executionMode: z.literal('simulation'),
+  externalMutationPerformed: z.literal(false),
+  roles: z.array(
+    z.object({
+      role: GovernanceRoleSchema,
+      label: z.string().min(1),
+      permissions: z.array(GovernanceActionSchema),
+    })
+  ),
+  irreversibleActions: z.array(
+    z.object({
+      action: GovernanceActionSchema,
+      requiresExplicitConfirmation: z.boolean(),
+    })
+  ),
+})
+
+export const RequestGovernedActionInputSchema = z.object({
+  actor: z.object({
+    id: z.string().regex(/^demo-[a-z-]+$/),
+    role: GovernanceRoleSchema,
+  }),
+  action: z.literal('profile.mark-allergic'),
+  resource: z.object({
+    type: z.literal('demo-profile'),
+    id: z.literal('demo-profile-001'),
+  }),
+  evidence: z.object({
+    reactionId: z.string().min(1).max(80),
+  }),
+  justification: z.string().trim().min(8).max(240),
+})
+
+export const RequestGovernedActionOutputSchema = z.object({
+  auditId: z.string().uuid(),
+  decision: z.enum(['denied', 'confirmation-required']),
+  reasonCode: z.enum([
+    'identity-role-mismatch',
+    'role-not-authorized',
+    'explicit-confirmation-required',
+  ]),
+  confirmationToken: z.string().uuid().optional(),
+  expiresAt: z.string().datetime().optional(),
+  identityProvider: z.literal('mock-demo'),
+  executionMode: z.literal('simulation'),
+  externalMutationPerformed: z.literal(false),
+})
+
+export const ConfirmGovernedActionInputSchema = z.object({
+  actor: z.object({
+    id: z.string().regex(/^demo-[a-z-]+$/),
+    role: GovernanceRoleSchema,
+  }),
+  confirmationToken: z.string().uuid(),
+  consentToConfirmIrreversible: z.literal(true),
+})
+
+export const ConfirmGovernedActionOutputSchema = z.object({
+  auditId: z.string().uuid(),
+  decision: z.enum(['confirmed', 'denied']),
+  reasonCode: z.enum([
+    'explicit-confirmation-recorded',
+    'invalid-or-expired-token',
+    'actor-mismatch',
+    'identity-role-mismatch',
+  ]),
+  identityProvider: z.literal('mock-demo'),
+  executionMode: z.literal('simulation'),
+  externalMutationPerformed: z.literal(false),
+})
+
+export const GovernanceAuditRecordSchema = z.object({
+  auditId: z.string().uuid(),
+  timestamp: z.string().datetime(),
+  actorId: z.string(),
+  actorRole: GovernanceRoleSchema,
+  action: GovernanceActionSchema,
+  resourceType: z.literal('demo-profile'),
+  decision: z.enum(['denied', 'confirmation-required', 'confirmed']),
+  reasonCode: z.string(),
+  confirmationEvidence: z.boolean(),
+  authorizationSource: z.literal('deterministic-rbac'),
+  identityProvider: z.literal('mock-demo'),
+  executionMode: z.literal('simulation'),
+  externalMutationPerformed: z.literal(false),
+})
+
+export const GovernanceAuditOutputSchema = z.object({
+  records: z.array(GovernanceAuditRecordSchema),
+  summary: z.object({
+    total: z.number().int().nonnegative(),
+    denied: z.number().int().nonnegative(),
+    awaitingConfirmation: z.number().int().nonnegative(),
+    confirmed: z.number().int().nonnegative(),
+  }),
+  privacyMode: z.literal('metadata-only'),
+})
+
 export const checkFoodSafetyContract = oc
   .route({
     method: 'POST',
@@ -158,6 +271,46 @@ export const evaluateSafetyContract = oc
   .input(z.object({}))
   .output(SafetyEvaluationOutputSchema)
 
+export const getGovernancePolicyContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/governance/policy',
+    summary: 'Describe the deterministic demo RBAC policy',
+    tags: ['Governance'],
+  })
+  .input(z.object({}))
+  .output(GovernancePolicyOutputSchema)
+
+export const requestGovernedActionContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/governance/actions/request',
+    summary: 'Request authorization for a governed irreversible action',
+    tags: ['Governance'],
+  })
+  .input(RequestGovernedActionInputSchema)
+  .output(RequestGovernedActionOutputSchema)
+
+export const confirmGovernedActionContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/governance/actions/confirm',
+    summary: 'Record explicit confirmation for a governed action',
+    tags: ['Governance'],
+  })
+  .input(ConfirmGovernedActionInputSchema)
+  .output(ConfirmGovernedActionOutputSchema)
+
+export const listGovernanceAuditContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/governance/audit',
+    summary: 'List metadata-only governance audit records',
+    tags: ['Governance'],
+  })
+  .input(z.object({}))
+  .output(GovernanceAuditOutputSchema)
+
 export const apiContract = {
   safety: {
     check: checkFoodSafetyContract,
@@ -167,6 +320,12 @@ export const apiContract = {
   },
   evaluations: {
     safety: evaluateSafetyContract,
+  },
+  governance: {
+    policy: getGovernancePolicyContract,
+    requestAction: requestGovernedActionContract,
+    confirmAction: confirmGovernedActionContract,
+    audit: listGovernanceAuditContract,
   },
 }
 
@@ -178,4 +337,27 @@ export type ListSafetyTracesOutput = z.infer<
 >
 export type SafetyEvaluationOutput = z.infer<
   typeof SafetyEvaluationOutputSchema
+>
+export type GovernanceRole = z.infer<typeof GovernanceRoleSchema>
+export type GovernanceAction = z.infer<typeof GovernanceActionSchema>
+export type GovernancePolicyOutput = z.infer<
+  typeof GovernancePolicyOutputSchema
+>
+export type RequestGovernedActionInput = z.infer<
+  typeof RequestGovernedActionInputSchema
+>
+export type RequestGovernedActionOutput = z.infer<
+  typeof RequestGovernedActionOutputSchema
+>
+export type ConfirmGovernedActionInput = z.infer<
+  typeof ConfirmGovernedActionInputSchema
+>
+export type ConfirmGovernedActionOutput = z.infer<
+  typeof ConfirmGovernedActionOutputSchema
+>
+export type GovernanceAuditRecord = z.infer<
+  typeof GovernanceAuditRecordSchema
+>
+export type GovernanceAuditOutput = z.infer<
+  typeof GovernanceAuditOutputSchema
 >

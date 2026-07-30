@@ -31,6 +31,10 @@ pnpm run api:dev
 - `POST /api/v1/safety/check`
 - `GET /api/v1/observability/traces`
 - `GET /api/v1/evaluations/safety`
+- `GET /api/v1/governance/policy`
+- `POST /api/v1/governance/actions/request`
+- `POST /api/v1/governance/actions/confirm`
+- `GET /api/v1/governance/audit`
 
 示例：
 
@@ -47,9 +51,15 @@ Trace 使用容量为 100 的进程内存储，只保存食材数量、档案状
 不保存食材名、宝宝姓名或备注。评测接口运行固定的安全回归集，不生成线上
 trace，也不调用模型；`provider: "none"` 是明确的运行状态，不是 mock 模型。
 
+治理接口是显式标注的 `mock-demo` Identity Provider / `simulation`
+执行模式，用于展示确定性 RBAC、一次性确认令牌和 metadata-only 审计。
+永久过敏标记授权只有绑定的 `safety-admin` 可以申请，确认接口要求
+`consentToConfirmIrreversible: true`；演示不会写入真实档案，响应始终包含
+`externalMutationPerformed: false`。
+
 ## 测试策略
 
 - 直接调用 oRPC procedure，验证安全、阻断、搭配提示和排敏目标分支。
 - 通过 Supertest 访问真实 Express/OpenAPI 边界，验证成功响应和非法输入。
-- 用生成的 OpenAPI 文档反查安全、可观测性和评测三类接口均已接入。
-- API 测试覆盖成功、非法输入、隐私最小化、容量上限和固定回归集；四项覆盖率门槛均为 90%，当前均为 100%。
+- 用生成的 OpenAPI 文档反查安全、可观测性、评测和治理接口均已接入。
+- API 测试覆盖成功、非法输入、隐私最小化、容量上限、固定回归集、越权、令牌过期与重放；四项覆盖率门槛均为 90%，当前均为 100%。

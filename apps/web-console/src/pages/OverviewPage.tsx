@@ -21,6 +21,12 @@ const capabilities = [
     value: '23 MCP tools',
     detail: '面向计划、库存、记录与反应回溯的工具层',
   },
+  {
+    icon: 'shield' as const,
+    label: 'Enterprise governance',
+    value: 'RBAC + Audit',
+    detail: '角色策略、一次性确认令牌与元数据审计',
+  },
 ]
 
 const layers = [
@@ -168,7 +174,7 @@ export function OverviewPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-24">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {capabilities.map((item) => (
             <article
               className="group rounded-[1.6rem] border border-black/8 bg-white/65 p-6 transition hover:-translate-y-1 hover:bg-white hover:shadow-[0_20px_50px_rgba(24,63,53,.08)]"

@@ -52,4 +52,12 @@ describe('portfolio console navigation', () => {
       await screen.findByRole('heading', { name: '决策可观测性' })
     ).toBeInTheDocument()
   })
+
+  it('routes to the enterprise governance console', async () => {
+    renderApp(<App />, '/governance')
+
+    expect(
+      await screen.findByRole('heading', { name: '权限与审计控制台' })
+    ).toBeInTheDocument()
+  })
 })

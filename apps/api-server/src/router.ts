@@ -6,6 +6,12 @@ import { performance } from 'node:perf_hooks'
 import { checkFoodsSafety } from '../../../utils/safety.js'
 import { evaluateSafetyRules } from './evaluation.js'
 import {
+  confirmGovernedAction,
+  getGovernancePolicy,
+  listGovernanceAudit,
+  requestGovernedAction,
+} from './governance.js'
+import {
   listSafetyTraces,
   recordSafetyTrace,
 } from './observability.js'
@@ -56,6 +62,14 @@ const listTraces = os.observability.traces.handler(() => listSafetyTraces())
 const evaluateSafety = os.evaluations.safety.handler(() =>
   evaluateSafetyRules()
 )
+const getPolicy = os.governance.policy.handler(() => getGovernancePolicy())
+const requestAction = os.governance.requestAction.handler(({ input }) =>
+  requestGovernedAction(input)
+)
+const confirmAction = os.governance.confirmAction.handler(({ input }) =>
+  confirmGovernedAction(input)
+)
+const listAudit = os.governance.audit.handler(() => listGovernanceAudit())
 
 export const router = os.router({
   safety: {
@@ -66,5 +80,11 @@ export const router = os.router({
   },
   evaluations: {
     safety: evaluateSafety,
+  },
+  governance: {
+    policy: getPolicy,
+    requestAction,
+    confirmAction,
+    audit: listAudit,
   },
 })

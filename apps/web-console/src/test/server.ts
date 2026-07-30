@@ -1,6 +1,8 @@
 import type {
   CheckFoodSafetyInput,
   CheckFoodSafetyOutput,
+  GovernanceAuditOutput,
+  GovernancePolicyOutput,
   ListSafetyTracesOutput,
   SafetyEvaluationOutput,
 } from '@fushi/contracts'
@@ -132,6 +134,71 @@ const evaluationResponse: SafetyEvaluationOutput = {
   })),
 }
 
+const governancePolicyResponse: GovernancePolicyOutput = {
+  identityProvider: 'mock-demo',
+  executionMode: 'simulation',
+  externalMutationPerformed: false,
+  roles: [
+    {
+      role: 'viewer',
+      label: '只读观察者',
+      permissions: ['safety.report.read'],
+    },
+    {
+      role: 'operator',
+      label: '业务操作员',
+      permissions: ['safety.report.read'],
+    },
+    {
+      role: 'safety-admin',
+      label: '安全管理员',
+      permissions: [
+        'safety.report.read',
+        'profile.mark-allergic',
+        'audit.export',
+      ],
+    },
+    {
+      role: 'auditor',
+      label: '审计员',
+      permissions: ['safety.report.read', 'audit.export'],
+    },
+  ],
+  irreversibleActions: [
+    {
+      action: 'profile.mark-allergic',
+      requiresExplicitConfirmation: true,
+    },
+  ],
+}
+
+const governanceAuditResponse: GovernanceAuditOutput = {
+  records: [
+    {
+      auditId: '93759ae7-bcee-4a75-9249-11f49d55b32a',
+      timestamp: '2026-07-30T03:00:00.000Z',
+      actorId: 'demo-safety-admin',
+      actorRole: 'safety-admin',
+      action: 'profile.mark-allergic',
+      resourceType: 'demo-profile',
+      decision: 'confirmed',
+      reasonCode: 'explicit-confirmation-recorded',
+      confirmationEvidence: true,
+      authorizationSource: 'deterministic-rbac',
+      identityProvider: 'mock-demo',
+      executionMode: 'simulation',
+      externalMutationPerformed: false,
+    },
+  ],
+  summary: {
+    total: 1,
+    denied: 0,
+    awaitingConfirmation: 0,
+    confirmed: 1,
+  },
+  privacyMode: 'metadata-only',
+}
+
 export const successHandler = http.post(
   '*/api/v1/safety/check',
   async ({ request }) => {
@@ -150,8 +217,64 @@ export const evaluationHandler = http.get(
   () => HttpResponse.json(evaluationResponse)
 )
 
+export const governancePolicyHandler = http.get(
+  '*/api/v1/governance/policy',
+  () => HttpResponse.json(governancePolicyResponse)
+)
+
+export const governanceAuditHandler = http.get(
+  '*/api/v1/governance/audit',
+  () => HttpResponse.json(governanceAuditResponse)
+)
+
+export const governanceRequestHandler = http.post(
+  '*/api/v1/governance/actions/request',
+  async ({ request }) => {
+    const input = (await request.json()) as {
+      actor: { role: string }
+    }
+    if (input.actor.role !== 'safety-admin') {
+      return HttpResponse.json({
+        auditId: '70d8dd8e-dc48-4f8d-a6af-0ff4a8bc015a',
+        decision: 'denied',
+        reasonCode: 'role-not-authorized',
+        identityProvider: 'mock-demo',
+        executionMode: 'simulation',
+        externalMutationPerformed: false,
+      })
+    }
+    return HttpResponse.json({
+      auditId: 'ed89da47-49ab-4e56-80f0-d7a3bb802238',
+      decision: 'confirmation-required',
+      reasonCode: 'explicit-confirmation-required',
+      confirmationToken: '7c4a51b6-8aed-40dc-9285-56837f406cf1',
+      expiresAt: '2026-07-30T03:05:00.000Z',
+      identityProvider: 'mock-demo',
+      executionMode: 'simulation',
+      externalMutationPerformed: false,
+    })
+  }
+)
+
+export const governanceConfirmHandler = http.post(
+  '*/api/v1/governance/actions/confirm',
+  () =>
+    HttpResponse.json({
+      auditId: '93759ae7-bcee-4a75-9249-11f49d55b32a',
+      decision: 'confirmed',
+      reasonCode: 'explicit-confirmation-recorded',
+      identityProvider: 'mock-demo',
+      executionMode: 'simulation',
+      externalMutationPerformed: false,
+    })
+)
+
 export const server = setupServer(
   successHandler,
   tracesHandler,
-  evaluationHandler
+  evaluationHandler,
+  governancePolicyHandler,
+  governanceAuditHandler,
+  governanceRequestHandler,
+  governanceConfirmHandler
 )
