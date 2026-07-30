@@ -1,17 +1,17 @@
 import {
   CheckFoodSafetyInputSchema,
   CheckFoodSafetyOutputSchema,
-  GovernanceAuditOutputSchema,
-  GovernancePolicyOutputSchema,
+  HouseholdAuditOutputSchema,
+  HouseholdStateOutputSchema,
   ListSafetyTracesOutputSchema,
-  RequestGovernedActionOutputSchema,
+  RequestAllergyChangeOutputSchema,
   SafetyEvaluationOutputSchema,
 } from '@fushi/contracts'
 import request from 'supertest'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { createApp } from '../src/app.js'
-import { clearGovernanceState } from '../src/governance.js'
+import { clearCollaborationState } from '../src/collaboration.js'
 import { clearSafetyTraces } from '../src/observability.js'
 import { getOpenAPISpec } from '../src/openapi.js'
 import { baseInput } from './fixtures.js'
@@ -21,7 +21,7 @@ const app = createApp()
 describe('Express + oRPC OpenAPI boundary', () => {
   beforeEach(() => {
     clearSafetyTraces()
-    clearGovernanceState()
+    clearCollaborationState()
   })
 
   it('serves health metadata that identifies the deterministic engine', async () => {
@@ -75,10 +75,14 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(response.body.paths).toHaveProperty('/v1/safety/check')
     expect(response.body.paths).toHaveProperty('/v1/observability/traces')
     expect(response.body.paths).toHaveProperty('/v1/evaluations/safety')
-    expect(response.body.paths).toHaveProperty('/v1/governance/policy')
-    expect(response.body.paths).toHaveProperty('/v1/governance/actions/request')
-    expect(response.body.paths).toHaveProperty('/v1/governance/actions/confirm')
-    expect(response.body.paths).toHaveProperty('/v1/governance/audit')
+    expect(response.body.paths).toHaveProperty('/v1/collaboration/household')
+    expect(response.body.paths).toHaveProperty(
+      '/v1/collaboration/allergy-changes/request'
+    )
+    expect(response.body.paths).toHaveProperty(
+      '/v1/collaboration/allergy-changes/confirm'
+    )
+    expect(response.body.paths).toHaveProperty('/v1/collaboration/audit')
   })
 
   it('serves typed observability and evaluation reports', async () => {
@@ -103,59 +107,60 @@ describe('Express + oRPC OpenAPI boundary', () => {
     ).toBe(1)
   })
 
-  it('enforces governance confirmation at the HTTP contract boundary', async () => {
-    const policy = await request(app).get('/api/v1/governance/policy').expect(200)
-    const authorization = await request(app)
-      .post('/api/v1/governance/actions/request')
+  it('enforces household owner confirmation at the HTTP contract boundary', async () => {
+    const household = await request(app)
+      .get('/api/v1/collaboration/household')
+      .expect(200)
+    const changeRequest = await request(app)
+      .post('/api/v1/collaboration/allergy-changes/request')
       .set('Content-Type', 'application/json')
       .send({
         actor: {
-          id: 'demo-safety-admin',
-          role: 'safety-admin',
+          id: 'demo-caregiver',
+          role: 'caregiver',
         },
-        action: 'profile.mark-allergic',
-        resource: {
-          type: 'demo-profile',
-          id: 'demo-profile-001',
-        },
-        evidence: {
-          reactionId: 'reaction-demo-001',
-        },
-        justification: '根据已记录反应申请永久过敏标记',
+        householdId: 'demo-household-001',
+        food: '鳕鱼',
+        reactionId: 'reaction-demo-001',
+        justification: '进食后出现已记录反应，申请更新安全档案',
       })
       .expect(200)
     const missingConsent = await request(app)
-      .post('/api/v1/governance/actions/confirm')
+      .post('/api/v1/collaboration/allergy-changes/confirm')
       .set('Content-Type', 'application/json')
       .send({
         actor: {
-          id: 'demo-safety-admin',
-          role: 'safety-admin',
+          id: 'demo-primary-caregiver',
+          role: 'primary-caregiver',
         },
-        confirmationToken: authorization.body.confirmationToken,
+        householdId: 'demo-household-001',
+        requestId: changeRequest.body.request.requestId,
       })
     const falseConsent = await request(app)
-      .post('/api/v1/governance/actions/confirm')
+      .post('/api/v1/collaboration/allergy-changes/confirm')
       .set('Content-Type', 'application/json')
       .send({
         actor: {
-          id: 'demo-safety-admin',
-          role: 'safety-admin',
+          id: 'demo-primary-caregiver',
+          role: 'primary-caregiver',
         },
-        confirmationToken: authorization.body.confirmationToken,
+        householdId: 'demo-household-001',
+        requestId: changeRequest.body.request.requestId,
         consentToConfirmIrreversible: false,
       })
-    const audit = await request(app).get('/api/v1/governance/audit').expect(200)
+    const audit = await request(app)
+      .get('/api/v1/collaboration/audit')
+      .expect(200)
 
-    expect(GovernancePolicyOutputSchema.parse(policy.body).identityProvider).toBe(
-      'mock-demo'
+    expect(HouseholdStateOutputSchema.parse(household.body).dataSource).toBe(
+      'synthetic-demo'
     )
     expect(
-      RequestGovernedActionOutputSchema.parse(authorization.body).decision
-    ).toBe('confirmation-required')
+      RequestAllergyChangeOutputSchema.parse(changeRequest.body).decision
+    ).toBe('pending-owner-confirmation')
     expect(missingConsent.status).toBe(400)
     expect(falseConsent.status).toBe(400)
-    expect(GovernanceAuditOutputSchema.parse(audit.body).summary.total).toBe(1)
+    expect(HouseholdAuditOutputSchema.parse(audit.body).summary.total).toBe(1)
   })
 
   it('returns a structured 404 outside the contract router', async () => {

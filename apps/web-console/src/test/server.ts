@@ -1,8 +1,8 @@
 import type {
   CheckFoodSafetyInput,
   CheckFoodSafetyOutput,
-  GovernanceAuditOutput,
-  GovernancePolicyOutput,
+  HouseholdAuditOutput,
+  HouseholdStateOutput,
   ListSafetyTracesOutput,
   SafetyEvaluationOutput,
 } from '@fushi/contracts'
@@ -134,69 +134,68 @@ const evaluationResponse: SafetyEvaluationOutput = {
   })),
 }
 
-const governancePolicyResponse: GovernancePolicyOutput = {
-  identityProvider: 'mock-demo',
-  executionMode: 'simulation',
-  externalMutationPerformed: false,
-  roles: [
+const householdResponse: HouseholdStateOutput = {
+  householdId: 'demo-household-001',
+  dataSource: 'synthetic-demo',
+  profileVersion: 1,
+  members: [
     {
-      role: 'viewer',
-      label: '只读观察者',
-      permissions: ['safety.report.read'],
-    },
-    {
-      role: 'operator',
-      label: '业务操作员',
-      permissions: ['safety.report.read'],
-    },
-    {
-      role: 'safety-admin',
-      label: '安全管理员',
+      actorId: 'demo-primary-caregiver',
+      role: 'primary-caregiver',
+      label: '主照护人',
       permissions: [
-        'safety.report.read',
-        'profile.mark-allergic',
-        'audit.export',
+        'profile.read',
+        'reaction.record',
+        'allergy-change.request',
+        'allergy-change.confirm',
       ],
     },
     {
-      role: 'auditor',
-      label: '审计员',
-      permissions: ['safety.report.read', 'audit.export'],
+      actorId: 'demo-caregiver',
+      role: 'caregiver',
+      label: '共同照护人',
+      permissions: [
+        'profile.read',
+        'reaction.record',
+        'allergy-change.request',
+      ],
     },
-  ],
-  irreversibleActions: [
     {
-      action: 'profile.mark-allergic',
-      requiresExplicitConfirmation: true,
+      actorId: 'demo-viewer',
+      role: 'viewer',
+      label: '只读家人',
+      permissions: ['profile.read'],
     },
   ],
+  foodStates: [{ food: '鳕鱼', state: 'confirmed' }],
+  pendingRequests: [],
 }
 
-const governanceAuditResponse: GovernanceAuditOutput = {
+const householdAuditResponse: HouseholdAuditOutput = {
   records: [
     {
       auditId: '93759ae7-bcee-4a75-9249-11f49d55b32a',
       timestamp: '2026-07-30T03:00:00.000Z',
-      actorId: 'demo-safety-admin',
-      actorRole: 'safety-admin',
-      action: 'profile.mark-allergic',
-      resourceType: 'demo-profile',
+      actorId: 'demo-primary-caregiver',
+      actorRole: 'primary-caregiver',
+      action: 'allergy-change.confirm',
+      householdId: 'demo-household-001',
+      food: '鳕鱼',
       decision: 'confirmed',
-      reasonCode: 'explicit-confirmation-recorded',
+      reasonCode: 'allergy-profile-updated',
       confirmationEvidence: true,
-      authorizationSource: 'deterministic-rbac',
-      identityProvider: 'mock-demo',
-      executionMode: 'simulation',
-      externalMutationPerformed: false,
+      profileVersion: 2,
+      authorizationSource: 'household-role-policy',
+      dataSource: 'synthetic-demo',
     },
   ],
   summary: {
     total: 1,
     denied: 0,
-    awaitingConfirmation: 0,
+    pendingOwnerConfirmation: 0,
     confirmed: 1,
   },
-  privacyMode: 'metadata-only',
+  dataSource: 'synthetic-demo',
 }
 
 export const successHandler = http.post(
@@ -217,55 +216,62 @@ export const evaluationHandler = http.get(
   () => HttpResponse.json(evaluationResponse)
 )
 
-export const governancePolicyHandler = http.get(
-  '*/api/v1/governance/policy',
-  () => HttpResponse.json(governancePolicyResponse)
+export const householdHandler = http.get(
+  '*/api/v1/collaboration/household',
+  () => HttpResponse.json(householdResponse)
 )
 
-export const governanceAuditHandler = http.get(
-  '*/api/v1/governance/audit',
-  () => HttpResponse.json(governanceAuditResponse)
+export const householdAuditHandler = http.get(
+  '*/api/v1/collaboration/audit',
+  () => HttpResponse.json(householdAuditResponse)
 )
 
-export const governanceRequestHandler = http.post(
-  '*/api/v1/governance/actions/request',
+export const allergyChangeRequestHandler = http.post(
+  '*/api/v1/collaboration/allergy-changes/request',
   async ({ request }) => {
     const input = (await request.json()) as {
       actor: { role: string }
     }
-    if (input.actor.role !== 'safety-admin') {
+    if (input.actor.role === 'viewer') {
       return HttpResponse.json({
         auditId: '70d8dd8e-dc48-4f8d-a6af-0ff4a8bc015a',
         decision: 'denied',
         reasonCode: 'role-not-authorized',
-        identityProvider: 'mock-demo',
-        executionMode: 'simulation',
-        externalMutationPerformed: false,
+        dataSource: 'synthetic-demo',
+        profileUpdated: false,
       })
     }
     return HttpResponse.json({
       auditId: 'ed89da47-49ab-4e56-80f0-d7a3bb802238',
-      decision: 'confirmation-required',
-      reasonCode: 'explicit-confirmation-required',
-      confirmationToken: '7c4a51b6-8aed-40dc-9285-56837f406cf1',
-      expiresAt: '2026-07-30T03:05:00.000Z',
-      identityProvider: 'mock-demo',
-      executionMode: 'simulation',
-      externalMutationPerformed: false,
+      decision: 'pending-owner-confirmation',
+      reasonCode: 'owner-confirmation-required',
+      request: {
+        requestId: '7c4a51b6-8aed-40dc-9285-56837f406cf1',
+        householdId: 'demo-household-001',
+        food: '鳕鱼',
+        reactionId: 'reaction-demo-001',
+        requestedBy: 'demo-caregiver',
+        requestedByRole: 'caregiver',
+        justification: '进食后出现已记录反应，申请更新安全档案',
+        status: 'pending-owner-confirmation',
+        createdAt: '2026-07-30T03:00:00.000Z',
+      },
+      dataSource: 'synthetic-demo',
+      profileUpdated: false,
     })
   }
 )
 
-export const governanceConfirmHandler = http.post(
-  '*/api/v1/governance/actions/confirm',
+export const allergyChangeConfirmHandler = http.post(
+  '*/api/v1/collaboration/allergy-changes/confirm',
   () =>
     HttpResponse.json({
       auditId: '93759ae7-bcee-4a75-9249-11f49d55b32a',
       decision: 'confirmed',
-      reasonCode: 'explicit-confirmation-recorded',
-      identityProvider: 'mock-demo',
-      executionMode: 'simulation',
-      externalMutationPerformed: false,
+      reasonCode: 'allergy-profile-updated',
+      dataSource: 'synthetic-demo',
+      profileUpdated: true,
+      profileVersion: 2,
     })
 )
 
@@ -273,8 +279,8 @@ export const server = setupServer(
   successHandler,
   tracesHandler,
   evaluationHandler,
-  governancePolicyHandler,
-  governanceAuditHandler,
-  governanceRequestHandler,
-  governanceConfirmHandler
+  householdHandler,
+  householdAuditHandler,
+  allergyChangeRequestHandler,
+  allergyChangeConfirmHandler
 )

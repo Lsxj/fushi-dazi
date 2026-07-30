@@ -53,11 +53,13 @@ describe('portfolio console navigation', () => {
     ).toBeInTheDocument()
   })
 
-  it('routes to the enterprise governance console', async () => {
-    renderApp(<App />, '/governance')
+  it('routes to the household collaboration workflow', async () => {
+    renderApp(<App />, '/collaboration')
 
     expect(
-      await screen.findByRole('heading', { name: '权限与审计控制台' })
+      await screen.findByRole('heading', {
+        name: '家庭协作与安全档案',
+      })
     ).toBeInTheDocument()
   })
 })

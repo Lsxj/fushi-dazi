@@ -128,117 +128,134 @@ export const SafetyEvaluationOutputSchema = z.object({
   cases: z.array(SafetyEvaluationCaseSchema),
 })
 
-export const GovernanceRoleSchema = z.enum([
+export const HouseholdRoleSchema = z.enum([
+  'primary-caregiver',
+  'caregiver',
   'viewer',
-  'operator',
-  'safety-admin',
-  'auditor',
 ])
 
-export const GovernanceActionSchema = z.enum([
-  'safety.report.read',
-  'profile.mark-allergic',
-  'audit.export',
-])
-
-export const GovernancePolicyOutputSchema = z.object({
-  identityProvider: z.literal('mock-demo'),
-  executionMode: z.literal('simulation'),
-  externalMutationPerformed: z.literal(false),
-  roles: z.array(
-    z.object({
-      role: GovernanceRoleSchema,
-      label: z.string().min(1),
-      permissions: z.array(GovernanceActionSchema),
-    })
-  ),
-  irreversibleActions: z.array(
-    z.object({
-      action: GovernanceActionSchema,
-      requiresExplicitConfirmation: z.boolean(),
-    })
-  ),
+export const HouseholdActorSchema = z.object({
+  id: z.string().regex(/^demo-[a-z-]+$/),
+  role: HouseholdRoleSchema,
 })
 
-export const RequestGovernedActionInputSchema = z.object({
+export const AllergyChangeRequestSchema = z.object({
+  requestId: z.string().uuid(),
+  householdId: z.literal('demo-household-001'),
+  food: z.string().min(1).max(40),
+  reactionId: z.string().min(1).max(80),
+  requestedBy: z.string(),
+  requestedByRole: HouseholdRoleSchema,
+  justification: z.string().min(8).max(240),
+  status: z.enum(['pending-owner-confirmation', 'confirmed']),
+  createdAt: z.string().datetime(),
+  confirmedAt: z.string().datetime().optional(),
+})
+
+export const HouseholdStateOutputSchema = z.object({
+  householdId: z.literal('demo-household-001'),
+  dataSource: z.literal('synthetic-demo'),
+  profileVersion: z.number().int().positive(),
+  members: z.array(
+    z.object({
+      actorId: z.string(),
+      role: HouseholdRoleSchema,
+      label: z.string(),
+      permissions: z.array(
+        z.enum([
+          'profile.read',
+          'reaction.record',
+          'allergy-change.request',
+          'allergy-change.confirm',
+        ])
+      ),
+    })
+  ),
+  foodStates: z.array(
+    z.object({
+      food: z.string(),
+      state: z.enum(['confirmed', 'allergic']),
+      changedAt: z.string().datetime().optional(),
+    })
+  ),
+  pendingRequests: z.array(AllergyChangeRequestSchema),
+})
+
+export const RequestAllergyChangeInputSchema = z.object({
   actor: z.object({
     id: z.string().regex(/^demo-[a-z-]+$/),
-    role: GovernanceRoleSchema,
+    role: HouseholdRoleSchema,
   }),
-  action: z.literal('profile.mark-allergic'),
-  resource: z.object({
-    type: z.literal('demo-profile'),
-    id: z.literal('demo-profile-001'),
-  }),
-  evidence: z.object({
-    reactionId: z.string().min(1).max(80),
-  }),
+  householdId: z.literal('demo-household-001'),
+  food: z.string().trim().min(1).max(40),
+  reactionId: z.string().min(1).max(80),
   justification: z.string().trim().min(8).max(240),
 })
 
-export const RequestGovernedActionOutputSchema = z.object({
+export const RequestAllergyChangeOutputSchema = z.object({
   auditId: z.string().uuid(),
-  decision: z.enum(['denied', 'confirmation-required']),
+  decision: z.enum(['denied', 'pending-owner-confirmation']),
   reasonCode: z.enum([
     'identity-role-mismatch',
     'role-not-authorized',
-    'explicit-confirmation-required',
+    'reaction-not-found',
+    'pending-request-exists',
+    'already-allergic',
+    'owner-confirmation-required',
   ]),
-  confirmationToken: z.string().uuid().optional(),
-  expiresAt: z.string().datetime().optional(),
-  identityProvider: z.literal('mock-demo'),
-  executionMode: z.literal('simulation'),
-  externalMutationPerformed: z.literal(false),
+  request: AllergyChangeRequestSchema.optional(),
+  dataSource: z.literal('synthetic-demo'),
+  profileUpdated: z.literal(false),
 })
 
-export const ConfirmGovernedActionInputSchema = z.object({
-  actor: z.object({
-    id: z.string().regex(/^demo-[a-z-]+$/),
-    role: GovernanceRoleSchema,
-  }),
-  confirmationToken: z.string().uuid(),
+export const ConfirmAllergyChangeInputSchema = z.object({
+  actor: HouseholdActorSchema,
+  householdId: z.literal('demo-household-001'),
+  requestId: z.string().uuid(),
   consentToConfirmIrreversible: z.literal(true),
 })
 
-export const ConfirmGovernedActionOutputSchema = z.object({
+export const ConfirmAllergyChangeOutputSchema = z.object({
   auditId: z.string().uuid(),
   decision: z.enum(['confirmed', 'denied']),
   reasonCode: z.enum([
-    'explicit-confirmation-recorded',
-    'invalid-or-expired-token',
-    'actor-mismatch',
     'identity-role-mismatch',
+    'owner-role-required',
+    'invalid-request',
+    'reaction-not-found',
+    'explicit-confirmation-required',
+    'allergy-profile-updated',
   ]),
-  identityProvider: z.literal('mock-demo'),
-  executionMode: z.literal('simulation'),
-  externalMutationPerformed: z.literal(false),
+  dataSource: z.literal('synthetic-demo'),
+  profileUpdated: z.boolean(),
+  profileVersion: z.number().int().positive(),
 })
 
-export const GovernanceAuditRecordSchema = z.object({
+export const HouseholdAuditRecordSchema = z.object({
   auditId: z.string().uuid(),
   timestamp: z.string().datetime(),
   actorId: z.string(),
-  actorRole: GovernanceRoleSchema,
-  action: GovernanceActionSchema,
-  resourceType: z.literal('demo-profile'),
-  decision: z.enum(['denied', 'confirmation-required', 'confirmed']),
+  actorRole: HouseholdRoleSchema,
+  action: z.enum(['allergy-change.request', 'allergy-change.confirm']),
+  householdId: z.literal('demo-household-001'),
+  food: z.string(),
+  decision: z.enum(['denied', 'pending-owner-confirmation', 'confirmed']),
   reasonCode: z.string(),
   confirmationEvidence: z.boolean(),
-  authorizationSource: z.literal('deterministic-rbac'),
-  identityProvider: z.literal('mock-demo'),
-  executionMode: z.literal('simulation'),
-  externalMutationPerformed: z.literal(false),
+  profileVersion: z.number().int().positive(),
+  authorizationSource: z.literal('household-role-policy'),
+  dataSource: z.literal('synthetic-demo'),
 })
 
-export const GovernanceAuditOutputSchema = z.object({
-  records: z.array(GovernanceAuditRecordSchema),
+export const HouseholdAuditOutputSchema = z.object({
+  records: z.array(HouseholdAuditRecordSchema),
   summary: z.object({
     total: z.number().int().nonnegative(),
     denied: z.number().int().nonnegative(),
-    awaitingConfirmation: z.number().int().nonnegative(),
+    pendingOwnerConfirmation: z.number().int().nonnegative(),
     confirmed: z.number().int().nonnegative(),
   }),
-  privacyMode: z.literal('metadata-only'),
+  dataSource: z.literal('synthetic-demo'),
 })
 
 export const checkFoodSafetyContract = oc
@@ -271,45 +288,45 @@ export const evaluateSafetyContract = oc
   .input(z.object({}))
   .output(SafetyEvaluationOutputSchema)
 
-export const getGovernancePolicyContract = oc
+export const getHouseholdStateContract = oc
   .route({
     method: 'GET',
-    path: '/v1/governance/policy',
-    summary: 'Describe the deterministic demo RBAC policy',
-    tags: ['Governance'],
+    path: '/v1/collaboration/household',
+    summary: 'Read the synthetic household collaboration state',
+    tags: ['Collaboration'],
   })
   .input(z.object({}))
-  .output(GovernancePolicyOutputSchema)
+  .output(HouseholdStateOutputSchema)
 
-export const requestGovernedActionContract = oc
+export const requestAllergyChangeContract = oc
   .route({
     method: 'POST',
-    path: '/v1/governance/actions/request',
-    summary: 'Request authorization for a governed irreversible action',
-    tags: ['Governance'],
+    path: '/v1/collaboration/allergy-changes/request',
+    summary: 'Request an allergy profile change with reaction evidence',
+    tags: ['Collaboration'],
   })
-  .input(RequestGovernedActionInputSchema)
-  .output(RequestGovernedActionOutputSchema)
+  .input(RequestAllergyChangeInputSchema)
+  .output(RequestAllergyChangeOutputSchema)
 
-export const confirmGovernedActionContract = oc
+export const confirmAllergyChangeContract = oc
   .route({
     method: 'POST',
-    path: '/v1/governance/actions/confirm',
-    summary: 'Record explicit confirmation for a governed action',
-    tags: ['Governance'],
+    path: '/v1/collaboration/allergy-changes/confirm',
+    summary: 'Confirm an allergy profile change as the primary caregiver',
+    tags: ['Collaboration'],
   })
-  .input(ConfirmGovernedActionInputSchema)
-  .output(ConfirmGovernedActionOutputSchema)
+  .input(ConfirmAllergyChangeInputSchema)
+  .output(ConfirmAllergyChangeOutputSchema)
 
-export const listGovernanceAuditContract = oc
+export const listHouseholdAuditContract = oc
   .route({
     method: 'GET',
-    path: '/v1/governance/audit',
-    summary: 'List metadata-only governance audit records',
-    tags: ['Governance'],
+    path: '/v1/collaboration/audit',
+    summary: 'List household safety profile change records',
+    tags: ['Collaboration'],
   })
   .input(z.object({}))
-  .output(GovernanceAuditOutputSchema)
+  .output(HouseholdAuditOutputSchema)
 
 export const apiContract = {
   safety: {
@@ -321,11 +338,11 @@ export const apiContract = {
   evaluations: {
     safety: evaluateSafetyContract,
   },
-  governance: {
-    policy: getGovernancePolicyContract,
-    requestAction: requestGovernedActionContract,
-    confirmAction: confirmGovernedActionContract,
-    audit: listGovernanceAuditContract,
+  collaboration: {
+    household: getHouseholdStateContract,
+    requestAllergyChange: requestAllergyChangeContract,
+    confirmAllergyChange: confirmAllergyChangeContract,
+    audit: listHouseholdAuditContract,
   },
 }
 
@@ -338,26 +355,20 @@ export type ListSafetyTracesOutput = z.infer<
 export type SafetyEvaluationOutput = z.infer<
   typeof SafetyEvaluationOutputSchema
 >
-export type GovernanceRole = z.infer<typeof GovernanceRoleSchema>
-export type GovernanceAction = z.infer<typeof GovernanceActionSchema>
-export type GovernancePolicyOutput = z.infer<
-  typeof GovernancePolicyOutputSchema
+export type HouseholdRole = z.infer<typeof HouseholdRoleSchema>
+export type HouseholdStateOutput = z.infer<typeof HouseholdStateOutputSchema>
+export type AllergyChangeRequest = z.infer<typeof AllergyChangeRequestSchema>
+export type RequestAllergyChangeInput = z.infer<
+  typeof RequestAllergyChangeInputSchema
 >
-export type RequestGovernedActionInput = z.infer<
-  typeof RequestGovernedActionInputSchema
+export type RequestAllergyChangeOutput = z.infer<
+  typeof RequestAllergyChangeOutputSchema
 >
-export type RequestGovernedActionOutput = z.infer<
-  typeof RequestGovernedActionOutputSchema
+export type ConfirmAllergyChangeInput = z.infer<
+  typeof ConfirmAllergyChangeInputSchema
 >
-export type ConfirmGovernedActionInput = z.infer<
-  typeof ConfirmGovernedActionInputSchema
+export type ConfirmAllergyChangeOutput = z.infer<
+  typeof ConfirmAllergyChangeOutputSchema
 >
-export type ConfirmGovernedActionOutput = z.infer<
-  typeof ConfirmGovernedActionOutputSchema
->
-export type GovernanceAuditRecord = z.infer<
-  typeof GovernanceAuditRecordSchema
->
-export type GovernanceAuditOutput = z.infer<
-  typeof GovernanceAuditOutputSchema
->
+export type HouseholdAuditRecord = z.infer<typeof HouseholdAuditRecordSchema>
+export type HouseholdAuditOutput = z.infer<typeof HouseholdAuditOutputSchema>

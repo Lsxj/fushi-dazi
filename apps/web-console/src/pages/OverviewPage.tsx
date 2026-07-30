@@ -23,9 +23,9 @@ const capabilities = [
   },
   {
     icon: 'shield' as const,
-    label: 'Enterprise governance',
-    value: 'RBAC + Audit',
-    detail: '角色策略、一次性确认令牌与元数据审计',
+    label: 'Multi-caregiver safety',
+    value: '家庭协作',
+    detail: '反应记录、变更申请、主照护人确认与档案追溯',
   },
 ]
 

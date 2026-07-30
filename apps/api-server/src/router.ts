@@ -4,13 +4,13 @@ import { randomUUID } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
 
 import { checkFoodsSafety } from '../../../utils/safety.js'
-import { evaluateSafetyRules } from './evaluation.js'
 import {
-  confirmGovernedAction,
-  getGovernancePolicy,
-  listGovernanceAudit,
-  requestGovernedAction,
-} from './governance.js'
+  confirmAllergyChange,
+  getHouseholdState,
+  listHouseholdAudit,
+  requestAllergyChange,
+} from './collaboration.js'
+import { evaluateSafetyRules } from './evaluation.js'
 import {
   listSafetyTraces,
   recordSafetyTrace,
@@ -62,14 +62,18 @@ const listTraces = os.observability.traces.handler(() => listSafetyTraces())
 const evaluateSafety = os.evaluations.safety.handler(() =>
   evaluateSafetyRules()
 )
-const getPolicy = os.governance.policy.handler(() => getGovernancePolicy())
-const requestAction = os.governance.requestAction.handler(({ input }) =>
-  requestGovernedAction(input)
+const getHousehold = os.collaboration.household.handler(() =>
+  getHouseholdState()
 )
-const confirmAction = os.governance.confirmAction.handler(({ input }) =>
-  confirmGovernedAction(input)
+const requestChange = os.collaboration.requestAllergyChange.handler(
+  ({ input }) => requestAllergyChange(input)
 )
-const listAudit = os.governance.audit.handler(() => listGovernanceAudit())
+const confirmChange = os.collaboration.confirmAllergyChange.handler(
+  ({ input }) => confirmAllergyChange(input)
+)
+const listCollaborationAudit = os.collaboration.audit.handler(() =>
+  listHouseholdAudit()
+)
 
 export const router = os.router({
   safety: {
@@ -81,10 +85,10 @@ export const router = os.router({
   evaluations: {
     safety: evaluateSafety,
   },
-  governance: {
-    policy: getPolicy,
-    requestAction,
-    confirmAction,
-    audit: listAudit,
+  collaboration: {
+    household: getHousehold,
+    requestAllergyChange: requestChange,
+    confirmAllergyChange: confirmChange,
+    audit: listCollaborationAudit,
   },
 })
