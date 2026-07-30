@@ -6,7 +6,13 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/app.ts', 'src/openapi.ts', 'src/router.ts'],
+      include: [
+        'src/app.ts',
+        'src/evaluation.ts',
+        'src/observability.ts',
+        'src/openapi.ts',
+        'src/router.ts',
+      ],
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
         branches: 90,

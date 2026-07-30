@@ -1,10 +1,13 @@
 import { call } from '@orpc/server'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
+import { clearSafetyTraces } from '../src/observability.js'
 import { router } from '../src/router.js'
 import { baseInput } from './fixtures.js'
 
 describe('contract-first safety procedure', () => {
+  beforeEach(() => clearSafetyTraces())
+
   it('rejects an unsafe or unknown food through deterministic rules', async () => {
     const result = await call(router.safety.check, {
       ...baseInput,
@@ -12,6 +15,10 @@ describe('contract-first safety procedure', () => {
     })
 
     expect(result.safe).toBe(false)
+    expect(result.traceId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    )
+    expect(result.durationMs).toBeGreaterThanOrEqual(0)
     expect(result.decisionSource).toBe('deterministic-rules')
     expect(result.results).toEqual(
       expect.arrayContaining([
@@ -86,6 +93,84 @@ describe('contract-first safety procedure', () => {
       food: '鳕鱼',
       safe: false,
       reason: '鳕鱼已标记过敏',
+    })
+  })
+
+  it('records privacy-safe summaries without food names or notes', async () => {
+    const check = await call(router.safety.check, {
+      ...baseInput,
+      foods: ['鳕鱼'],
+      profile: {
+        ...baseInput.profile,
+        individualExceptions: {
+          鳕鱼: {
+            state: 'allergic',
+            note: 'private-reaction-note',
+          },
+        },
+      },
+    })
+    const traceReport = await call(router.observability.traces, {})
+
+    expect(traceReport).toMatchObject({
+      privacyMode: 'summary-only',
+      summary: {
+        total: 1,
+        allowed: 0,
+        blocked: 1,
+      },
+      traces: [
+        {
+          traceId: check.traceId,
+          executionMode: 'deterministic',
+          provider: 'none',
+          status: 'blocked',
+          inputSummary: {
+            foodCount: 1,
+            profileStatus: 'normal',
+          },
+          outputSummary: {
+            safe: false,
+            passedCount: 0,
+            blockedCount: 1,
+          },
+        },
+      ],
+    })
+    expect(JSON.stringify(traceReport)).not.toContain('鳕鱼')
+    expect(JSON.stringify(traceReport)).not.toContain('private-reaction-note')
+  })
+
+  it('runs the fixed deterministic regression suite', async () => {
+    const evaluation = await call(router.evaluations.safety, {})
+
+    expect(evaluation).toMatchObject({
+      suiteId: 'safety-regression-v1',
+      executionMode: 'deterministic',
+      provider: 'none',
+      datasetSize: 4,
+      passCount: 4,
+      passRate: 1,
+      safetyBlockRecall: 1,
+    })
+    expect(evaluation.cases.every((item) => item.passed)).toBe(true)
+
+    const traces = await call(router.observability.traces, {})
+    expect(traces.summary.total).toBe(0)
+  })
+
+  it('keeps only the latest 100 privacy-safe traces', async () => {
+    for (let index = 0; index < 101; index += 1) {
+      await call(router.safety.check, baseInput)
+    }
+
+    const traces = await call(router.observability.traces, {})
+
+    expect(traces.traces).toHaveLength(100)
+    expect(traces.summary).toMatchObject({
+      total: 100,
+      allowed: 100,
+      blocked: 0,
     })
   })
 })

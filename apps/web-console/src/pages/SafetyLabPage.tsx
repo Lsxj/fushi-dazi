@@ -328,7 +328,7 @@ export function SafetyLabPage() {
                   </div>
                 )}
 
-                <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-5 text-xs text-white/50">
+                <div className="mt-6 grid gap-3 border-t border-white/10 pt-5 text-xs text-white/50 sm:grid-cols-3">
                   <div>
                     <span className="block">档案快照</span>
                     <strong className="mt-1 block text-sm text-white/85">
@@ -342,6 +342,16 @@ export function SafetyLabPage() {
                       'postVaccine'
                         ? '疫苗后'
                         : '日常'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="block">Trace / latency</span>
+                    <strong
+                      className="mt-1 block truncate font-mono text-xs text-white/85"
+                      title={checkSafety.data.traceId}
+                    >
+                      {checkSafety.data.traceId.slice(0, 8)} ·{' '}
+                      {checkSafety.data.durationMs.toFixed(2)} ms
                     </strong>
                   </div>
                 </div>

@@ -79,6 +79,12 @@ export function OverviewPage() {
               >
                 运行安全实验 <Icon name="arrow" size={17} />
               </Link>
+              <Link
+                className="inline-flex items-center gap-3 rounded-full border border-black/12 bg-white/70 px-6 py-3.5 text-sm font-bold text-[#183f35] transition hover:bg-white"
+                to="/observability"
+              >
+                查看可观测性 <Icon name="arrow" size={16} />
+              </Link>
               <a
                 className="inline-flex items-center gap-3 rounded-full border border-black/12 bg-white/70 px-6 py-3.5 text-sm font-bold text-[#183f35] transition hover:bg-white"
                 href="/openapi.json"

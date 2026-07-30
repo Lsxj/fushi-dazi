@@ -39,4 +39,17 @@ describe('portfolio console navigation', () => {
       screen.getByRole('heading', { name: '安全规则实验室' })
     ).toBeInTheDocument()
   })
+
+  it('opens the observability console from the architecture overview', async () => {
+    const user = userEvent.setup()
+    renderApp(<App />)
+
+    await user.click(
+      screen.getByRole('link', { name: /查看可观测性/ })
+    )
+
+    expect(
+      await screen.findByRole('heading', { name: '决策可观测性' })
+    ).toBeInTheDocument()
+  })
 })

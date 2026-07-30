@@ -6,6 +6,7 @@ import { Icon } from './Icon'
 const navigation = [
   { to: '/', label: '方案总览', end: true },
   { to: '/safety', label: '安全规则实验室', end: false },
+  { to: '/observability', label: '可观测性与评估', end: false },
 ]
 
 export function AppShell() {

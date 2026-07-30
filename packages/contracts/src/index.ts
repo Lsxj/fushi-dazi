@@ -54,6 +54,8 @@ export const TabooSchema = z.object({
 })
 
 export const CheckFoodSafetyOutputSchema = z.object({
+  traceId: z.string().uuid(),
+  durationMs: z.number().nonnegative(),
   safe: z.boolean(),
   decisionSource: z.literal('deterministic-rules'),
   profileSnapshot: z.object({
@@ -73,6 +75,59 @@ export const CheckFoodSafetyOutputSchema = z.object({
   tabooBlocks: z.array(TabooSchema),
 })
 
+export const SafetyTraceSchema = z.object({
+  traceId: z.string().uuid(),
+  timestamp: z.string().datetime(),
+  operation: z.literal('safety.check'),
+  executionMode: z.literal('deterministic'),
+  provider: z.literal('none'),
+  decisionSource: z.literal('deterministic-rules'),
+  status: z.enum(['allowed', 'blocked']),
+  durationMs: z.number().nonnegative(),
+  inputSummary: z.object({
+    foodCount: z.number().int().min(1).max(10),
+    profileStatus: z.enum(['normal', 'postVaccine']),
+  }),
+  outputSummary: z.object({
+    safe: z.boolean(),
+    passedCount: z.number().int().nonnegative(),
+    blockedCount: z.number().int().nonnegative(),
+    warningCount: z.number().int().nonnegative(),
+    hardBlockCount: z.number().int().nonnegative(),
+  }),
+})
+
+export const ListSafetyTracesOutputSchema = z.object({
+  traces: z.array(SafetyTraceSchema),
+  summary: z.object({
+    total: z.number().int().nonnegative(),
+    allowed: z.number().int().nonnegative(),
+    blocked: z.number().int().nonnegative(),
+    averageDurationMs: z.number().nonnegative(),
+  }),
+  privacyMode: z.literal('summary-only'),
+})
+
+export const SafetyEvaluationCaseSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  expectedSafe: z.boolean(),
+  actualSafe: z.boolean(),
+  passed: z.boolean(),
+})
+
+export const SafetyEvaluationOutputSchema = z.object({
+  suiteId: z.literal('safety-regression-v1'),
+  evaluatedAt: z.string().datetime(),
+  executionMode: z.literal('deterministic'),
+  provider: z.literal('none'),
+  datasetSize: z.number().int().positive(),
+  passCount: z.number().int().nonnegative(),
+  passRate: z.number().min(0).max(1),
+  safetyBlockRecall: z.number().min(0).max(1),
+  cases: z.array(SafetyEvaluationCaseSchema),
+})
+
 export const checkFoodSafetyContract = oc
   .route({
     method: 'POST',
@@ -83,11 +138,44 @@ export const checkFoodSafetyContract = oc
   .input(CheckFoodSafetyInputSchema)
   .output(CheckFoodSafetyOutputSchema)
 
+export const listSafetyTracesContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/observability/traces',
+    summary: 'List privacy-safe execution traces for safety checks',
+    tags: ['Observability'],
+  })
+  .input(z.object({}))
+  .output(ListSafetyTracesOutputSchema)
+
+export const evaluateSafetyContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/evaluations/safety',
+    summary: 'Run the deterministic safety regression suite',
+    tags: ['Evaluation'],
+  })
+  .input(z.object({}))
+  .output(SafetyEvaluationOutputSchema)
+
 export const apiContract = {
   safety: {
     check: checkFoodSafetyContract,
+  },
+  observability: {
+    traces: listSafetyTracesContract,
+  },
+  evaluations: {
+    safety: evaluateSafetyContract,
   },
 }
 
 export type CheckFoodSafetyInput = z.infer<typeof CheckFoodSafetyInputSchema>
 export type CheckFoodSafetyOutput = z.infer<typeof CheckFoodSafetyOutputSchema>
+export type SafetyTrace = z.infer<typeof SafetyTraceSchema>
+export type ListSafetyTracesOutput = z.infer<
+  typeof ListSafetyTracesOutputSchema
+>
+export type SafetyEvaluationOutput = z.infer<
+  typeof SafetyEvaluationOutputSchema
+>
