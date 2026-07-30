@@ -13,6 +13,7 @@ export default defineConfig({
         'src/observability.ts',
         'src/openapi.ts',
         'src/router.ts',
+        '../../utils/menuPreview.ts',
       ],
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {

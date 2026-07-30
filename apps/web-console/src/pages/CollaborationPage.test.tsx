@@ -17,6 +17,10 @@ describe('CollaborationPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('合成家庭数据')).toBeInTheDocument()
     expect(screen.getByText('已确认正常')).toBeInTheDocument()
+    expect(screen.getByText('鳕鱼蔬菜粥')).toBeInTheDocument()
+    expect(
+      screen.getByText('当前候选均通过家庭安全档案校验。')
+    ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /只读家人/ }))
     await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
@@ -37,6 +41,7 @@ describe('CollaborationPage', () => {
     await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
 
     expect(await screen.findByText('等待主照护人确认')).toBeInTheDocument()
+    expect(screen.getByText('鳕鱼蔬菜粥')).toBeInTheDocument()
     await user.click(
       screen.getByRole('button', { name: '切换为主照护人审核' })
     )
@@ -55,6 +60,10 @@ describe('CollaborationPage', () => {
 
     expect(await screen.findByText('安全档案已更新')).toBeInTheDocument()
     expect(screen.getByText(/安全档案已经更新 · 档案版本 v2/)).toBeInTheDocument()
+    expect(await screen.findByText('永久过敏')).toBeInTheDocument()
+    expect(await screen.findByText('牛肉土豆粥')).toBeInTheDocument()
+    expect(screen.getByText('已排除：鳕鱼蔬菜粥')).toBeInTheDocument()
+    expect(screen.getByText(/鳕鱼已标记过敏/)).toBeInTheDocument()
   })
 
   it('shows household service loading failures', async () => {
@@ -62,7 +71,10 @@ describe('CollaborationPage', () => {
       http.get('*/api/v1/collaboration/household', () =>
         HttpResponse.error()
       ),
-      http.get('*/api/v1/collaboration/audit', () => HttpResponse.error())
+      http.get('*/api/v1/collaboration/audit', () => HttpResponse.error()),
+      http.get('*/api/v1/collaboration/menu-preview', () =>
+        HttpResponse.error()
+      )
     )
     renderApp(<CollaborationPage />, '/collaboration')
 

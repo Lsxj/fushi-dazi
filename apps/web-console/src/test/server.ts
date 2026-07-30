@@ -2,6 +2,7 @@ import type {
   CheckFoodSafetyInput,
   CheckFoodSafetyOutput,
   HouseholdAuditOutput,
+  HouseholdMenuPreviewOutput,
   HouseholdStateOutput,
   ListSafetyTracesOutput,
   SafetyEvaluationOutput,
@@ -171,6 +172,52 @@ const householdResponse: HouseholdStateOutput = {
   pendingRequests: [],
 }
 
+let collaborationProfileIsAllergic = false
+
+export function resetCollaborationMockState() {
+  collaborationProfileIsAllergic = false
+}
+
+function menuPreviewResponse(): HouseholdMenuPreviewOutput {
+  return {
+    householdId: 'demo-household-001',
+    dataSource: 'synthetic-demo',
+    profileVersion: collaborationProfileIsAllergic ? 2 : 1,
+    decisionSource: 'deterministic-rules',
+    executionMode: 'deterministic',
+    provider: 'none',
+    meals: [
+      {
+        slot: 'breakfast',
+        recipeId: 'r002',
+        recipeName: '南瓜大米粥',
+        ingredients: ['南瓜', '大米'],
+      },
+      {
+        slot: 'lunch',
+        recipeId: collaborationProfileIsAllergic ? 'r010' : 'r005',
+        recipeName: collaborationProfileIsAllergic
+          ? '牛肉土豆粥'
+          : '鳕鱼蔬菜粥',
+        ingredients: collaborationProfileIsAllergic
+          ? ['牛肉', '土豆', '大米']
+          : ['鳕鱼', '西兰花', '大米'],
+      },
+    ],
+    exclusions: collaborationProfileIsAllergic
+      ? [
+          {
+            recipeId: 'r005',
+            recipeName: '鳕鱼蔬菜粥',
+            blockedFood: '鳕鱼',
+            reason: '鳕鱼已标记过敏',
+            rule: 'individual-allergy',
+          },
+        ]
+      : [],
+  }
+}
+
 const householdAuditResponse: HouseholdAuditOutput = {
   records: [
     {
@@ -218,7 +265,25 @@ export const evaluationHandler = http.get(
 
 export const householdHandler = http.get(
   '*/api/v1/collaboration/household',
-  () => HttpResponse.json(householdResponse)
+  () =>
+    HttpResponse.json({
+      ...householdResponse,
+      profileVersion: collaborationProfileIsAllergic ? 2 : 1,
+      foodStates: [
+        {
+          food: '鳕鱼',
+          state: collaborationProfileIsAllergic ? 'allergic' : 'confirmed',
+          ...(collaborationProfileIsAllergic
+            ? { changedAt: '2026-07-30T03:00:00.000Z' }
+            : {}),
+        },
+      ],
+    } satisfies HouseholdStateOutput)
+)
+
+export const householdMenuPreviewHandler = http.get(
+  '*/api/v1/collaboration/menu-preview',
+  () => HttpResponse.json(menuPreviewResponse())
 )
 
 export const householdAuditHandler = http.get(
@@ -264,8 +329,9 @@ export const allergyChangeRequestHandler = http.post(
 
 export const allergyChangeConfirmHandler = http.post(
   '*/api/v1/collaboration/allergy-changes/confirm',
-  () =>
-    HttpResponse.json({
+  () => {
+    collaborationProfileIsAllergic = true
+    return HttpResponse.json({
       auditId: '93759ae7-bcee-4a75-9249-11f49d55b32a',
       decision: 'confirmed',
       reasonCode: 'allergy-profile-updated',
@@ -273,6 +339,7 @@ export const allergyChangeConfirmHandler = http.post(
       profileUpdated: true,
       profileVersion: 2,
     })
+  }
 )
 
 export const server = setupServer(
@@ -280,6 +347,7 @@ export const server = setupServer(
   tracesHandler,
   evaluationHandler,
   householdHandler,
+  householdMenuPreviewHandler,
   householdAuditHandler,
   allergyChangeRequestHandler,
   allergyChangeConfirmHandler

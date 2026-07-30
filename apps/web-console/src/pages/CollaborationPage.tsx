@@ -51,6 +51,10 @@ export function CollaborationPage() {
     queryKey: ['collaboration', 'audit'],
     queryFn: () => apiClient.collaboration.audit({}),
   })
+  const menuPreview = useQuery({
+    queryKey: ['collaboration', 'menu-preview'],
+    queryFn: () => apiClient.collaboration.menuPreview({}),
+  })
 
   const requestChange = useMutation({
     mutationFn: () =>
@@ -73,6 +77,9 @@ export function CollaborationPage() {
         }),
         queryClient.invalidateQueries({
           queryKey: ['collaboration', 'audit'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['collaboration', 'menu-preview'],
         }),
       ])
     },
@@ -97,6 +104,9 @@ export function CollaborationPage() {
         queryClient.invalidateQueries({
           queryKey: ['collaboration', 'audit'],
         }),
+        queryClient.invalidateQueries({
+          queryKey: ['collaboration', 'menu-preview'],
+        }),
       ])
     },
   })
@@ -111,8 +121,9 @@ export function CollaborationPage() {
     }
   }
 
-  const isLoading = household.isPending || audit.isPending
-  const isError = household.isError || audit.isError
+  const isLoading =
+    household.isPending || audit.isPending || menuPreview.isPending
+  const isError = household.isError || audit.isError || menuPreview.isError
   const foodState = household.data?.foodStates.find(
     (item) => item.food === '鳕鱼'
   )
@@ -154,7 +165,7 @@ export function CollaborationPage() {
         </div>
       )}
 
-      {household.data && audit.data && (
+      {household.data && audit.data && menuPreview.data && (
         <>
           <section
             aria-label="档案状态"
@@ -199,6 +210,65 @@ export function CollaborationPage() {
                 每次确认变更后递增，便于冲突检测
               </span>
             </article>
+          </section>
+
+          <section className="mt-6 overflow-hidden rounded-[1.8rem] border border-black/8 bg-white/75">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/8 px-6 py-5">
+              <div>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#df5c34]">
+                  Deterministic menu impact
+                </span>
+                <h2 className="mt-1 text-2xl font-black text-[#183f35]">
+                  今日菜单受安全档案约束
+                </h2>
+                <p className="mt-2 text-sm text-[#68756e]">
+                  使用档案 v{menuPreview.data.profileVersion} 重新计算；申请待确认时菜单不变，确认后立即排除过敏食材。
+                </p>
+              </div>
+              <span className="rounded-full bg-[#e5ebe6] px-3 py-1.5 font-mono text-[10px] font-bold text-[#315f52]">
+                {menuPreview.data.decisionSource} · no LLM
+              </span>
+            </div>
+            <div className="grid gap-4 p-6 md:grid-cols-2">
+              {menuPreview.data.meals.map((meal) => (
+                <article
+                  className="rounded-2xl border border-black/8 bg-[#f8f8f5] p-5"
+                  key={meal.slot}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7a867f]">
+                    {meal.slot === 'breakfast' ? '早餐' : '午餐'}
+                  </span>
+                  <h3 className="mt-2 text-lg font-black text-[#183f35]">
+                    {meal.recipeName}
+                  </h3>
+                  <p className="mt-2 text-xs leading-5 text-[#7a867f]">
+                    {meal.ingredients.join(' · ')}
+                  </p>
+                </article>
+              ))}
+            </div>
+            <div className="border-t border-black/8 px-6 py-5">
+              {menuPreview.data.exclusions.length === 0 ? (
+                <p className="text-sm font-bold text-[#315f52]">
+                  当前候选均通过家庭安全档案校验。
+                </p>
+              ) : (
+                menuPreview.data.exclusions.map((exclusion) => (
+                  <div
+                    className="rounded-2xl border border-[#d87b5d]/25 bg-[#fff0e8] p-4"
+                    key={exclusion.recipeId}
+                  >
+                    <strong className="text-sm text-[#8a452d]">
+                      已排除：{exclusion.recipeName}
+                    </strong>
+                    <p className="mt-1 text-xs leading-5 text-[#8a604f]">
+                      {exclusion.reason} · 规则 {exclusion.rule} · 已替换为不含
+                      {exclusion.blockedFood} 的候选
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </section>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[.95fr_1.05fr]">

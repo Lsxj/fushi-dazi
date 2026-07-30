@@ -3,12 +3,17 @@ import type {
   ConfirmAllergyChangeOutput,
   HouseholdAuditOutput,
   HouseholdAuditRecord,
+  HouseholdMenuPreviewOutput,
   HouseholdRole,
   HouseholdStateOutput,
   RequestAllergyChangeInput,
   RequestAllergyChangeOutput,
 } from '@fushi/contracts'
 import { randomUUID } from 'node:crypto'
+
+import { getCategoryByFood } from '../../../data/categories.js'
+import { generateDeterministicMenuPreview } from '../../../utils/menuPreview.js'
+import type { FoodSafetyProfile } from '../../../utils/planner.js'
 
 const HOUSEHOLD_ID = 'demo-household-001' as const
 const MAX_AUDIT_RECORDS = 100
@@ -128,6 +133,50 @@ export function getHouseholdState(): HouseholdStateOutput {
     pendingRequests: [...changeRequests.values()].filter(
       (request) => request.status === 'pending-owner-confirmation'
     ),
+  }
+}
+
+export function getHouseholdMenuPreview(): HouseholdMenuPreviewOutput {
+  const confirmedFoods = ['南瓜', '大米', '鳕鱼', '西兰花', '牛肉', '土豆']
+  const categoryAllergies: FoodSafetyProfile['categoryAllergies'] = {}
+
+  for (const food of confirmedFoods) {
+    const category = getCategoryByFood(food)
+    if (category && !category.noAllergyTracking) {
+      categoryAllergies[category.id] = {
+        state: 'open',
+        representative: food,
+        passedDate: '2026-07-01',
+      }
+    }
+  }
+
+  const profile: FoodSafetyProfile = {
+    ageMonths: 10,
+    currentStatus: 'normal',
+    categoryAllergies,
+    individualExceptions:
+      foodState.state === 'allergic'
+        ? {
+            [foodState.food]: {
+              state: 'allergic',
+              note: '主照护人依据 reaction-demo-001 确认',
+              reasonReactionId: 'reaction-demo-001',
+            },
+          }
+        : {},
+    confirmedFoods,
+  }
+  const preview = generateDeterministicMenuPreview(profile)
+
+  return {
+    householdId: HOUSEHOLD_ID,
+    dataSource: 'synthetic-demo',
+    profileVersion,
+    decisionSource: 'deterministic-rules',
+    executionMode: 'deterministic',
+    provider: 'none',
+    ...preview,
   }
 }
 

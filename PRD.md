@@ -1,7 +1,7 @@
 # 辅食搭子产品需求文档（PRD）
 
-> 文档版本：v0.9-draft
-> 更新日期：2026-07-28
+> 文档版本：v0.13-draft
+> 更新日期：2026-07-30
 > 产品阶段：内测版，核心闭环已实现，进入发布前核验与测试收口  
 > 适用范围：微信小程序；Contract API、React Solution Console 与 MCP Server 为开发者作品集和方案验证能力，不属于家长端正式交付范围
 
@@ -54,8 +54,8 @@
 | AI 搭子 | 🟡 已实现待真机核验 | 小程序聊天 UI、5 个安全工具、云函数、多模型适配、本地 mock 降级；CloudBase preflight 通过，正式 provider 真机回答待确认 |
 | 云端数据同步 | 🟠 部分实现 | AI 首次会话会把 7 类本地数据备份到按 openid 隔离的 cloudDB；“关于”页已披露；尚不是小程序全局双向同步，也缺少用户自助删除入口 |
 | MCP Server | ✅ 演示可用 | 23 个工具、10 个资源、3 个提示词；TypeScript 构建通过，冒烟测试 46/46，集成测试 11/11 |
-| Contract-first API | ✅ 演示可用 | 共享 Zod/oRPC 合约、Express OpenAPI Handler、summary-only trace、安全评测与家庭协作接口；23 项测试通过，四项覆盖率均为 100% |
-| React Solution Console | ✅ 演示可用 | React 19 架构总览、安全实验室、可观测性评估及家庭协作控制台；17 项 MSW 测试通过，行覆盖率 98.23% |
+| Contract-first API | ✅ 演示可用 | 共享 Zod/oRPC 合约、Express OpenAPI Handler、summary-only trace、安全评测、家庭协作与菜单影响接口；26 项测试通过 |
+| React Solution Console | ✅ 演示可用 | React 19 架构总览、安全实验室、可观测性评估及家庭协作控制台；17 项 MSW 测试通过，行覆盖率超过 98% |
 
 当前内容资产：29 个食物分类、32 种基础食材、127 道食谱、9 条搭配禁忌。
 
@@ -191,6 +191,8 @@
 - 提供“家庭协作与安全档案”页面，复现主照护人、共同照护人和只读家人共同使用同一宝宝安全档案的真实场景。
 - 共同照护人可以根据已存在的反应记录提交永久过敏变更申请，但不能直接改变档案；只读家人不能提交申请。
 - 主照护人必须核对关联反应并以字面量 `true` 显式确认；成功后更新合成档案状态、递增版本并写入变更记录。
+- 页面必须用同一个菜单生成预览证明变更的实际影响：申请待确认时保留鳕鱼菜品，确认永久过敏后由确定性规则排除该菜品并选择不含鳕鱼的安全替代。
+- 菜单结果必须携带档案版本、`decisionSource: deterministic-rules`、被排除食谱和规则理由；LLM 不参与安全过滤。
 - 页面只使用 `synthetic-demo` 家庭数据，不引入真实宝宝信息；生产环境的家庭邀请、身份验证、云端持久化与并发同步仍未实现。
 - 桌面端和移动端均需可用，不得出现横向溢出或依赖微信运行时。
 
@@ -213,7 +215,7 @@
 
 - 仓库使用 pnpm monorepo 管理 `packages/contracts`、`apps/api-server` 与 `apps/web-console`，现有微信小程序保持原目录和构建方式。
 - `packages/contracts` 使用 Zod 定义输入输出并生成 oRPC contract，是 HTTP 服务端和 React 客户端的唯一边界类型来源。
-- `apps/api-server` 使用 Express + oRPC OpenAPI Handler 暴露 `/api/v1/safety/check` 与 `/openapi.json`，实现层复用 `utils/safety.ts`，不复制安全规则。
+- `apps/api-server` 使用 Express + oRPC OpenAPI Handler 暴露安全检查、家庭协作和菜单影响接口；实现层复用 `utils/safety.ts`，不复制安全规则。
 - `apps/web-console` 通过 oRPC `OpenAPILink` 消费共享 contract；TanStack Query 管理服务端请求状态，Zustand 只管理本地实验场景与输入。
 - React 测试使用 Vitest、Testing Library 与 MSW 覆盖成功、拦截、空输入、连接失败和重试路径。
 - GitHub Actions 配置覆盖 Node 20/22 的 workspace 构建和测试；远程 CI 未作为当前验收证据，本地 `npm run verify` 是现阶段权威质量门禁。
@@ -291,8 +293,8 @@
 
 - 根目录 `npm run verify`：通过。
 - 小程序 TypeScript 构建、聊天历史回归和备份回归：通过。
-- Contract-first API：23/23 测试通过，语句/分支/函数/行覆盖率均为 100%。
-- React Solution Console：生产构建通过，17/17 测试通过；语句 98.29%、分支 82.99%、函数 98.48%、行 98.23%。
+- Contract-first API：26/26 测试通过；语句/函数/行覆盖率 100%，分支覆盖率 97.67%。
+- React Solution Console：生产构建通过，17/17 测试通过；语句 98.34%、分支 85.06%、函数 98.55%、行 98.29%。
 - React 与真实 API 联调：日常场景返回确定性结论与搭配提醒；个体过敏场景成功触发拦截。
 - React 浏览器验收：桌面端与 390px 移动端完成检查，无横向溢出，浏览器控制台无应用错误。
 - MCP Server `npm run build`：通过。
@@ -308,6 +310,7 @@
 
 | 日期 | 版本 | 说明 |
 |---|---|---|
+| 2026-07-30 | v0.13-draft | 打通家庭安全档案与菜单生成：待确认不改菜单，确认永久过敏后用共享确定性规则排除鳕鱼菜品、选择安全替代并展示规则证据 |
 | 2026-07-30 | v0.12-draft | 将抽象企业治理演示重构为真实多人照护安全档案流程：共同照护人申请、反应依据、主照护人确认、档案版本更新与变更记录 |
 | 2026-07-30 | v0.11-draft | 新增 mock IdP、确定性 RBAC、一次性显式确认、metadata-only 审计及权限控制台；明确模拟执行不会写入外部档案 |
 | 2026-07-30 | v0.10-draft | 新增 summary-only 执行 trace、固定安全回归评测、React 可观测性控制台及成功/空状态/失败恢复测试 |

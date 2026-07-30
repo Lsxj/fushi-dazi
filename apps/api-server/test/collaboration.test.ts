@@ -111,6 +111,25 @@ describe('household allergy change workflow', () => {
     expect(household.profileVersion).toBe(1)
   })
 
+  it('keeps the menu unchanged while an allergy request is only pending', async () => {
+    const before = await call(router.collaboration.menuPreview, {})
+    await call(router.collaboration.requestAllergyChange, requestInput)
+    const pending = await call(router.collaboration.menuPreview, {})
+
+    expect(before).toMatchObject({
+      profileVersion: 1,
+      decisionSource: 'deterministic-rules',
+      executionMode: 'deterministic',
+      provider: 'none',
+      meals: [
+        { slot: 'breakfast', recipeName: '南瓜大米粥' },
+        { slot: 'lunch', recipeName: '鳕鱼蔬菜粥' },
+      ],
+      exclusions: [],
+    })
+    expect(pending).toEqual(before)
+  })
+
   it('allows only the primary caregiver to confirm', async () => {
     const request = await call(
       router.collaboration.requestAllergyChange,
@@ -249,6 +268,45 @@ describe('household allergy change workflow', () => {
     })
     expect(audit.records[1]?.confirmationEvidence).toBe(true)
     expect(requestAfterAllergic.reasonCode).toBe('already-allergic')
+  })
+
+  it('deterministically removes allergic food and selects a safe substitute', async () => {
+    const request = await call(
+      router.collaboration.requestAllergyChange,
+      requestInput
+    )
+    await call(router.collaboration.confirmAllergyChange, {
+      actor: {
+        id: 'demo-primary-caregiver',
+        role: 'primary-caregiver',
+      },
+      householdId: 'demo-household-001',
+      requestId: request.request!.requestId,
+      consentToConfirmIrreversible: true,
+    })
+
+    const preview = await call(router.collaboration.menuPreview, {})
+
+    expect(preview).toMatchObject({
+      profileVersion: 2,
+      decisionSource: 'deterministic-rules',
+      meals: [
+        { slot: 'breakfast', recipeName: '南瓜大米粥' },
+        { slot: 'lunch', recipeName: '牛肉土豆粥' },
+      ],
+      exclusions: [
+        {
+          recipeId: 'r005',
+          recipeName: '鳕鱼蔬菜粥',
+          blockedFood: '鳕鱼',
+          reason: '鳕鱼已标记过敏',
+          rule: 'individual-allergy',
+        },
+      ],
+    })
+    expect(
+      preview.meals.flatMap((meal) => meal.ingredients)
+    ).not.toContain('鳕鱼')
   })
 
   it('caps household audit history at 100 records', async () => {

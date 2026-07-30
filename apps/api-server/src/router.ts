@@ -6,6 +6,7 @@ import { performance } from 'node:perf_hooks'
 import { checkFoodsSafety } from '../../../utils/safety.js'
 import {
   confirmAllergyChange,
+  getHouseholdMenuPreview,
   getHouseholdState,
   listHouseholdAudit,
   requestAllergyChange,
@@ -65,6 +66,9 @@ const evaluateSafety = os.evaluations.safety.handler(() =>
 const getHousehold = os.collaboration.household.handler(() =>
   getHouseholdState()
 )
+const getMenuPreview = os.collaboration.menuPreview.handler(() =>
+  getHouseholdMenuPreview()
+)
 const requestChange = os.collaboration.requestAllergyChange.handler(
   ({ input }) => requestAllergyChange(input)
 )
@@ -87,6 +91,7 @@ export const router = os.router({
   },
   collaboration: {
     household: getHousehold,
+    menuPreview: getMenuPreview,
     requestAllergyChange: requestChange,
     confirmAllergyChange: confirmChange,
     audit: listCollaborationAudit,

@@ -2,6 +2,7 @@ import {
   CheckFoodSafetyInputSchema,
   CheckFoodSafetyOutputSchema,
   HouseholdAuditOutputSchema,
+  HouseholdMenuPreviewOutputSchema,
   HouseholdStateOutputSchema,
   ListSafetyTracesOutputSchema,
   RequestAllergyChangeOutputSchema,
@@ -76,6 +77,9 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(response.body.paths).toHaveProperty('/v1/observability/traces')
     expect(response.body.paths).toHaveProperty('/v1/evaluations/safety')
     expect(response.body.paths).toHaveProperty('/v1/collaboration/household')
+    expect(response.body.paths).toHaveProperty(
+      '/v1/collaboration/menu-preview'
+    )
     expect(response.body.paths).toHaveProperty(
       '/v1/collaboration/allergy-changes/request'
     )
@@ -161,6 +165,22 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(missingConsent.status).toBe(400)
     expect(falseConsent.status).toBe(400)
     expect(HouseholdAuditOutputSchema.parse(audit.body).summary.total).toBe(1)
+  })
+
+  it('serves a menu preview constrained by the current profile version', async () => {
+    const response = await request(app)
+      .get('/api/v1/collaboration/menu-preview')
+      .expect(200)
+    const preview = HouseholdMenuPreviewOutputSchema.parse(response.body)
+
+    expect(preview).toMatchObject({
+      profileVersion: 1,
+      decisionSource: 'deterministic-rules',
+      meals: [
+        { slot: 'breakfast', recipeName: '南瓜大米粥' },
+        { slot: 'lunch', recipeName: '鳕鱼蔬菜粥' },
+      ],
+    })
   })
 
   it('returns a structured 404 outside the contract router', async () => {

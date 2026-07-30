@@ -18,7 +18,7 @@ npm run verify
 
 - [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow。
 - [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
-- [React Solution Console](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW，提供架构叙事、安全实验室、隐私安全 trace、固定规则评测和多人照护安全档案变更。
+- [React Solution Console](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW，提供架构叙事、安全实验室、隐私安全 trace、固定规则评测，以及“多人照护确认过敏后菜单自动排除并替换”的业务闭环。
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
 - [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
 - Mock provider：无模型密钥也能离线演示，且调用方可以明确识别 mock / live 状态。
@@ -80,6 +80,7 @@ fushi-ditu/
 │   └── taboos.ts             # 食材搭配禁忌(9条)
 ├── utils/
 │   ├── planner.ts            # 计划与排敏核心规则
+│   ├── menuPreview.ts        # 基于共享安全规则的稳定菜单预览
 │   ├── journal.ts            # 饮食记录
 │   ├── reactions.ts          # 反应记录与回溯
 │   └── storage.ts            # 冰箱存储管理

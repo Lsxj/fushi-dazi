@@ -258,6 +258,32 @@ export const HouseholdAuditOutputSchema = z.object({
   dataSource: z.literal('synthetic-demo'),
 })
 
+export const HouseholdMenuPreviewOutputSchema = z.object({
+  householdId: z.literal('demo-household-001'),
+  dataSource: z.literal('synthetic-demo'),
+  profileVersion: z.number().int().positive(),
+  decisionSource: z.literal('deterministic-rules'),
+  executionMode: z.literal('deterministic'),
+  provider: z.literal('none'),
+  meals: z.array(
+    z.object({
+      slot: z.enum(['breakfast', 'lunch']),
+      recipeId: z.string().min(1),
+      recipeName: z.string().min(1),
+      ingredients: z.array(z.string().min(1)).min(1),
+    })
+  ),
+  exclusions: z.array(
+    z.object({
+      recipeId: z.string().min(1),
+      recipeName: z.string().min(1),
+      blockedFood: z.string().min(1),
+      reason: z.string().min(1),
+      rule: z.enum(['individual-allergy', 'food-safety']),
+    })
+  ),
+})
+
 export const checkFoodSafetyContract = oc
   .route({
     method: 'POST',
@@ -328,6 +354,16 @@ export const listHouseholdAuditContract = oc
   .input(z.object({}))
   .output(HouseholdAuditOutputSchema)
 
+export const getHouseholdMenuPreviewContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/collaboration/menu-preview',
+    summary: 'Generate a menu preview constrained by the household safety profile',
+    tags: ['Collaboration'],
+  })
+  .input(z.object({}))
+  .output(HouseholdMenuPreviewOutputSchema)
+
 export const apiContract = {
   safety: {
     check: checkFoodSafetyContract,
@@ -340,6 +376,7 @@ export const apiContract = {
   },
   collaboration: {
     household: getHouseholdStateContract,
+    menuPreview: getHouseholdMenuPreviewContract,
     requestAllergyChange: requestAllergyChangeContract,
     confirmAllergyChange: confirmAllergyChangeContract,
     audit: listHouseholdAuditContract,
@@ -372,3 +409,6 @@ export type ConfirmAllergyChangeOutput = z.infer<
 >
 export type HouseholdAuditRecord = z.infer<typeof HouseholdAuditRecordSchema>
 export type HouseholdAuditOutput = z.infer<typeof HouseholdAuditOutputSchema>
+export type HouseholdMenuPreviewOutput = z.infer<
+  typeof HouseholdMenuPreviewOutputSchema
+>
