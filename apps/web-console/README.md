@@ -21,6 +21,7 @@
 
 ```bash
 pnpm install
+pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
 打开两个终端：
@@ -40,6 +41,7 @@ pnpm run web:dev
 ```bash
 pnpm --filter @fushi/web-console build
 pnpm --filter @fushi/web-console test:coverage
+pnpm --filter @fushi/web-console test:e2e
 ```
 
-前端覆盖率门槛为：语句/行/函数 85%，分支 80%。根目录的 `npm run verify` 会同时执行小程序、Contract API、React 控制台和 MCP Server 的完整检查。
+前端覆盖率门槛为：语句/行/函数 85%，分支 80%。Playwright 会在隔离端口启动真实 API 与 Vite，使用 Chromium 验证个体过敏阻断，以及只读拒绝、共同照护人申请、主照护人显式确认和菜单替换。根目录的 `npm run verify` 会同时执行小程序、Contract API、React 控制台、MCP Server 和 Playwright E2E 的完整检查。

@@ -8,8 +8,9 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 4173,
     proxy: {
-      '/api': 'http://127.0.0.1:3000',
-      '/openapi.json': 'http://127.0.0.1:3000',
+      '/api': process.env.FUSHI_API_PROXY ?? 'http://127.0.0.1:3000',
+      '/openapi.json':
+        process.env.FUSHI_API_PROXY ?? 'http://127.0.0.1:3000',
     },
   },
 })
