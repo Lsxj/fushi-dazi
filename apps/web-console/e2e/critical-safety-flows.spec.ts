@@ -78,3 +78,40 @@ test('requires owner confirmation before changing the profile and menu', async (
   await expect(page.getByText('已排除：鳕鱼蔬菜粥')).toBeVisible()
   await expect(page.getByText(/关联确认凭证：是/)).toBeVisible()
 })
+
+test('turns an explicitly consented family report into an audited safety case', async ({
+  page,
+}) => {
+  const created = await page.request.post(
+    'http://127.0.0.1:3100/api/v1/support/cases',
+    {
+      data: {
+        reason: 'unsafe-food-in-menu',
+        context: {
+          clientVersion: '1.0.4',
+          occurredAt: '2026-08-05T09:00:00.000Z',
+          menuDate: '2026-08-06',
+          profileVersion: 3,
+        },
+        consentToUploadDiagnostics: true,
+      },
+    }
+  )
+  expect(created.ok()).toBe(true)
+
+  await page.goto('/support')
+  await expect(
+    page.getByRole('heading', { name: '家庭支持工单' })
+  ).toBeVisible()
+  await expect(page.getByText('菜单出现疑似不安全食材').first()).toBeVisible()
+  await page.getByRole('button', { name: '认领并开始调查' }).click()
+  await page.getByRole('button', { name: '升级安全审核' }).click()
+  await page.getByRole('button', { name: /支持人员 · 切换/ }).click()
+  await page.getByRole('button', { name: '安全复核并解决' }).click()
+  await page.getByRole('button', { name: '全部' }).click()
+
+  await expect(page.getByText('已解决').first()).toBeVisible()
+  await expect(page.getByText('case-resolved')).toBeVisible()
+  await page.getByRole('button', { name: '关闭工单' }).click()
+  await expect(page.getByText('已关闭').first()).toBeVisible()
+})

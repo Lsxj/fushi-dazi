@@ -15,7 +15,7 @@ describe('OperationsDashboardPage', () => {
       await screen.findByRole('heading', { name: '发布前安全门禁' })
     ).toBeInTheDocument()
     expect(screen.getByText('READY FOR REVIEW')).toBeInTheDocument()
-    expect(screen.getByText('后台只读，不代替主照护人确认')).toBeInTheDocument()
+    expect(screen.getByText('1 条关键安全问题')).toBeInTheDocument()
     expect(screen.getByText('mock-policy · 离线评估')).toBeInTheDocument()
   })
 

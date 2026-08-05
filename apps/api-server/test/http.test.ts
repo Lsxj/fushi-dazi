@@ -10,6 +10,9 @@ import {
   CreateReleaseCandidateOutputSchema,
   ListReleaseCandidatesOutputSchema,
   ReviewReleaseCandidateOutputSchema,
+  CreateSupportCaseOutputSchema,
+  ListSupportCasesOutputSchema,
+  UpdateSupportCaseOutputSchema,
   SafetyEvaluationOutputSchema,
 } from '@fushi/contracts'
 import request from 'supertest'
@@ -19,6 +22,7 @@ import { createApp } from '../src/app.js'
 import { clearCollaborationState } from '../src/collaboration.js'
 import { clearSafetyTraces } from '../src/observability.js'
 import { clearReleaseState } from '../src/releases.js'
+import { clearSupportState } from '../src/support.js'
 import { getOpenAPISpec } from '../src/openapi.js'
 import { baseInput } from './fixtures.js'
 
@@ -29,6 +33,7 @@ describe('Express + oRPC OpenAPI boundary', () => {
     clearSafetyTraces()
     clearCollaborationState()
     clearReleaseState()
+    clearSupportState()
   })
 
   it('serves health metadata that identifies the deterministic engine', async () => {
@@ -96,6 +101,9 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(response.body.paths).toHaveProperty('/v1/collaboration/audit')
     expect(response.body.paths).toHaveProperty('/v1/releases/candidates')
     expect(response.body.paths).toHaveProperty('/v1/releases/candidates/review')
+    expect(response.body.paths).toHaveProperty('/v1/support/cases')
+    expect(response.body.paths).toHaveProperty('/v1/support/cases/track')
+    expect(response.body.paths).toHaveProperty('/v1/support/cases/update')
   })
 
   it('serves typed observability and evaluation reports', async () => {
@@ -235,6 +243,49 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(ListReleaseCandidatesOutputSchema.parse(listResponse.body)).toMatchObject({
       candidates: [{ version: '1.2.0-rc.1', status: 'approved' }],
       policy: { automaticDeployment: false },
+    })
+  })
+
+  it('requires explicit diagnostic consent and serves an audited support workflow', async () => {
+    const withoutConsent = await request(app)
+      .post('/api/v1/support/cases')
+      .set('Content-Type', 'application/json')
+      .send({
+        reason: 'unsafe-food-in-menu',
+        context: { clientVersion: '1.0.4', occurredAt: '2026-08-05T09:00:00.000Z' },
+      })
+    expect(withoutConsent.status).toBe(400)
+
+    const createdResponse = await request(app)
+      .post('/api/v1/support/cases')
+      .set('Content-Type', 'application/json')
+      .send({
+        reason: 'unsafe-food-in-menu',
+        context: { clientVersion: '1.0.4', occurredAt: '2026-08-05T09:00:00.000Z' },
+        consentToUploadDiagnostics: true,
+      })
+      .expect(200)
+    const created = CreateSupportCaseOutputSchema.parse(createdResponse.body)
+    const updatedResponse = await request(app)
+      .post('/api/v1/support/cases/update')
+      .set('Content-Type', 'application/json')
+      .send({
+        action: 'assign-self',
+        caseId: created.case.caseId,
+        expectedCaseVersion: 1,
+        actor: { id: 'demo-support-agent', role: 'support-agent' },
+      })
+      .expect(200)
+    const casesResponse = await request(app).get('/api/v1/support/cases').expect(200)
+
+    expect(UpdateSupportCaseOutputSchema.parse(updatedResponse.body)).toMatchObject({
+      result: 'updated',
+      case: { status: 'investigating' },
+    })
+    expect(ListSupportCasesOutputSchema.parse(casesResponse.body)).toMatchObject({
+      summary: { total: 1, unassigned: 0, criticalOpen: 1 },
+      identityMode: 'mock-operator-directory',
+      privacyMode: 'metadata-only',
     })
   })
 

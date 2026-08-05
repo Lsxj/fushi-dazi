@@ -1,0 +1,27 @@
+.page-bg { min-height: 100vh; background: #f7f3ea; }
+.container { padding: 32rpx 28rpx 60rpx; }
+.hero-card { padding: 38rpx 34rpx; border-radius: 32rpx; background: #183f35; color: #fff; }
+.hero-tag { display: inline-block; padding: 8rpx 16rpx; border-radius: 999rpx; background: rgba(255,255,255,.1); color: #9de4cf; font-size: 22rpx; font-weight: 700; }
+.hero-title { margin-top: 20rpx; font-size: 48rpx; font-weight: 800; }
+.hero-desc { margin-top: 14rpx; color: rgba(255,255,255,.64); font-size: 26rpx; line-height: 1.7; }
+.card { margin-top: 24rpx; padding: 30rpx; border-radius: 28rpx; background: #fff; box-shadow: 0 10rpx 32rpx rgba(34,54,45,.06); }
+.card-title { color: #183f35; font-size: 30rpx; font-weight: 800; }
+.reason-list { margin-top: 18rpx; }
+.reason-item { display: flex; gap: 20rpx; padding: 22rpx 0; border-bottom: 1rpx solid #ecebe5; }
+.reason-item:last-child { border-bottom: 0; }
+.reason-radio { display: flex; align-items: center; justify-content: center; width: 38rpx; height: 38rpx; border: 2rpx solid #bcc7c1; border-radius: 50%; color: #fff; font-size: 22rpx; }
+.reason-item.selected .reason-radio { border-color: #2f7d68; background: #2f7d68; }
+.reason-copy { flex: 1; }
+.reason-label { color: #26352e; font-size: 27rpx; font-weight: 700; }
+.reason-hint { margin-top: 7rpx; color: #88928d; font-size: 23rpx; line-height: 1.5; }
+.privacy-box { margin-top: 18rpx; padding: 22rpx; border-radius: 20rpx; background: #f3f6f3; color: #627068; font-size: 24rpx; line-height: 1.65; }
+.privacy-safe { margin-top: 12rpx; color: #2f7d68; font-weight: 700; }
+.consent-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-top: 24rpx; }
+.consent-copy { color: #26352e; font-size: 25rpx; font-weight: 700; }
+.submit-btn { margin-top: 28rpx; border-radius: 999rpx; background: #ef6a3c; color: #fff; font-size: 28rpx; font-weight: 800; }
+.submit-btn[disabled] { opacity: .55; }
+.footer-note { margin-top: 20rpx; color: #9b928b; font-size: 22rpx; line-height: 1.6; text-align: center; }
+.receipt-card { border: 2rpx solid #b8d8cd; }
+.receipt-status { display: inline-block; margin-top: 16rpx; padding: 8rpx 16rpx; border-radius: 999rpx; background: #e1f1eb; color: #2f6a57; font-size: 23rpx; font-weight: 800; }
+.receipt-id { margin-top: 14rpx; color: #8c9690; font-size: 20rpx; word-break: break-all; }
+.secondary-btn { margin-top: 20rpx; border: 1rpx solid #cbd4cf; border-radius: 999rpx; background: #fff; color: #315f52; font-size: 25rpx; font-weight: 700; }

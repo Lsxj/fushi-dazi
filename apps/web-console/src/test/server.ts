@@ -6,7 +6,10 @@ import type {
   HouseholdMenuPreviewOutput,
   HouseholdStateOutput,
   ListReleaseCandidatesOutput,
+  ListSupportCasesOutput,
   ReleaseCandidate,
+  SupportCase,
+  SupportCaseAuditRecord,
   ListSafetyTracesOutput,
   SafetyEvaluationOutput,
 } from '@fushi/contracts'
@@ -221,10 +224,44 @@ const householdResponse: HouseholdStateOutput = {
 
 let collaborationProfileIsAllergic = false
 let releaseCandidates: ReleaseCandidate[] = []
+const initialSupportCase: SupportCase = {
+  caseId: '4c7eca4d-8b6a-4c62-a3b1-b55cff36072b',
+  caseVersion: 1,
+  category: 'menu-safety',
+  reason: 'unsafe-food-in-menu',
+  severity: 'critical',
+  status: 'new',
+  source: 'mini-program',
+  context: {
+    clientVersion: '1.0.4',
+    occurredAt: '2026-08-05T09:00:00.000Z',
+    menuDate: '2026-08-06',
+    profileVersion: 3,
+  },
+  createdAt: '2026-08-05T09:00:00.000Z',
+  updatedAt: '2026-08-05T09:00:00.000Z',
+}
+const initialSupportAudit: SupportCaseAuditRecord = {
+  auditId: '74a17766-351a-4bfa-9410-a3b776876749',
+  caseId: initialSupportCase.caseId,
+  timestamp: initialSupportCase.createdAt,
+  actorId: 'anonymous-family',
+  actorRole: 'family-reporter',
+  action: 'case-created',
+  decision: 'allowed',
+  toStatus: 'new',
+  reasonCode: 'unsafe-food-in-menu',
+  caseVersion: 1,
+  privacyMode: 'metadata-only',
+}
+let supportCases: SupportCase[] = [initialSupportCase]
+let supportAudits: SupportCaseAuditRecord[] = [initialSupportAudit]
 
 export function resetCollaborationMockState() {
   collaborationProfileIsAllergic = false
   releaseCandidates = []
+  supportCases = [initialSupportCase]
+  supportAudits = [initialSupportAudit]
 }
 
 function menuPreviewResponse(): HouseholdMenuPreviewOutput {
@@ -489,6 +526,112 @@ export const reviewReleaseCandidateHandler = http.post(
   }
 )
 
+export const supportCasesHandler = http.get('*/api/v1/support/cases', () => {
+  const response: ListSupportCasesOutput = {
+    cases: supportCases,
+    summary: {
+      total: supportCases.length,
+      unassigned: supportCases.filter((supportCase) => !supportCase.assignedTo).length,
+      criticalOpen: supportCases.filter(
+        (supportCase) =>
+          supportCase.severity === 'critical' &&
+          supportCase.status !== 'resolved' &&
+          supportCase.status !== 'closed'
+      ).length,
+      escalated: supportCases.filter((supportCase) => supportCase.status === 'escalated').length,
+    },
+    auditRecords: supportAudits,
+    persistenceMode: 'process-memory',
+    identityMode: 'mock-operator-directory',
+    privacyMode: 'metadata-only',
+  }
+  return HttpResponse.json(response)
+})
+
+export const updateSupportCaseHandler = http.post(
+  '*/api/v1/support/cases/update',
+  async ({ request }) => {
+    const input = (await request.json()) as {
+      action: 'assign-self' | 'escalate' | 'resolve' | 'close'
+      caseId: string
+      expectedCaseVersion: number
+      actor: { id: string; role: 'support-agent' | 'safety-reviewer' }
+      resolutionCode?: SupportCase['resolutionCode']
+    }
+    const current = supportCases.find((supportCase) => supportCase.caseId === input.caseId)
+    if (!current) {
+      return HttpResponse.json({ result: 'case-not-found', persistenceMode: 'process-memory' })
+    }
+    if (
+      input.action === 'resolve' &&
+      current.severity === 'critical' &&
+      input.actor.role !== 'safety-reviewer'
+    ) {
+      return HttpResponse.json({
+        case: current,
+        result: 'safety-reviewer-required',
+        persistenceMode: 'process-memory',
+      })
+    }
+    if (
+      input.action === 'resolve' &&
+      current.severity === 'critical' &&
+      current.status !== 'escalated'
+    ) {
+      return HttpResponse.json({
+        case: current,
+        result: 'invalid-state-transition',
+        persistenceMode: 'process-memory',
+      })
+    }
+    const nextStatus: SupportCase['status'] = {
+      'assign-self': 'investigating',
+      escalate: 'escalated',
+      resolve: 'resolved',
+      close: 'closed',
+    }[input.action] as SupportCase['status']
+    const updated: SupportCase = {
+      ...current,
+      caseVersion: current.caseVersion + 1,
+      status: nextStatus,
+      updatedAt: '2026-08-05T09:05:00.000Z',
+      ...(input.action === 'assign-self' ? { assignedTo: input.actor.id } : {}),
+      ...(input.action === 'resolve' && input.resolutionCode
+        ? { resolutionCode: input.resolutionCode }
+        : {}),
+    }
+    supportCases = supportCases.map((supportCase) =>
+      supportCase.caseId === updated.caseId ? updated : supportCase
+    )
+    const audit: SupportCaseAuditRecord = {
+      auditId: `${String(updated.caseVersion).padStart(8, '0')}-351a-4bfa-9410-a3b776876749`,
+      caseId: updated.caseId,
+      timestamp: updated.updatedAt,
+      actorId: input.actor.id,
+      actorRole: input.actor.role,
+      action: {
+        'assign-self': 'case-assigned',
+        escalate: 'case-escalated',
+        resolve: 'case-resolved',
+        close: 'case-closed',
+      }[input.action] as SupportCaseAuditRecord['action'],
+      decision: 'allowed',
+      fromStatus: current.status,
+      toStatus: updated.status,
+      reasonCode: input.resolutionCode ?? input.action,
+      caseVersion: updated.caseVersion,
+      privacyMode: 'metadata-only',
+    }
+    supportAudits = [audit, ...supportAudits]
+    return HttpResponse.json({
+      case: updated,
+      auditId: audit.auditId,
+      result: 'updated',
+      persistenceMode: 'process-memory',
+    })
+  }
+)
+
 export const server = setupServer(
   successHandler,
   tracesHandler,
@@ -501,5 +644,7 @@ export const server = setupServer(
   allergyChangeConfirmHandler,
   releaseCandidatesHandler,
   createReleaseCandidateHandler,
-  reviewReleaseCandidateHandler
+  reviewReleaseCandidateHandler,
+  supportCasesHandler,
+  updateSupportCaseHandler
 )

@@ -407,6 +407,151 @@ export const ListReleaseCandidatesOutputSchema = z.object({
   }),
 })
 
+export const SupportCaseReasonSchema = z.enum([
+  'unsafe-food-in-menu',
+  'ai-safety-warning-missing',
+  'inventory-not-updated',
+  'profile-not-refreshed',
+  'request-cloud-data-deletion',
+])
+
+export const SupportCaseStatusSchema = z.enum([
+  'new',
+  'investigating',
+  'escalated',
+  'resolved',
+  'closed',
+])
+
+export const SupportOperatorSchema = z.object({
+  id: z.enum(['demo-support-agent', 'demo-safety-reviewer']),
+  role: z.enum(['support-agent', 'safety-reviewer']),
+})
+
+export const SupportCaseSchema = z.object({
+  caseId: z.string().uuid(),
+  caseVersion: z.number().int().positive(),
+  category: z.enum(['menu-safety', 'ai-quality', 'data-problem', 'privacy-request']),
+  reason: SupportCaseReasonSchema,
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  status: SupportCaseStatusSchema,
+  source: z.literal('mini-program'),
+  context: z.object({
+    clientVersion: z.string().trim().min(1).max(30),
+    occurredAt: z.string().datetime(),
+    menuDate: z.iso.date().optional(),
+    traceId: z.string().uuid().optional(),
+    profileVersion: z.number().int().positive().optional(),
+  }),
+  assignedTo: z.string().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  resolutionCode: z
+    .enum(['fix-planned', 'guidance-provided', 'no-defect-found', 'deletion-accepted'])
+    .optional(),
+})
+
+export const SupportCaseAuditRecordSchema = z.object({
+  auditId: z.string().uuid(),
+  caseId: z.string().uuid(),
+  timestamp: z.string().datetime(),
+  actorId: z.string(),
+  actorRole: z.enum(['family-reporter', 'support-agent', 'safety-reviewer']),
+  action: z.enum(['case-created', 'case-assigned', 'case-escalated', 'case-resolved', 'case-closed']),
+  decision: z.enum(['allowed', 'denied']),
+  fromStatus: SupportCaseStatusSchema.optional(),
+  toStatus: SupportCaseStatusSchema,
+  reasonCode: z.string(),
+  caseVersion: z.number().int().positive(),
+  privacyMode: z.literal('metadata-only'),
+})
+
+export const CreateSupportCaseInputSchema = z.object({
+  reason: SupportCaseReasonSchema,
+  context: z.object({
+    clientVersion: z.string().trim().min(1).max(30),
+    occurredAt: z.string().datetime(),
+    menuDate: z.iso.date().optional(),
+    traceId: z.string().uuid().optional(),
+    profileVersion: z.number().int().positive().optional(),
+  }),
+  consentToUploadDiagnostics: z.literal(true),
+})
+
+export const CreateSupportCaseOutputSchema = z.object({
+  case: SupportCaseSchema,
+  trackingToken: z.string().uuid(),
+  auditId: z.string().uuid(),
+  privacyMode: z.literal('metadata-only'),
+})
+
+export const TrackSupportCaseInputSchema = z.object({
+  caseId: z.string().uuid(),
+  trackingToken: z.string().uuid(),
+})
+
+export const TrackSupportCaseOutputSchema = z.object({
+  case: SupportCaseSchema.optional(),
+  found: z.boolean(),
+  privacyMode: z.literal('metadata-only'),
+})
+
+export const ListSupportCasesOutputSchema = z.object({
+  cases: z.array(SupportCaseSchema),
+  summary: z.object({
+    total: z.number().int().nonnegative(),
+    unassigned: z.number().int().nonnegative(),
+    criticalOpen: z.number().int().nonnegative(),
+    escalated: z.number().int().nonnegative(),
+  }),
+  auditRecords: z.array(SupportCaseAuditRecordSchema),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
+  identityMode: z.literal('mock-operator-directory'),
+  privacyMode: z.literal('metadata-only'),
+})
+
+export const UpdateSupportCaseInputSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('assign-self'),
+    caseId: z.string().uuid(),
+    expectedCaseVersion: z.number().int().positive(),
+    actor: SupportOperatorSchema,
+  }),
+  z.object({
+    action: z.literal('escalate'),
+    caseId: z.string().uuid(),
+    expectedCaseVersion: z.number().int().positive(),
+    actor: SupportOperatorSchema,
+  }),
+  z.object({
+    action: z.literal('resolve'),
+    caseId: z.string().uuid(),
+    expectedCaseVersion: z.number().int().positive(),
+    actor: SupportOperatorSchema,
+    resolutionCode: z.enum(['fix-planned', 'guidance-provided', 'no-defect-found', 'deletion-accepted']),
+  }),
+  z.object({
+    action: z.literal('close'),
+    caseId: z.string().uuid(),
+    expectedCaseVersion: z.number().int().positive(),
+    actor: SupportOperatorSchema,
+  }),
+])
+
+export const UpdateSupportCaseOutputSchema = z.object({
+  case: SupportCaseSchema.optional(),
+  auditId: z.string().uuid().optional(),
+  result: z.enum([
+    'updated',
+    'case-not-found',
+    'identity-role-mismatch',
+    'case-version-conflict',
+    'invalid-state-transition',
+    'safety-reviewer-required',
+  ]),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
+})
+
 export const checkFoodSafetyContract = oc
   .route({
     method: 'POST',
@@ -527,6 +672,46 @@ export const reviewReleaseCandidateContract = oc
   .input(ReviewReleaseCandidateInputSchema)
   .output(ReviewReleaseCandidateOutputSchema)
 
+export const createSupportCaseContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/support/cases',
+    summary: 'Create a metadata-only support case with explicit consent',
+    tags: ['Support'],
+  })
+  .input(CreateSupportCaseInputSchema)
+  .output(CreateSupportCaseOutputSchema)
+
+export const trackSupportCaseContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/support/cases/track',
+    summary: 'Track a family-submitted support case with its secret token',
+    tags: ['Support'],
+  })
+  .input(TrackSupportCaseInputSchema)
+  .output(TrackSupportCaseOutputSchema)
+
+export const listSupportCasesContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/support/cases',
+    summary: 'List metadata-only support cases for internal operators',
+    tags: ['Support'],
+  })
+  .input(z.object({}))
+  .output(ListSupportCasesOutputSchema)
+
+export const updateSupportCaseContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/support/cases/update',
+    summary: 'Apply an audited support case state transition',
+    tags: ['Support'],
+  })
+  .input(UpdateSupportCaseInputSchema)
+  .output(UpdateSupportCaseOutputSchema)
+
 export const apiContract = {
   safety: {
     check: checkFoodSafetyContract,
@@ -549,6 +734,12 @@ export const apiContract = {
     candidates: listReleaseCandidatesContract,
     createCandidate: createReleaseCandidateContract,
     reviewCandidate: reviewReleaseCandidateContract,
+  },
+  support: {
+    createCase: createSupportCaseContract,
+    trackCase: trackSupportCaseContract,
+    cases: listSupportCasesContract,
+    updateCase: updateSupportCaseContract,
   },
 }
 
@@ -602,3 +793,12 @@ export type ReviewReleaseCandidateOutput = z.infer<
 export type ListReleaseCandidatesOutput = z.infer<
   typeof ListReleaseCandidatesOutputSchema
 >
+export type SupportCase = z.infer<typeof SupportCaseSchema>
+export type SupportCaseAuditRecord = z.infer<typeof SupportCaseAuditRecordSchema>
+export type CreateSupportCaseInput = z.infer<typeof CreateSupportCaseInputSchema>
+export type CreateSupportCaseOutput = z.infer<typeof CreateSupportCaseOutputSchema>
+export type TrackSupportCaseInput = z.infer<typeof TrackSupportCaseInputSchema>
+export type TrackSupportCaseOutput = z.infer<typeof TrackSupportCaseOutputSchema>
+export type ListSupportCasesOutput = z.infer<typeof ListSupportCasesOutputSchema>
+export type UpdateSupportCaseInput = z.infer<typeof UpdateSupportCaseInputSchema>
+export type UpdateSupportCaseOutput = z.infer<typeof UpdateSupportCaseOutputSchema>

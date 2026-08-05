@@ -15,7 +15,8 @@
     "pages/reactions/reactions",
     "pages/recipes/recipes",
     "pages/about/about",
-    "pages/ai-chat/ai-chat"
+    "pages/ai-chat/ai-chat",
+    "pages/support/support"
   ],
   "window": {
     "backgroundTextStyle": "light",

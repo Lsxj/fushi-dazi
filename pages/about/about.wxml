@@ -50,6 +50,11 @@
       <view class="content" style="margin-top: 8rpx;">问题、最近对话和回答所需的上下文会由云函数处理，并可能发送给当前配置的 AI 模型服务商生成回答。</view>
     </view>
     <view class="privacy-warning">清理本地缓存不会自动删除已经同步到云端的数据。内测期间如需删除云端数据，请联系开发者。</view>
+    <view class="privacy-block">
+      <view class="privacy-title">提交支持工单时</view>
+      <view class="content">只有在“报告问题”页明确授权后，才会上传问题类型、客户端版本、发生时间以及可选的 Trace/档案版本标识。工单接口不接收宝宝姓名、自由备注、完整聊天记录、食材清单或联系方式。</view>
+      <view class="content" style="margin-top: 8rpx;">支持人员可以认领、调查和升级工单，但不能从后台修改家庭过敏档案。当前内测版支持服务默认仅用于本地联调。</view>
+    </view>
   </view>
 
   <view class="card">

@@ -72,6 +72,14 @@
       </view>
       <view class="menu-arrow">›</view>
     </navigator>
+    <navigator url="/pages/support/support" class="menu-row">
+      <view class="menu-icon icon-green">🛟</view>
+      <view class="menu-info">
+        <view class="menu-name">报告问题</view>
+        <view class="menu-sub">授权提交脱敏诊断信息并查看处理状态</view>
+      </view>
+      <view class="menu-arrow">›</view>
+    </navigator>
     <view class="menu-row" bindtap="confirmReset">
       <view class="menu-icon icon-red">🔄</view>
       <view class="menu-info">

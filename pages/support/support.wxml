@@ -1,0 +1,50 @@
+<view class="page-bg">
+  <view class="container">
+    <view class="hero-card">
+      <view class="hero-tag">内测支持 · {{serviceMode}}</view>
+      <view class="hero-title">报告问题</view>
+      <view class="hero-desc">选择问题类型并授权上传最小诊断信息。这里不是紧急医疗通道；严重不适请立即就医或拨打 120。</view>
+    </view>
+
+    <view wx:if="{{receipt}}" class="card receipt-card">
+      <view class="card-title">最近工单</view>
+      <view class="receipt-status">{{receipt.status}}</view>
+      <view class="receipt-id">编号 {{receipt.caseId}}</view>
+      <button class="secondary-btn" bindtap="refreshStatus">刷新处理状态</button>
+    </view>
+
+    <view class="card">
+      <view class="card-title">1. 选择问题类型</view>
+      <view class="reason-list">
+        <view
+          wx:for="{{reasons}}"
+          wx:key="value"
+          class="reason-item {{selectedReason === item.value ? 'selected' : ''}}"
+          data-reason="{{item.value}}"
+          bindtap="selectReason"
+        >
+          <view class="reason-radio">{{selectedReason === item.value ? '✓' : ''}}</view>
+          <view class="reason-copy">
+            <view class="reason-label">{{item.label}}</view>
+            <view class="reason-hint">{{item.hint}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="card-title">2. 确认上传范围</view>
+      <view class="privacy-box">
+        <view>会上传：问题类型、客户端版本、发生时间，以及页面已有的可选 Trace/版本标识。</view>
+        <view class="privacy-safe">不会上传：宝宝姓名、自由备注、完整聊天记录、食材清单或联系方式。</view>
+      </view>
+      <view class="consent-row">
+        <view class="consent-copy">我同意上传上述最小诊断信息</view>
+        <switch checked="{{consent}}" color="#2f7d68" bindchange="toggleConsent" />
+      </view>
+    </view>
+
+    <button class="submit-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitCase">提交支持工单</button>
+    <view class="footer-note">正式支持服务尚未部署时，请求会明确失败且不会上传数据。</view>
+  </view>
+</view>

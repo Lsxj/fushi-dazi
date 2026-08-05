@@ -42,13 +42,13 @@ npm run verify
 pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
-质量门禁会依次完成小程序 TypeScript 构建与回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 2 项真实 Chromium E2E。API 行覆盖率为 98.77%，React 控制台行覆盖率为 94.38%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
+质量门禁会依次完成小程序 TypeScript 构建与隐私回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 3 项真实 Chromium E2E。API 行覆盖率为 98.55%，React 控制台行覆盖率为 94.27%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
 
 ## AI 工程作品集
 
 - [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow；固定离线评估集量化工具选择、安全阻断、grounding 代理和端到端成功率。
 - [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
-- [React 运营与安全控制台](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW；主界面服务内部运营、安全验证和只读家庭支持，架构证据与可变更的家庭合成流程隔离在开发者专区。
+- [React 运营与安全控制台](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW；主界面服务支持工单、内部运营和安全验证，架构证据与可变更的家庭合成流程隔离在开发者专区。
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
 - [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
 - [Architecture Decision Records](./docs/adr/README.md)：记录规则边界、contract-first、不可逆确认与离线评估的关键取舍。

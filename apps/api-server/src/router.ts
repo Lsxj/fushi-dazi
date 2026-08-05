@@ -22,6 +22,12 @@ import {
   listReleaseCandidates,
   reviewReleaseCandidate,
 } from './releases.js'
+import {
+  createSupportCase,
+  listSupportCases,
+  trackSupportCase,
+  updateSupportCase,
+} from './support.js'
 
 const os = implement(apiContract)
 
@@ -96,6 +102,16 @@ const createCandidate = os.releases.createCandidate.handler(({ input }) =>
 const reviewCandidate = os.releases.reviewCandidate.handler(({ input }) =>
   reviewReleaseCandidate(input)
 )
+const createCase = os.support.createCase.handler(({ input }) =>
+  createSupportCase(input)
+)
+const trackCase = os.support.trackCase.handler(({ input }) =>
+  trackSupportCase(input)
+)
+const listCases = os.support.cases.handler(() => listSupportCases())
+const updateCase = os.support.updateCase.handler(({ input }) =>
+  updateSupportCase(input)
+)
 
 export const router = os.router({
   safety: {
@@ -119,5 +135,11 @@ export const router = os.router({
     candidates: listCandidates,
     createCandidate,
     reviewCandidate,
+  },
+  support: {
+    createCase,
+    trackCase,
+    cases: listCases,
+    updateCase,
   },
 })

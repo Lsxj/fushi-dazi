@@ -7,7 +7,7 @@ const navigation = [
   { to: '/', label: '运营总览', end: true },
   { to: '/safety', label: '规则验证', end: false },
   { to: '/observability', label: 'AI 质量', end: false },
-  { to: '/support', label: '家庭支持', end: false },
+  { to: '/support', label: '支持工单', end: false },
   { to: '/developer', label: '开发者工具', end: false },
 ]
 

@@ -13,6 +13,7 @@ HTTP request
 ```
 
 API 不调用 LLM、不保存真实宝宝档案，也不复制安全规则。安全检查请求只携带判断所需的最小档案快照，并且不提供由客户端声明的安全豁免字段；家庭协作演示仅保存明确标注的合成数据。
+支持工单只接收经过用户字面量授权的结构化诊断元数据，不接收宝宝姓名、自由备注、完整聊天、食材清单或联系方式。
 
 ## 运行
 
@@ -37,6 +38,10 @@ pnpm run api:dev
 - `POST /api/v1/collaboration/allergy-changes/request`
 - `POST /api/v1/collaboration/allergy-changes/confirm`
 - `GET /api/v1/collaboration/audit`
+- `POST /api/v1/support/cases`
+- `POST /api/v1/support/cases/track`
+- `GET /api/v1/support/cases`
+- `POST /api/v1/support/cases/update`
 
 示例：
 
@@ -76,6 +81,9 @@ Agentic 评测接口运行 9 个固定的合成家庭问题，复用小程序与
 `utils/safety.ts` 确定性规则。申请仍处于待确认状态时菜单不变；主照护人
 确认后，同一生成链路会排除包含过敏食材的食谱、选择安全替代，并返回
 `profileVersion`、被排除食谱及具体规则理由。该接口不调用 LLM。
+
+支持工单使用 `new → investigating → escalated → resolved → closed` 状态机和
+`expectedCaseVersion` 乐观并发。关键安全工单必须先升级，再由绑定角色的安全审核人解决；伪造角色、过期版本和非法流转均被拒绝并写入 metadata-only 审计。家庭追踪需要 case ID 与仅提交端持有的 tracking token。当前 operator directory 和文件存储只用于本地演示，不能替代生产 OIDC 与数据库。
 
 ## 测试策略
 

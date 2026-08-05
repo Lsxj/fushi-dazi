@@ -14,6 +14,8 @@ export default defineConfig({
         'src/observability.ts',
         'src/releases.ts',
         'src/release-store.ts',
+        'src/support.ts',
+        'src/support-store.ts',
         'src/openapi.ts',
         'src/router.ts',
         '../../utils/menuPreview.ts',

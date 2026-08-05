@@ -14,13 +14,9 @@ export function OperationsDashboardPage() {
   const [reviewerId, setReviewerId] = useState('safety-reviewer')
   const [reviewNote, setReviewNote] = useState('已核对自动检查证据，批准进入人工发布步骤')
   const [evidenceConfirmed, setEvidenceConfirmed] = useState(false)
-  const household = useQuery({
-    queryKey: ['collaboration', 'household'],
-    queryFn: () => apiClient.collaboration.household({}),
-  })
-  const audit = useQuery({
-    queryKey: ['collaboration', 'audit'],
-    queryFn: () => apiClient.collaboration.audit({}),
+  const supportCases = useQuery({
+    queryKey: ['support', 'cases'],
+    queryFn: () => apiClient.support.cases({}),
   })
   const traces = useQuery({
     queryKey: ['observability', 'traces'],
@@ -40,8 +36,7 @@ export function OperationsDashboardPage() {
   })
 
   const queries = [
-    household,
-    audit,
+    supportCases,
     traces,
     safetyEvaluation,
     agenticEvaluation,
@@ -134,8 +129,7 @@ export function OperationsDashboardPage() {
         </section>
       )}
 
-      {household.data &&
-        audit.data &&
+      {supportCases.data &&
         traces.data &&
         safetyEvaluation.data &&
         agenticEvaluation.data &&
@@ -143,9 +137,9 @@ export function OperationsDashboardPage() {
           <>
             <section aria-label="关键运营指标" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">待家庭确认</span>
-                <strong className="mt-3 block text-3xl font-black text-[#183f35]">{household.data.pendingRequests.length}</strong>
-                <span className="mt-2 block text-xs text-[#7a867f]">后台只读，不代替主照护人确认</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">待认领工单</span>
+                <strong className="mt-3 block text-3xl font-black text-[#183f35]">{supportCases.data.summary.unassigned}</strong>
+                <span className="mt-2 block text-xs text-[#7a867f]">{supportCases.data.summary.criticalOpen} 条关键安全问题</span>
               </article>
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
                 <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">安全回归</span>
@@ -311,7 +305,7 @@ export function OperationsDashboardPage() {
                 <h2 className="mt-1 text-2xl font-black text-[#183f35]">今日处理队列</h2>
                 <div className="mt-5 space-y-3">
                   <Link className="flex items-center justify-between rounded-2xl border border-black/8 bg-[#f8f8f5] p-4" to="/support">
-                    <div><strong className="block text-sm text-[#183f35]">家庭支持与授权审计</strong><span className="mt-1 block text-xs text-[#7a867f]">{audit.data.summary.total} 条变更记录</span></div>
+                    <div><strong className="block text-sm text-[#183f35]">家庭支持工单</strong><span className="mt-1 block text-xs text-[#7a867f]">{supportCases.data.summary.unassigned} 条待认领 · {supportCases.data.summary.criticalOpen} 条关键安全</span></div>
                     <Icon name="arrow" size={17} />
                   </Link>
                   <Link className="flex items-center justify-between rounded-2xl border border-black/8 bg-[#f8f8f5] p-4" to="/observability">

@@ -57,7 +57,7 @@ describe('operations console navigation', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: '家庭支持与授权审计',
+        name: '家庭支持工单',
       })
     ).toBeInTheDocument()
   })

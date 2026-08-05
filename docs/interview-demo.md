@@ -52,7 +52,22 @@ pnpm run web:dev
 
 > LLM 可以理解问题和解释结果，但不能决定宝宝能不能吃。小程序、API、MCP 和菜单预览共用同一规则边界，因此没有 API Key 也能完整验证安全路径。这是 ADR-0001 的核心取舍。
 
-## 2:00–4:00：多人照护闭环
+## 2:00–3:15：家庭支持工单闭环
+
+页面：`/support`
+
+操作：
+
+1. 指出工单来自小程序“报告问题”页的明确授权，只包含问题类型、版本、时间和可选诊断标识。
+2. 认领关键安全工单并升级安全审核。
+3. 切换为安全审核人，记录解决结论并展示审计。
+4. 强调后台没有修改家庭过敏档案的入口。
+
+建议话术：
+
+> 这不是静态后台列表。小程序先取得字面量同意，API 才创建 metadata-only 工单；后台状态写入带 case version，过期页面不能覆盖新结果。critical 工单必须先升级，再由服务端绑定的安全审核角色解决。当前身份目录和服务地址明确是本地模式，不冒充生产认证。
+
+## 3:15–4:15：多人照护闭环
 
 页面：`/developer/scenarios/collaboration`
 
@@ -70,7 +85,7 @@ pnpm run web:dev
 
 > 客户端角色不被直接信任，服务端重新绑定身份。不可逆操作需要字面量 true、审计 ID 和主照护人权限。申请与确认还携带 expectedProfileVersion；旧页面会收到冲突而不是覆盖新档案。这是业务安全需求推导出的 RBAC、显式确认和乐观并发，不是为了展示技术名词。
 
-## 4:00–5:15：可观测性与 Agentic Evaluation
+## 4:15–5:15：可观测性与 Agentic Evaluation
 
 页面：`/observability`
 
@@ -94,7 +109,7 @@ pnpm run web:dev
 - `apps/web-console/`：React Query 管服务端状态，Zustand 管本地交互状态。
 - `mcp-server/`：23 个工具、10 个资源、3 个提示词。
 - `skills/fushi-safety-change/` 与 `AGENTS.md`：把重复的安全开发流程变成团队可复用资产。
-- `npm run verify`：API 40/40、React/MSW 24/24、Playwright 2/2、MCP 冒烟 46/46、集成 11/11。
+- `npm run verify`：API 50/50、React/MSW 25/25、Playwright 3/3、MCP 冒烟 46/46、集成 11/11。
 
 建议话术：
 
