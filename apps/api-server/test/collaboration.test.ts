@@ -1,12 +1,22 @@
 import type { ConfirmAllergyChangeInput } from '@fushi/contracts'
 import { call } from '@orpc/server'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import {
   clearCollaborationState,
+  configureCollaborationStoreForTest,
   confirmAllergyChange,
+  reloadCollaborationStateFromStoreForTest,
   removeSyntheticReactionEvidence,
+  simulateConcurrentProfileUpdateForTest,
 } from '../src/collaboration.js'
+import {
+  createFileCollaborationStore,
+  createMemoryCollaborationStore,
+} from '../src/collaboration-store.js'
 import { router } from '../src/router.js'
 
 const requestInput = {
@@ -18,10 +28,14 @@ const requestInput = {
   food: '鳕鱼',
   reactionId: 'reaction-demo-001',
   justification: '进食后出现已记录反应，申请更新安全档案',
+  expectedProfileVersion: 1,
 }
 
 describe('household allergy change workflow', () => {
-  beforeEach(() => clearCollaborationState())
+  beforeEach(() => {
+    configureCollaborationStoreForTest(createMemoryCollaborationStore())
+    clearCollaborationState()
+  })
 
   it('exposes a synthetic household with real caregiver responsibilities', async () => {
     const household = await call(router.collaboration.household, {})
@@ -29,6 +43,7 @@ describe('household allergy change workflow', () => {
     expect(household).toMatchObject({
       householdId: 'demo-household-001',
       dataSource: 'synthetic-demo',
+      persistenceMode: 'process-memory',
       profileVersion: 1,
       foodStates: [{ food: '鳕鱼', state: 'confirmed' }],
     })
@@ -141,6 +156,7 @@ describe('household allergy change workflow', () => {
         actor: requestInput.actor,
         householdId: 'demo-household-001',
         requestId: request.request!.requestId,
+        expectedProfileVersion: 1,
         consentToConfirmIrreversible: true,
       }
     )
@@ -153,6 +169,7 @@ describe('household allergy change workflow', () => {
         },
         householdId: 'demo-household-001',
         requestId: request.request!.requestId,
+        expectedProfileVersion: 1,
         consentToConfirmIrreversible: true,
       }
     )
@@ -172,6 +189,7 @@ describe('household allergy change workflow', () => {
       },
       householdId: 'demo-household-001',
       requestId: '982a16b1-5c10-4a24-af22-2b578233bd1c',
+      expectedProfileVersion: 1,
       consentToConfirmIrreversible: false,
     } as unknown as ConfirmAllergyChangeInput
 
@@ -190,6 +208,7 @@ describe('household allergy change workflow', () => {
       },
       householdId: 'demo-household-001',
       requestId: '982a16b1-5c10-4a24-af22-2b578233bd1c',
+      expectedProfileVersion: 1,
       consentToConfirmIrreversible: true,
     })
     const request = await call(
@@ -206,6 +225,7 @@ describe('household allergy change workflow', () => {
         },
         householdId: 'demo-household-001',
         requestId: request.request!.requestId,
+        expectedProfileVersion: 1,
         consentToConfirmIrreversible: true,
       }
     )
@@ -231,6 +251,7 @@ describe('household allergy change workflow', () => {
         },
         householdId: 'demo-household-001',
         requestId: request.request!.requestId,
+        expectedProfileVersion: 1,
         consentToConfirmIrreversible: true,
       }
     )
@@ -241,13 +262,14 @@ describe('household allergy change workflow', () => {
       },
       householdId: 'demo-household-001',
       requestId: request.request!.requestId,
+      expectedProfileVersion: 2,
       consentToConfirmIrreversible: true,
     })
     const household = await call(router.collaboration.household, {})
     const audit = await call(router.collaboration.audit, {})
     const requestAfterAllergic = await call(
       router.collaboration.requestAllergyChange,
-      requestInput
+      { ...requestInput, expectedProfileVersion: 2 }
     )
 
     expect(confirmed).toMatchObject({
@@ -282,6 +304,7 @@ describe('household allergy change workflow', () => {
       },
       householdId: 'demo-household-001',
       requestId: request.request!.requestId,
+      expectedProfileVersion: 1,
       consentToConfirmIrreversible: true,
     })
 
@@ -307,6 +330,87 @@ describe('household allergy change workflow', () => {
     expect(
       preview.meals.flatMap((meal) => meal.ingredients)
     ).not.toContain('鳕鱼')
+  })
+
+  it('rejects a stale confirmation without mutating the safety profile', async () => {
+    const request = await call(
+      router.collaboration.requestAllergyChange,
+      requestInput
+    )
+    simulateConcurrentProfileUpdateForTest()
+
+    const stale = await call(router.collaboration.confirmAllergyChange, {
+      actor: {
+        id: 'demo-primary-caregiver',
+        role: 'primary-caregiver',
+      },
+      householdId: 'demo-household-001',
+      requestId: request.request!.requestId,
+      expectedProfileVersion: 1,
+      consentToConfirmIrreversible: true,
+    })
+    const household = await call(router.collaboration.household, {})
+    const audit = await call(router.collaboration.audit, {})
+
+    expect(stale).toMatchObject({
+      decision: 'denied',
+      reasonCode: 'profile-version-conflict',
+      profileUpdated: false,
+      profileVersion: 2,
+    })
+    expect(household).toMatchObject({
+      profileVersion: 2,
+      foodStates: [{ food: '鳕鱼', state: 'confirmed' }],
+      pendingRequests: [{ baseProfileVersion: 1 }],
+    })
+    expect(audit.records[0]).toMatchObject({
+      decision: 'denied',
+      reasonCode: 'profile-version-conflict',
+      confirmationEvidence: false,
+    })
+  })
+
+  it('rejects a change request created from a stale profile view', async () => {
+    simulateConcurrentProfileUpdateForTest()
+
+    const stale = await call(
+      router.collaboration.requestAllergyChange,
+      requestInput
+    )
+    const household = await call(router.collaboration.household, {})
+
+    expect(stale).toMatchObject({
+      decision: 'denied',
+      reasonCode: 'profile-version-conflict',
+      profileUpdated: false,
+    })
+    expect(household).toMatchObject({
+      profileVersion: 2,
+      foodStates: [{ food: '鳕鱼', state: 'confirmed' }],
+      pendingRequests: [],
+    })
+  })
+
+  it('restores a pending request and audit history from the local file store', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'fushi-collaboration-'))
+    const store = createFileCollaborationStore(join(directory, 'state.json'))
+    configureCollaborationStoreForTest(store)
+    clearCollaborationState()
+
+    await call(router.collaboration.requestAllergyChange, requestInput)
+    reloadCollaborationStateFromStoreForTest()
+
+    const household = await call(router.collaboration.household, {})
+    const audit = await call(router.collaboration.audit, {})
+    expect(household).toMatchObject({
+      persistenceMode: 'local-file',
+      profileVersion: 1,
+      pendingRequests: [{ baseProfileVersion: 1 }],
+    })
+    expect(audit).toMatchObject({
+      persistenceMode: 'local-file',
+      summary: { pendingOwnerConfirmation: 1 },
+    })
   })
 
   it('caps household audit history at 100 records', async () => {

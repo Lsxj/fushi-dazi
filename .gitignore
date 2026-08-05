@@ -19,6 +19,7 @@ cloudfunctions/chat-ai/fushi-ditu/
 cloudfunctions/chat-ai/_localdata/
 cloudfunctions/chat-ai/wx-shim.js
 backups/
+apps/api-server/.data/
 
 # Local recovery snapshots may contain user data
 recovery/

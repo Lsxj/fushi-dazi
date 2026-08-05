@@ -14,10 +14,18 @@ import { randomUUID } from 'node:crypto'
 import { getCategoryByFood } from '../../../data/categories.js'
 import { generateDeterministicMenuPreview } from '../../../utils/menuPreview.js'
 import type { FoodSafetyProfile } from '../../../utils/planner.js'
+import {
+  createFileCollaborationStore,
+  createInitialCollaborationState,
+  createMemoryCollaborationStore,
+  getDefaultCollaborationStorePath,
+  type CollaborationPersistedState,
+  type CollaborationStore,
+} from './collaboration-store.js'
 
 const HOUSEHOLD_ID = 'demo-household-001' as const
 const MAX_AUDIT_RECORDS = 100
-const knownReactionIds = new Set(['reaction-demo-001'])
+const knownReactionIds = new Set<string>()
 
 const roleByActor: Record<string, HouseholdRole> = {
   'demo-primary-caregiver': 'primary-caregiver',
@@ -30,11 +38,46 @@ const changeRequests = new Map<
   NonNullable<RequestAllergyChangeOutput['request']>
 >()
 const auditRecords: HouseholdAuditRecord[] = []
-let profileVersion = 1
-let foodState: HouseholdStateOutput['foodStates'][number] = {
-  food: '鳕鱼',
-  state: 'confirmed',
+let profileVersion: number
+let foodState: HouseholdStateOutput['foodStates'][number]
+let collaborationStore: CollaborationStore =
+  process.env.NODE_ENV === 'test'
+    ? createMemoryCollaborationStore()
+    : createFileCollaborationStore(
+        process.env.FUSHI_COLLABORATION_STORE_PATH ??
+          getDefaultCollaborationStorePath()
+      )
+
+function hydrateState(state: CollaborationPersistedState): void {
+  profileVersion = state.profileVersion
+  foodState = { ...state.foodState }
+  changeRequests.clear()
+  for (const request of state.changeRequests) {
+    changeRequests.set(request.requestId, request)
+  }
+  auditRecords.splice(0, auditRecords.length, ...state.auditRecords)
+  knownReactionIds.clear()
+  for (const reactionId of state.knownReactionIds) {
+    knownReactionIds.add(reactionId)
+  }
 }
+
+function snapshotState(): CollaborationPersistedState {
+  return {
+    schemaVersion: 1,
+    profileVersion,
+    foodState: { ...foodState },
+    changeRequests: [...changeRequests.values()],
+    auditRecords: [...auditRecords],
+    knownReactionIds: [...knownReactionIds],
+  }
+}
+
+function persistState(): void {
+  collaborationStore.save(snapshotState())
+}
+
+hydrateState(collaborationStore.load())
 
 function hasBoundRole(actorId: string, role: HouseholdRole): boolean {
   return roleByActor[actorId] === role
@@ -62,6 +105,7 @@ function recordAudit(
   if (auditRecords.length > MAX_AUDIT_RECORDS) {
     auditRecords.length = MAX_AUDIT_RECORDS
   }
+  persistState()
   return record
 }
 
@@ -74,6 +118,7 @@ function denyRequest(
     | 'reaction-not-found'
     | 'pending-request-exists'
     | 'already-allergic'
+    | 'profile-version-conflict'
   >
 ): RequestAllergyChangeOutput {
   const audit = recordAudit({
@@ -99,6 +144,7 @@ export function getHouseholdState(): HouseholdStateOutput {
   return {
     householdId: HOUSEHOLD_ID,
     dataSource: 'synthetic-demo',
+    persistenceMode: collaborationStore.mode,
     profileVersion,
     members: [
       {
@@ -172,6 +218,7 @@ export function getHouseholdMenuPreview(): HouseholdMenuPreviewOutput {
   return {
     householdId: HOUSEHOLD_ID,
     dataSource: 'synthetic-demo',
+    persistenceMode: collaborationStore.mode,
     profileVersion,
     decisionSource: 'deterministic-rules',
     executionMode: 'deterministic',
@@ -188,6 +235,9 @@ export function requestAllergyChange(
   }
   if (input.actor.role === 'viewer') {
     return denyRequest(input, 'role-not-authorized')
+  }
+  if (input.expectedProfileVersion !== profileVersion) {
+    return denyRequest(input, 'profile-version-conflict')
   }
   if (!knownReactionIds.has(input.reactionId)) {
     return denyRequest(input, 'reaction-not-found')
@@ -213,6 +263,7 @@ export function requestAllergyChange(
     requestedBy: input.actor.id,
     requestedByRole: input.actor.role,
     justification: input.justification,
+    baseProfileVersion: profileVersion,
     status: 'pending-owner-confirmation' as const,
     createdAt: new Date().toISOString(),
   }
@@ -283,6 +334,12 @@ export function confirmAllergyChange(
   if (!request || request.status !== 'pending-owner-confirmation') {
     return denyConfirmation(input, 'invalid-request')
   }
+  if (
+    input.expectedProfileVersion !== profileVersion ||
+    request.baseProfileVersion !== profileVersion
+  ) {
+    return denyConfirmation(input, 'profile-version-conflict', request.food)
+  }
   if (!knownReactionIds.has(request.reactionId)) {
     return denyConfirmation(input, 'reaction-not-found', request.food)
   }
@@ -335,21 +392,32 @@ export function listHouseholdAudit(): HouseholdAuditOutput {
       ).length,
     },
     dataSource: 'synthetic-demo',
+    persistenceMode: collaborationStore.mode,
   }
 }
 
 export function clearCollaborationState(): void {
-  changeRequests.clear()
-  auditRecords.length = 0
-  profileVersion = 1
-  foodState = {
-    food: '鳕鱼',
-    state: 'confirmed',
-  }
-  knownReactionIds.clear()
-  knownReactionIds.add('reaction-demo-001')
+  hydrateState(createInitialCollaborationState())
+  persistState()
 }
 
 export function removeSyntheticReactionEvidence(reactionId: string): void {
   knownReactionIds.delete(reactionId)
+  persistState()
+}
+
+export function configureCollaborationStoreForTest(
+  store: CollaborationStore
+): void {
+  collaborationStore = store
+  hydrateState(collaborationStore.load())
+}
+
+export function reloadCollaborationStateFromStoreForTest(): void {
+  hydrateState(collaborationStore.load())
+}
+
+export function simulateConcurrentProfileUpdateForTest(): void {
+  profileVersion += 1
+  persistState()
 }

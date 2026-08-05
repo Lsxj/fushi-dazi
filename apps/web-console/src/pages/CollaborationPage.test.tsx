@@ -100,4 +100,43 @@ describe('CollaborationPage', () => {
       await screen.findByText('变更申请暂时无法提交，请重试。')
     ).toBeInTheDocument()
   })
+
+  it('shows a stale-profile conflict without claiming the profile changed', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.post(
+        '*/api/v1/collaboration/allergy-changes/confirm',
+        () =>
+          HttpResponse.json({
+            auditId: 'fe16de0d-8163-4289-8689-4a34e4d2a88b',
+            decision: 'denied',
+            reasonCode: 'profile-version-conflict',
+            dataSource: 'synthetic-demo',
+            profileUpdated: false,
+            profileVersion: 2,
+          })
+      )
+    )
+    renderApp(<CollaborationPage />, '/collaboration')
+
+    await screen.findByRole('heading', { name: '谁正在操作？' })
+    await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
+    await user.click(
+      await screen.findByRole('button', { name: '切换为主照护人审核' })
+    )
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: /我已核对 reaction-demo-001/,
+      })
+    )
+    await user.click(
+      screen.getByRole('button', { name: '确认并更新安全档案' })
+    )
+
+    expect(await screen.findByText('档案未改变')).toBeInTheDocument()
+    expect(
+      screen.getByText(/安全档案已被其他照护人更新，请重新核对/)
+    ).toBeInTheDocument()
+    expect(screen.getByText('鳕鱼蔬菜粥')).toBeInTheDocument()
+  })
 })

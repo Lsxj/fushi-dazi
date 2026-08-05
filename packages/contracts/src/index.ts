@@ -147,6 +147,7 @@ export const AllergyChangeRequestSchema = z.object({
   requestedBy: z.string(),
   requestedByRole: HouseholdRoleSchema,
   justification: z.string().min(8).max(240),
+  baseProfileVersion: z.number().int().positive(),
   status: z.enum(['pending-owner-confirmation', 'confirmed']),
   createdAt: z.string().datetime(),
   confirmedAt: z.string().datetime().optional(),
@@ -155,6 +156,7 @@ export const AllergyChangeRequestSchema = z.object({
 export const HouseholdStateOutputSchema = z.object({
   householdId: z.literal('demo-household-001'),
   dataSource: z.literal('synthetic-demo'),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
   profileVersion: z.number().int().positive(),
   members: z.array(
     z.object({
@@ -190,6 +192,7 @@ export const RequestAllergyChangeInputSchema = z.object({
   food: z.string().trim().min(1).max(40),
   reactionId: z.string().min(1).max(80),
   justification: z.string().trim().min(8).max(240),
+  expectedProfileVersion: z.number().int().positive(),
 })
 
 export const RequestAllergyChangeOutputSchema = z.object({
@@ -201,6 +204,7 @@ export const RequestAllergyChangeOutputSchema = z.object({
     'reaction-not-found',
     'pending-request-exists',
     'already-allergic',
+    'profile-version-conflict',
     'owner-confirmation-required',
   ]),
   request: AllergyChangeRequestSchema.optional(),
@@ -212,6 +216,7 @@ export const ConfirmAllergyChangeInputSchema = z.object({
   actor: HouseholdActorSchema,
   householdId: z.literal('demo-household-001'),
   requestId: z.string().uuid(),
+  expectedProfileVersion: z.number().int().positive(),
   consentToConfirmIrreversible: z.literal(true),
 })
 
@@ -224,6 +229,7 @@ export const ConfirmAllergyChangeOutputSchema = z.object({
     'invalid-request',
     'reaction-not-found',
     'explicit-confirmation-required',
+    'profile-version-conflict',
     'allergy-profile-updated',
   ]),
   dataSource: z.literal('synthetic-demo'),
@@ -256,11 +262,13 @@ export const HouseholdAuditOutputSchema = z.object({
     confirmed: z.number().int().nonnegative(),
   }),
   dataSource: z.literal('synthetic-demo'),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
 })
 
 export const HouseholdMenuPreviewOutputSchema = z.object({
   householdId: z.literal('demo-household-001'),
   dataSource: z.literal('synthetic-demo'),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
   profileVersion: z.number().int().positive(),
   decisionSource: z.literal('deterministic-rules'),
   executionMode: z.literal('deterministic'),

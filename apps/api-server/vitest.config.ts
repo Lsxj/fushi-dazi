@@ -10,6 +10,7 @@ export default defineConfig({
         'src/app.ts',
         'src/evaluation.ts',
         'src/collaboration.ts',
+        'src/collaboration-store.ts',
         'src/observability.ts',
         'src/openapi.ts',
         'src/router.ts',

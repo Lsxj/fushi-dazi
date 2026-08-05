@@ -127,6 +127,7 @@ describe('Express + oRPC OpenAPI boundary', () => {
         food: '鳕鱼',
         reactionId: 'reaction-demo-001',
         justification: '进食后出现已记录反应，申请更新安全档案',
+        expectedProfileVersion: 1,
       })
       .expect(200)
     const missingConsent = await request(app)
@@ -139,6 +140,7 @@ describe('Express + oRPC OpenAPI boundary', () => {
         },
         householdId: 'demo-household-001',
         requestId: changeRequest.body.request.requestId,
+        expectedProfileVersion: 1,
       })
     const falseConsent = await request(app)
       .post('/api/v1/collaboration/allergy-changes/confirm')
@@ -150,15 +152,17 @@ describe('Express + oRPC OpenAPI boundary', () => {
         },
         householdId: 'demo-household-001',
         requestId: changeRequest.body.request.requestId,
+        expectedProfileVersion: 1,
         consentToConfirmIrreversible: false,
       })
     const audit = await request(app)
       .get('/api/v1/collaboration/audit')
       .expect(200)
 
-    expect(HouseholdStateOutputSchema.parse(household.body).dataSource).toBe(
-      'synthetic-demo'
-    )
+    expect(HouseholdStateOutputSchema.parse(household.body)).toMatchObject({
+      dataSource: 'synthetic-demo',
+      persistenceMode: 'process-memory',
+    })
     expect(
       RequestAllergyChangeOutputSchema.parse(changeRequest.body).decision
     ).toBe('pending-owner-confirmation')

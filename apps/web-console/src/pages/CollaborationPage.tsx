@@ -27,6 +27,7 @@ function reasonLabel(reasonCode: string): string {
     'reaction-not-found': '关联的反应记录不存在',
     'pending-request-exists': '该食材已有待确认申请',
     'already-allergic': '该食材已经标记为永久过敏',
+    'profile-version-conflict': '安全档案已被其他照护人更新，请重新核对',
     'owner-confirmation-required': '等待主照护人确认',
     'owner-role-required': '只有主照护人可以确认',
     'invalid-request': '申请不存在或已经处理',
@@ -67,6 +68,7 @@ export function CollaborationPage() {
         food: '鳕鱼',
         reactionId: 'reaction-demo-001',
         justification: '进食后出现已记录反应，申请更新安全档案',
+        expectedProfileVersion: household.data?.profileVersion ?? 1,
       }),
     onSuccess: (result) => {
       setChangeResult(result)
@@ -94,6 +96,7 @@ export function CollaborationPage() {
         },
         householdId: 'demo-household-001',
         requestId: changeResult?.request?.requestId ?? '',
+        expectedProfileVersion: household.data?.profileVersion ?? 1,
         consentToConfirmIrreversible: true,
       }),
     onSuccess: () => {
@@ -144,8 +147,12 @@ export function CollaborationPage() {
           </p>
         </div>
         <div className="rounded-2xl border border-[#d7a58f]/35 bg-[#fff0e8] px-4 py-3 text-xs leading-5 text-[#8a452d]">
-          <strong className="block">合成家庭数据</strong>
-          这是可运行的真实流程原型，不包含真实宝宝信息。
+          <strong className="block">
+            {household.data?.persistenceMode === 'local-file'
+              ? '本地持久化合成数据'
+              : '合成家庭数据'}
+          </strong>
+          不包含真实宝宝信息；本地文件模式可跨服务重启恢复。
         </div>
       </div>
 
@@ -426,7 +433,13 @@ export function CollaborationPage() {
                       : 'border-[#d87b5d]/25 bg-[#fff0e8]'
                   }`}
                 >
-                  <strong className="text-sm text-[#245949]">
+                  <strong
+                    className={`text-sm ${
+                      confirmChange.data.profileUpdated
+                        ? 'text-[#245949]'
+                        : 'text-[#8a452d]'
+                    }`}
+                  >
                     {confirmChange.data.profileUpdated
                       ? '安全档案已更新'
                       : '档案未改变'}

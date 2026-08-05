@@ -138,6 +138,7 @@ const evaluationResponse: SafetyEvaluationOutput = {
 const householdResponse: HouseholdStateOutput = {
   householdId: 'demo-household-001',
   dataSource: 'synthetic-demo',
+  persistenceMode: 'process-memory',
   profileVersion: 1,
   members: [
     {
@@ -182,6 +183,7 @@ function menuPreviewResponse(): HouseholdMenuPreviewOutput {
   return {
     householdId: 'demo-household-001',
     dataSource: 'synthetic-demo',
+    persistenceMode: 'process-memory',
     profileVersion: collaborationProfileIsAllergic ? 2 : 1,
     decisionSource: 'deterministic-rules',
     executionMode: 'deterministic',
@@ -219,6 +221,7 @@ function menuPreviewResponse(): HouseholdMenuPreviewOutput {
 }
 
 const householdAuditResponse: HouseholdAuditOutput = {
+  persistenceMode: 'process-memory',
   records: [
     {
       auditId: '93759ae7-bcee-4a75-9249-11f49d55b32a',
@@ -318,6 +321,7 @@ export const allergyChangeRequestHandler = http.post(
         requestedBy: 'demo-caregiver',
         requestedByRole: 'caregiver',
         justification: '进食后出现已记录反应，申请更新安全档案',
+        baseProfileVersion: 1,
         status: 'pending-owner-confirmation',
         createdAt: '2026-07-30T03:00:00.000Z',
       },
