@@ -5,20 +5,20 @@ import { describe, expect, it } from 'vitest'
 import { App } from './App'
 import { renderApp } from './test/render'
 
-describe('portfolio console navigation', () => {
-  it('presents the architecture story and opens the safety lab', async () => {
+describe('operations console navigation', () => {
+  it('presents the operations queue and opens rule verification', async () => {
     const user = userEvent.setup()
     renderApp(<App />)
 
     expect(
-      screen.getByRole('heading', { name: /把 AI 能力/ })
+      await screen.findByRole('heading', { name: '运营与安全总览' })
     ).toBeInTheDocument()
-    expect(screen.getByText('23 MCP tools')).toBeInTheDocument()
+    expect(await screen.findByText('发布前安全门禁')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('link', { name: /运行安全实验/ }))
+    await user.click(screen.getByRole('link', { name: /运行规则验证/ }))
 
     expect(
-      screen.getByRole('heading', { name: '安全规则实验室' })
+      screen.getByRole('heading', { name: '安全规则验证' })
     ).toBeInTheDocument()
   })
 
@@ -32,34 +32,42 @@ describe('portfolio console navigation', () => {
     await user.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
 
-    const labLinks = screen.getAllByRole('link', { name: '安全规则实验室' })
+    const labLinks = screen.getAllByRole('link', { name: '规则验证' })
     fireEvent.click(labLinks.at(-1)!)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(
-      screen.getByRole('heading', { name: '安全规则实验室' })
+      screen.getByRole('heading', { name: '安全规则验证' })
     ).toBeInTheDocument()
   })
 
-  it('opens the observability console from the architecture overview', async () => {
+  it('opens AI quality from the operations dashboard', async () => {
     const user = userEvent.setup()
     renderApp(<App />)
 
-    await user.click(
-      screen.getByRole('link', { name: /查看可观测性/ })
-    )
+    await screen.findByText('发布前安全门禁')
+    await user.click(screen.getByRole('link', { name: /查看失败案例与 trace/ }))
 
     expect(
-      await screen.findByRole('heading', { name: '决策可观测性' })
+      await screen.findByRole('heading', { name: 'AI 质量与安全评估' })
     ).toBeInTheDocument()
   })
 
-  it('routes to the household collaboration workflow', async () => {
+  it('redirects the old collaboration route to read-only support', async () => {
     renderApp(<App />, '/collaboration')
 
     expect(
       await screen.findByRole('heading', {
-        name: '家庭协作与安全档案',
+        name: '家庭支持与授权审计',
       })
     ).toBeInTheDocument()
+  })
+
+  it('keeps architecture evidence in the developer area', () => {
+    renderApp(<App />, '/developer')
+
+    expect(
+      screen.getByRole('heading', { name: /工程架构与/ })
+    ).toBeInTheDocument()
+    expect(screen.getByText('23 MCP tools')).toBeInTheDocument()
   })
 })

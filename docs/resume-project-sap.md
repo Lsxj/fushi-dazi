@@ -22,7 +22,7 @@
 - 在 **pnpm monorepo** 中完成 React 19 与 TypeScript 后端的端到端实现：以 **Zod + oRPC** 先定义共享契约，再接入 Express/OpenAPI 与 React；使用 React Query 管理服务端状态、Zustand 管理本地交互状态，并在核心 workspace 边界启用 TypeScript strict mode。
 - 将多人照护场景实现为可审计业务闭环：危险档案变更必须经过 RBAC、字面量显式确认和乐观并发版本校验；成功后原子持久化档案与审计事件并重算菜单，过期写入被拒绝且不改变原状态。
 - 将重复的 AI 开发与业务操作固化为 **23 个 MCP tools、10 个 resources、3 个 prompts**，并编写项目级 `AGENTS.md` 与安全变更 Skill，把契约优先、负向测试、人工确认和质量门禁沉淀为团队可复用工程资产。
-- 建立本地可重复的质量门禁：API 34/34、React/MSW 18/18、Playwright Chromium E2E 2/2、MCP 单元 9/9、冒烟 46/46、集成 11/11；API 与 React 行覆盖率均超过 98%。9 个固定 agentic 案例覆盖工具选择、安全阻断与 grounding 代理，离线 `mock-policy` 全部通过，明确不等同于线上模型准确率。
+- 建立本地可重复的质量门禁：API 34/34、React/MSW 23/23、Playwright Chromium E2E 2/2、MCP 单元 9/9、冒烟 46/46、集成 11/11；API 行覆盖率 98.92%，React 行覆盖率 96.75%。9 个固定 agentic 案例覆盖工具选择、安全阻断与 grounding 代理，离线 `mock-policy` 全部通过，明确不等同于线上模型准确率。
 - 通过 ADR 记录规则边界、contract-first、显式授权与离线评估等关键取舍，并明确当前单节点文件存储、mock IdP、合成数据和未完成线上模型验证的边界，为后续迁移数据库、真实认证和生产可观测性保留演进路径。
 
 **技术栈：** TypeScript、Node.js、Express、oRPC、Zod、React 19、React Router、TanStack Query、Zustand、Vite、Tailwind CSS、Vitest、MSW、Playwright、MCP、pnpm workspaces、GitHub Actions
@@ -41,7 +41,7 @@ Designed and implemented a decision-support product for caregivers of children a
 - Delivered an end-to-end React 19 and TypeScript backend in a **pnpm monorepo** using **Zod and oRPC** contract-first schemas, Express/OpenAPI, React Query for server state, Zustand for local interaction state, and strict TypeScript at the core workspace boundaries.
 - Implemented an auditable multi-caregiver mutation flow with RBAC, literal confirmation, optimistic version checks, atomic profile/audit persistence, and deterministic menu recomputation; stale writes are rejected without changing the profile or menu.
 - Turned repeated engineering and product workflows into **23 MCP tools, 10 resources, and 3 prompts**, supported by a repository-level `AGENTS.md` and a reusable safety-change Skill that codifies contract-first delivery, negative tests, human approval, and quality gates.
-- Built a reproducible local quality gate covering 34 API tests, 18 React/MSW tests, 2 Playwright Chromium E2E flows, 9 MCP unit tests, 46 smoke tests, and an 11-step integration flow; both API and React line coverage exceed 98%. Added 9 deterministic agentic regression cases for tool selection, safety-block recall, and a grounding proxy, explicitly reported as offline `mock-policy` results rather than live-model accuracy.
+- Built a reproducible local quality gate covering 34 API tests, 23 React/MSW tests, 2 Playwright Chromium E2E flows, 9 MCP unit tests, 46 smoke tests, and an 11-step integration flow; API line coverage is 98.92% and React line coverage is 96.75%. Added 9 deterministic agentic regression cases for tool selection, safety-block recall, and a grounding proxy, explicitly reported as offline `mock-policy` results rather than live-model accuracy.
 - Documented architectural trade-offs through ADRs and made the current single-node file store, mock identity provider, synthetic data, and unverified live-model path explicit, with an evolution path toward production persistence, authentication, and observability.
 
 **Stack:** TypeScript, Node.js, Express, oRPC, Zod, React 19, React Router, TanStack Query, Zustand, Vite, Tailwind CSS, Vitest, MSW, Playwright, MCP, pnpm workspaces, GitHub Actions

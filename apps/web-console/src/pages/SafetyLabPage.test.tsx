@@ -13,7 +13,7 @@ describe('SafetyLabPage', () => {
     renderApp(<SafetyLabPage />, '/safety')
 
     await user.click(
-      screen.getByRole('button', { name: /运行确定性检查/ })
+      screen.getByRole('button', { name: /运行规则验证/ })
     )
 
     expect(await screen.findByText('可以进入后续编排')).toBeInTheDocument()
@@ -31,7 +31,7 @@ describe('SafetyLabPage', () => {
       screen.getByRole('button', { name: /个体过敏拦截/ })
     )
     await user.click(
-      screen.getByRole('button', { name: /运行确定性检查/ })
+      screen.getByRole('button', { name: /运行规则验证/ })
     )
 
     expect(await screen.findByText('已触发安全拦截')).toBeInTheDocument()
@@ -45,7 +45,7 @@ describe('SafetyLabPage', () => {
     renderApp(<SafetyLabPage />, '/safety')
 
     const input = screen.getByLabelText('待检查食材')
-    const submit = screen.getByRole('button', { name: /运行确定性检查/ })
+    const submit = screen.getByRole('button', { name: /运行规则验证/ })
 
     await user.clear(input)
     expect(submit).toBeDisabled()
@@ -65,7 +65,7 @@ describe('SafetyLabPage', () => {
     renderApp(<SafetyLabPage />, '/safety')
 
     await user.click(
-      screen.getByRole('button', { name: /运行确定性检查/ })
+      screen.getByRole('button', { name: /运行规则验证/ })
     )
 
     expect(await screen.findByText('检查未完成')).toBeInTheDocument()

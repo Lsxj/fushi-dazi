@@ -44,14 +44,14 @@ export function ObservabilityPage() {
         <div>
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#e5ebe6] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.13em] text-[#315f52]">
             <Icon name="code" size={14} />
-            Observability & evaluation
+            AI quality & safety assurance
           </div>
           <h1 className="text-4xl font-black tracking-[-0.045em] text-[#183f35] sm:text-6xl">
-            决策可观测性
+            AI 质量与安全评估
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-[#68756e]">
-            追踪每次规则执行的状态、延迟与汇总结果，并用固定回归集验证关键安全场景。
-            当前 provider 为 none：这里评估的是确定性规则，不伪装成大模型调用。
+            追踪规则执行状态、延迟与汇总结果，并用固定回归集判断候选版本是否可以进入人工发布审核。
+            provider 状态始终可见，不把离线规则或 mock 结果包装成线上模型能力。
           </p>
         </div>
         <button
@@ -153,7 +153,7 @@ export function ObservabilityPage() {
                     className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#91cdbb]"
                     to="/safety"
                   >
-                    前往安全实验室 <Icon name="arrow" size={16} />
+                    前往规则验证 <Icon name="arrow" size={16} />
                   </Link>
                 </div>
               ) : (

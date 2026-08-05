@@ -49,14 +49,14 @@ export function SafetyLabPage() {
         <div>
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#e5ebe6] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.13em] text-[#315f52]">
             <Icon name="shield" size={14} />
-            Deterministic safety boundary
+            Pre-release rule verification
           </div>
           <h1 className="text-4xl font-black tracking-[-0.045em] text-[#183f35] sm:text-6xl">
-            安全规则实验室
+            安全规则验证
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[#68756e]">
-            切换档案并提交食材，观察同一套业务规则如何给出可解释的确定性结果。
-            这条边界独立于大模型，即使没有 API Key 也能完整运行。
+            在规则或内容发布前，用代表性档案验证食材是否被正确放行或阻断。
+            结果来自确定性规则，即使没有模型 API Key 也能执行。
           </p>
         </div>
         <div className="rounded-2xl border border-[#d7a58f]/40 bg-[#fff0e8] px-4 py-3 text-xs leading-5 text-[#8a452d]">
@@ -171,7 +171,7 @@ export function SafetyLabPage() {
                 </>
               ) : (
                 <>
-                  运行确定性检查 <Icon name="arrow" size={17} />
+                  运行规则验证 <Icon name="arrow" size={17} />
                 </>
               )}
             </button>
@@ -191,7 +191,7 @@ export function SafetyLabPage() {
                   Decision
                 </span>
                 <h2 className="mt-1 text-2xl font-black" id="result-title">
-                  规则执行结果
+                  验证结果
                 </h2>
               </div>
               <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[.06] px-3 py-1.5 font-mono text-[10px] text-white/65">
@@ -206,7 +206,7 @@ export function SafetyLabPage() {
                   <div className="mx-auto grid size-16 place-items-center rounded-3xl border border-white/10 bg-white/[.06] text-[#91cdbb]">
                     <Icon name="code" size={28} />
                   </div>
-                  <h3 className="mt-6 text-lg font-bold">等待一次可审计决策</h3>
+                  <h3 className="mt-6 text-lg font-bold">等待一次发布前验证</h3>
                   <p className="mt-2 text-sm leading-6 text-white/50">
                     提交后将显示逐食材判断、规则原因、搭配提醒与决策来源。
                   </p>

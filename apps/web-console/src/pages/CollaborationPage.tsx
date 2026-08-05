@@ -137,13 +137,13 @@ export function CollaborationPage() {
         <div>
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#e5ebe6] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.13em] text-[#315f52]">
             <Icon name="shield" size={14} />
-            Multi-caregiver safety workflow
+            Developer scenario · multi-caregiver workflow
           </div>
           <h1 className="text-4xl font-black tracking-[-0.045em] text-[#183f35] sm:text-6xl">
-            家庭协作与安全档案
+            家庭授权合成测试场景
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-[#68756e]">
-            老人或保姆发现进食反应后，可以提交档案变更申请；永久过敏标记必须由主照护人结合反应记录明确确认，避免多人照护时误改安全信息。
+            仅供开发和回归测试：模拟共同照护人提交申请、主照护人显式确认，以及档案版本和菜单的确定性联动。正式后台没有代替家长确认的权限。
           </p>
         </div>
         <div className="rounded-2xl border border-[#d7a58f]/35 bg-[#fff0e8] px-4 py-3 text-xs leading-5 text-[#8a452d]">

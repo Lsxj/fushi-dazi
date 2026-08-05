@@ -13,7 +13,7 @@ test('blocks an individual allergy through the real React and API boundary', asy
       response.url().includes('/api/v1/safety/check') &&
       response.request().method() === 'POST'
   )
-  await page.getByRole('button', { name: '运行确定性检查' }).click()
+  await page.getByRole('button', { name: '运行规则验证' }).click()
   const response = await responsePromise
   const payload = (await response.json()) as {
     safe: boolean
@@ -35,7 +35,7 @@ test('blocks an individual allergy through the real React and API boundary', asy
 test('requires owner confirmation before changing the profile and menu', async ({
   page,
 }) => {
-  await page.goto('/collaboration')
+  await page.goto('/developer/scenarios/collaboration')
 
   await expect(
     page.getByRole('heading', { name: '谁正在操作？' })

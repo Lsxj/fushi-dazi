@@ -31,7 +31,7 @@ pnpm run web:dev
 - React Console 是独立作品集和方案验证面，不冒充小程序已上线功能。
 - 演示使用 `synthetic-demo` 家庭数据，不包含真实宝宝信息。
 
-## 0:45–2:00：安全规则实验室
+## 0:45–2:00：安全规则验证
 
 页面：`/safety`
 
@@ -54,7 +54,7 @@ pnpm run web:dev
 
 ## 2:00–4:00：多人照护闭环
 
-页面：`/collaboration`
+页面：`/developer/scenarios/collaboration`
 
 操作：
 
@@ -94,7 +94,7 @@ pnpm run web:dev
 - `apps/web-console/`：React Query 管服务端状态，Zustand 管本地交互状态。
 - `mcp-server/`：23 个工具、10 个资源、3 个提示词。
 - `skills/fushi-safety-change/` 与 `AGENTS.md`：把重复的安全开发流程变成团队可复用资产。
-- `npm run verify`：API 34/34、React/MSW 18/18、Playwright 2/2、MCP 冒烟 46/46、集成 11/11。
+- `npm run verify`：API 34/34、React/MSW 23/23、Playwright 2/2、MCP 冒烟 46/46、集成 11/11。
 
 建议话术：
 
@@ -137,4 +137,4 @@ pnpm run web:dev
 - API 未启动：运行 `pnpm run api:dev`，页面会显示可恢复错误，不用掩盖。
 - 无模型密钥：继续演示确定性规则与 `mock-policy`，这是设计支持的离线模式。
 - 页面状态已是 v2：更换 `FUSHI_COLLABORATION_STORE_PATH` 后重启 API。
-- 时间不足：只演示安全实验室、家庭协作确认和 Observability 三页，跳过代码目录。
+- 时间不足：只演示运营总览、规则验证和 AI 质量三页；家庭确认作为开发者合成场景按需展开。

@@ -49,7 +49,7 @@ describe('ObservabilityPage', () => {
       await screen.findByText('还没有可观测执行')
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /前往安全实验室/ })
+      screen.getByRole('link', { name: /前往规则验证/ })
     ).toHaveAttribute('href', '/safety')
   })
 

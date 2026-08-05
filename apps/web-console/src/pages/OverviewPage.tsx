@@ -66,30 +66,29 @@ export function OverviewPage() {
           <div className="relative">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#183f35]/15 bg-white/65 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-[#315f52]">
               <span className="size-1.5 rounded-full bg-[#df5c34]" />
-              AI Solution Architecture · Case 01
+              Developer tools · architecture evidence
             </div>
             <h1 className="max-w-4xl text-[clamp(3rem,7.2vw,6.8rem)] font-black leading-[0.92] tracking-[-0.065em] text-[#183f35]">
-              把 AI 能力，
+              工程架构与
               <br />
-              做成可信的
-              <span className="text-[#df5c34]">产品系统。</span>
+              <span className="text-[#df5c34]">可运行证据。</span>
             </h1>
             <p className="mt-8 max-w-2xl text-base leading-8 text-[#59675f] sm:text-lg">
-              辅食搭子不是一个聊天框 Demo。它把家长档案、确定性安全规则、
-              AI 编排与工程质量组合成一套可落地、可验证、可扩展的解决方案。
+              本专区面向开发者和技术评审，集中展示 contract-first API、确定性安全边界、
+              MCP 工作流与质量门禁；内部运营人员无需理解这些实现细节。
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 className="inline-flex items-center gap-3 rounded-full bg-[#183f35] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(24,63,53,.18)] transition hover:-translate-y-0.5 hover:bg-[#245949]"
                 to="/safety"
               >
-                运行安全实验 <Icon name="arrow" size={17} />
+                打开规则验证 <Icon name="arrow" size={17} />
               </Link>
               <Link
                 className="inline-flex items-center gap-3 rounded-full border border-black/12 bg-white/70 px-6 py-3.5 text-sm font-bold text-[#183f35] transition hover:bg-white"
                 to="/observability"
               >
-                查看可观测性 <Icon name="arrow" size={16} />
+                查看 AI 质量 <Icon name="arrow" size={16} />
               </Link>
               <a
                 className="inline-flex items-center gap-3 rounded-full border border-black/12 bg-white/70 px-6 py-3.5 text-sm font-bold text-[#183f35] transition hover:bg-white"
@@ -149,9 +148,9 @@ export function OverviewPage() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-5 text-center">
                   <div>
-                    <strong className="block text-xl">100%</strong>
+                    <strong className="block text-xl">98.9%</strong>
                     <span className="text-[10px] uppercase tracking-wide text-white/50">
-                      API coverage
+                      API statements
                     </span>
                   </div>
                   <div>

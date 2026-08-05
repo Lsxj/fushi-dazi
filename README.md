@@ -8,12 +8,12 @@
 
 - **真实问题**：把宝宝档案、排敏、身体状态、库存、菜单、饮食执行和反应记录串成连续决策；多人照护时避免错误修改过敏档案和误喂。
 - **架构答案**：LLM 负责理解、编排和解释，确定性规则负责食物安全；Zod + oRPC 统一 React/Express 契约；不可逆变更使用角色授权、显式确认、档案版本和审计记录。
-- **可运行证据**：React 19 + Express + oRPC、23 个 MCP 工具、9 个 agentic 固定评估案例、18 个 React/MSW 测试、2 个真实 Chromium E2E、46 个 MCP 冒烟测试和 11 步集成流程。
-- **诚实边界**：家庭协作是独立 Web 合成演示；当前为单节点本地持久化和 mock IdP，不冒充生产云数据库或已上线小程序功能。
+- **可运行证据**：React 19 + Express + oRPC、23 个 MCP 工具、9 个 agentic 固定评估案例、23 个 React/MSW 测试、2 个真实 Chromium E2E、46 个 MCP 冒烟测试和 11 步集成流程。
+- **诚实边界**：Web 是内部运营与安全控制台；家庭角色切换仅保留在开发者合成场景。当前仍为单节点本地持久化和 mock IdP，不冒充生产云数据库或已上线小程序功能。
 
 面试材料：[架构决策记录](./docs/adr/README.md) · [7 分钟演示脚本](./docs/interview-demo.md) · [SAP 定向简历项目模块](./docs/resume-project-sap.md) · [SAP 面试追问清单](./docs/interview-qa-sap.md)
 
-## 快速运行 Solution Console
+## 快速运行运营与安全控制台
 
 ```bash
 pnpm install
@@ -26,7 +26,7 @@ pnpm run api:dev
 pnpm run web:dev
 ```
 
-访问 `http://127.0.0.1:4173/`，建议依次查看 `/safety`、`/collaboration` 和 `/observability`。
+访问 `http://127.0.0.1:4173/`，建议依次查看运营总览、`/safety` 规则验证、`/observability` AI 质量、`/support` 家庭支持和 `/developer` 开发者工具。
 
 ## 本地质量门禁
 
@@ -42,13 +42,13 @@ npm run verify
 pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
-质量门禁会依次完成小程序 TypeScript 构建与回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 2 项真实 Chromium E2E。API 四项覆盖率均超过 93%，React 控制台行覆盖率超过 98%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
+质量门禁会依次完成小程序 TypeScript 构建与回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 2 项真实 Chromium E2E。API 四项覆盖率均超过 93%，React 控制台行覆盖率为 96.75%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
 
 ## AI 工程作品集
 
 - [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow；固定离线评估集量化工具选择、安全阻断、grounding 代理和端到端成功率。
 - [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
-- [React Solution Console](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW，提供架构叙事、安全实验室、隐私安全 trace、固定规则评测，以及“多人照护确认过敏后菜单自动排除并替换”的业务闭环。
+- [React 运营与安全控制台](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW；主界面服务内部运营、安全验证和只读家庭支持，架构证据与可变更的家庭合成流程隔离在开发者专区。
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
 - [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
 - [Architecture Decision Records](./docs/adr/README.md)：记录规则边界、contract-first、不可逆确认与离线评估的关键取舍。
@@ -98,7 +98,7 @@ pnpm --filter @fushi/web-console exec playwright install chromium
 fushi-ditu/
 ├── apps/
 │   ├── api-server/             # Express + oRPC contract-first API
-│   └── web-console/            # React AI solution portfolio console
+│   └── web-console/            # React operations, safety and developer console
 ├── packages/
 │   └── contracts/              # 共享 Zod/oRPC 输入输出契约
 ├── app.ts                    # 入口,云能力与档案结构初始化
