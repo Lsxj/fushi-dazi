@@ -89,9 +89,9 @@ fushi-ditu/utils/* 编译后调 `wx.getStorageSync(key)` inline。生产环境�
 **每次 deploy `.env.local`** 临时写进 `cloudbaserc.json`,推上去,trap EXIT 自动清(避免 commit 泄露 key)。
 
 ### 4. tool registry 镜像 mcp-server
-同样的 5 个安全工具:
+同样的 6 个安全工具:
 - `read_baby_profile` / `check_food_safety` (HARD GUARDRAIL)
-- `list_recipes` / `generate_today_menu` / `record_reaction`
+- `list_recipes` / `generate_today_menu` / `get_feeding_history` / `record_reaction`
 
 `mark_food_allergic` 不在 — 不可逆操作必须 user UI 显式确认(同 mcp-server 的 `z.literal(true)` 哲学)。
 
@@ -108,7 +108,7 @@ LOCAL=1               → __dirname/_localdata/
 
 1. **架构**:小程序 + 云函数 + LLM 三层,云函数是边界(fushi-ditu 业务能力 0 改动复用)
 2. **多租户**:wx.login openid 天然隔离,cloudDB 按 openid 文档
-3. **guardrail**:5 个 safe tools,LLM 不在 safety path(`check_food_safety` 纯规则)
+3. **guardrail**:6 个 safe tools,LLM 不在 safety path(`check_food_safety` 纯规则)
 4. **provider 抽象**:换模型不改代码(改 env var)
 5. **deploy model**:WeChat 云函数只打包单目录,跨目录用 sync 脚本
 6. **iOS-side 同步**:_localBackup 一次性把本地 wx.storage 传到 cloudDB(本地 onboarding 不变)
@@ -116,7 +116,7 @@ LOCAL=1               → __dirname/_localdata/
 ## 已知 trade-off
 
 1. **`generate_today_menu` 写 weeklyPlan** — 跟 fushi-ditu 原生一致,但 LLM 选 date 时需要 `YYYY-MM-DD` 格式;LLM 偶尔返错日期会 silently 用今天
-2. **mock mode 关键词匹配** — 不是真 LLM 推理,只测流程跑通
+2. **mock mode 共享确定性路由** — 不是真 LLM 推理，只用于离线流程与固定评估；安全回答必须引用工具结果，阻断或结果缺失时不能固定回答“安全”
 3. **fushi-ditu 每次改 utils 需要 sync + deploy** — 2 步,容易忘
 4. **`maxHistory=20` turn** — 长对话超出会丢前文
 5. **tool_use loop max=5 次** — 防止 LLM 死循环;真用没碰到

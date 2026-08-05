@@ -31,6 +31,7 @@ pnpm run api:dev
 - `POST /api/v1/safety/check`
 - `GET /api/v1/observability/traces`
 - `GET /api/v1/evaluations/safety`
+- `GET /api/v1/evaluations/agentic`
 - `GET /api/v1/collaboration/household`
 - `GET /api/v1/collaboration/menu-preview`
 - `POST /api/v1/collaboration/allergy-changes/request`
@@ -51,6 +52,12 @@ curl -X POST http://127.0.0.1:3000/api/v1/safety/check \
 Trace 使用容量为 100 的进程内存储，只保存食材数量、档案状态和结果计数，
 不保存食材名、宝宝姓名或备注。评测接口运行固定的安全回归集，不生成线上
 trace，也不调用模型；`provider: "none"` 是明确的运行状态，不是 mock 模型。
+
+Agentic 评测接口运行 9 个固定的合成家庭问题，复用小程序与云函数 mock 的
+共享工具路由，并真实调用确定性安全规则。它量化工具选择正确率、安全阻断
+召回率、grounding 代理指标和端到端成功率。`provider: "mock-policy"` 表示
+这里没有调用线上模型；grounding 代理只验证是否先选择了正确数据来源工具，
+不等同于自然语言回答事实准确率。
 
 家庭协作接口使用明确标注的 `synthetic-demo` 数据，复现一个真实多人照护
 流程：共同照护人根据已存在的反应记录提交永久过敏变更申请，主照护人使用
@@ -75,4 +82,4 @@ trace，也不调用模型；`provider: "none"` 是明确的运行状态，不�
 - 直接调用 oRPC procedure，验证安全、阻断、搭配提示和排敏目标分支。
 - 通过 Supertest 访问真实 Express/OpenAPI 边界，验证成功响应和非法输入。
 - 用生成的 OpenAPI 文档反查安全、可观测性、评测和家庭协作接口均已接入。
-- API 测试覆盖成功、非法输入、隐私最小化、容量上限、固定回归集、家庭角色越权、反应依据、重复申请、显式确认、档案版本冲突、重启恢复和菜单安全重算；四项覆盖率门槛均为 90%。
+- API 测试覆盖成功、非法输入、隐私最小化、容量上限、安全与 agentic 固定回归集、家庭角色越权、反应依据、重复申请、显式确认、档案版本冲突、重启恢复和菜单安全重算；四项覆盖率门槛均为 90%。

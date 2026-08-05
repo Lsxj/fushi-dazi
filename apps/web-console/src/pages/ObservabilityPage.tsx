@@ -17,15 +17,25 @@ export function ObservabilityPage() {
     queryKey: ['evaluations', 'safety'],
     queryFn: () => apiClient.evaluations.safety({}),
   })
-  const isPending = traces.isPending || evaluation.isPending
-  const isError = traces.isError || evaluation.isError
+  const agenticEvaluation = useQuery({
+    queryKey: ['evaluations', 'agentic'],
+    queryFn: () => apiClient.evaluations.agentic({}),
+  })
+  const isPending =
+    traces.isPending || evaluation.isPending || agenticEvaluation.isPending
+  const isError =
+    traces.isError || evaluation.isError || agenticEvaluation.isError
   const blockedRate =
     traces.data && traces.data.summary.total > 0
       ? traces.data.summary.blocked / traces.data.summary.total
       : 0
 
   function refresh() {
-    void Promise.all([traces.refetch(), evaluation.refetch()])
+    void Promise.all([
+      traces.refetch(),
+      evaluation.refetch(),
+      agenticEvaluation.refetch(),
+    ])
   }
 
   return (
@@ -46,7 +56,11 @@ export function ObservabilityPage() {
         </div>
         <button
           className="inline-flex w-fit items-center gap-2 rounded-full border border-black/10 bg-white/70 px-5 py-3 text-sm font-bold text-[#183f35] transition hover:bg-white disabled:opacity-50"
-          disabled={traces.isFetching || evaluation.isFetching}
+          disabled={
+            traces.isFetching ||
+            evaluation.isFetching ||
+            agenticEvaluation.isFetching
+          }
           onClick={refresh}
           type="button"
         >
@@ -80,7 +94,7 @@ export function ObservabilityPage() {
         </div>
       )}
 
-      {traces.data && evaluation.data && (
+      {traces.data && evaluation.data && agenticEvaluation.data && (
         <>
           <section
             aria-label="运行指标"
@@ -233,6 +247,103 @@ export function ObservabilityPage() {
               </div>
             </section>
           </div>
+
+          <section
+            aria-label="Agentic workflow evaluation"
+            className="mt-6 rounded-[1.8rem] border border-black/8 bg-white/75 p-6"
+          >
+            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+              <div>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#557766]">
+                  Agentic regression suite
+                </span>
+                <h2 className="mt-1 text-xl font-black text-[#183f35]">
+                  AI 工具编排评测
+                </h2>
+                <p className="mt-2 max-w-3xl text-xs leading-5 text-[#7a867f]">
+                  {agenticEvaluation.data.suiteId} · 离线固定问题集 · provider:{' '}
+                  {agenticEvaluation.data.provider}。工具选择使用 mock 路由策略，
+                  安全结论仍由确定性规则真实执行，不调用模型。
+                </p>
+              </div>
+              <span className="w-fit rounded-full bg-[#e4ece6] px-3 py-1.5 text-xs font-black text-[#315f52]">
+                {agenticEvaluation.data.passCount}/
+                {agenticEvaluation.data.datasetSize} passed
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                [
+                  'Tool selection',
+                  percent(agenticEvaluation.data.toolSelectionAccuracy),
+                ],
+                [
+                  'Safety block recall',
+                  percent(agenticEvaluation.data.safetyBlockRecall),
+                ],
+                [
+                  'Grounding proxy',
+                  percent(agenticEvaluation.data.groundingProxyRate),
+                ],
+                [
+                  'End-to-end success',
+                  percent(agenticEvaluation.data.endToEndSuccessRate),
+                ],
+              ].map(([label, value]) => (
+                <article
+                  className="rounded-2xl border border-black/8 bg-[#f8f8f5] p-4"
+                  key={label}
+                >
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-[#7a867f]">
+                    {label}
+                  </span>
+                  <strong className="mt-2 block text-2xl font-black text-[#183f35]">
+                    {value}
+                  </strong>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-[#cfb770]/30 bg-[#fff8de] p-4 text-xs leading-5 text-[#705d24]">
+              <strong>Grounding proxy 不是回答事实准确率。</strong>
+              它验证回答前是否选择了正确的数据来源工具；线上模型回答质量仍需单独采样评测。
+            </div>
+
+            <div className="mt-5 grid gap-3 lg:grid-cols-2">
+              {agenticEvaluation.data.cases.map((evaluationCase) => (
+                <article
+                  className="flex items-start justify-between gap-4 rounded-2xl border border-black/8 p-4"
+                  key={evaluationCase.id}
+                >
+                  <div>
+                    <h3 className="text-sm font-bold text-[#183f35]">
+                      {evaluationCase.label}
+                    </h3>
+                    <p className="mt-1 text-xs text-[#7a867f]">
+                      “{evaluationCase.question}”
+                    </p>
+                    <p className="mt-2 font-mono text-[10px] text-[#879189]">
+                      {evaluationCase.actualTool ?? 'no-tool'} · evidence:{' '}
+                      {evaluationCase.evidenceSource}
+                      {evaluationCase.actualSafety
+                        ? ` · safety:${evaluationCase.actualSafety}`
+                        : ''}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${
+                      evaluationCase.passed
+                        ? 'bg-[#dff1e9] text-[#28634f]'
+                        : 'bg-[#ffe3d8] text-[#9b472c]'
+                    }`}
+                  >
+                    {evaluationCase.passed ? 'PASS' : 'FAIL'}
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
         </>
       )}
     </div>

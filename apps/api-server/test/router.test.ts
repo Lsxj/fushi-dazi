@@ -1,6 +1,7 @@
 import { call } from '@orpc/server'
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { evaluateAgenticWorkflow } from '../../../utils/agentEvaluation.js'
 import { clearSafetyTraces } from '../src/observability.js'
 import { router } from '../src/router.js'
 import { baseInput } from './fixtures.js'
@@ -157,6 +158,33 @@ describe('contract-first safety procedure', () => {
 
     const traces = await call(router.observability.traces, {})
     expect(traces.summary.total).toBe(0)
+  })
+
+  it('runs the offline agentic workflow evaluation without model calls', async () => {
+    const evaluation = await call(router.evaluations.agentic, {})
+
+    expect(evaluation).toMatchObject({
+      suiteId: 'agentic-workflow-v1',
+      executionMode: 'offline-deterministic',
+      provider: 'mock-policy',
+      datasetSize: 9,
+      passCount: 9,
+      toolSelectionAccuracy: 1,
+      safetyBlockRecall: 1,
+      groundingProxyRate: 1,
+      endToEndSuccessRate: 1,
+    })
+    expect(evaluation.cases.every((item) => item.passed)).toBe(true)
+  })
+
+  it('reports routing and safety failures instead of hiding them', () => {
+    const evaluation = evaluateAgenticWorkflow(() => null)
+
+    expect(evaluation.passCount).toBe(0)
+    expect(evaluation.toolSelectionAccuracy).toBe(0)
+    expect(evaluation.safetyBlockRecall).toBe(0)
+    expect(evaluation.groundingProxyRate).toBe(0)
+    expect(evaluation.endToEndSuccessRate).toBe(0)
   })
 
   it('keeps only the latest 100 privacy-safe traces', async () => {

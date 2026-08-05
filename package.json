@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "test": "npm run build && node test/chat-ai-history-regression.test.js && node test/backup-regression.test.js",
+    "test": "npm run build && node test/chat-ai-history-regression.test.js && node test/chat-ai-agentic-evaluation.test.js && node test/backup-regression.test.js",
     "verify": "npm test && pnpm run workspace:verify && npm --prefix mcp-server run build && npm --prefix mcp-server run test:coverage && npm --prefix mcp-server test && npm --prefix mcp-server run test:integration",
     "workspace:build": "pnpm --filter @fushi/contracts build && pnpm --filter @fushi/api-server build && pnpm --filter @fushi/web-console build",
     "workspace:test": "pnpm --filter @fushi/api-server test:coverage && pnpm --filter @fushi/web-console test:coverage",
@@ -13,6 +13,7 @@
     "api:dev": "pnpm --filter @fushi/api-server dev",
     "web:dev": "pnpm --filter @fushi/web-console dev",
     "test:chat-ai-history": "node test/chat-ai-history-regression.test.js",
+    "test:chat-ai-agentic": "npm run build && node test/chat-ai-agentic-evaluation.test.js",
     "test:backup": "npm run build && node test/backup-regression.test.js",
     "deploy:chat-ai": "./scripts/deploy-chat-ai.sh",
     "deploy:chat-ai:check": "./scripts/deploy-chat-ai.sh --check",

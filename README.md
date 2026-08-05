@@ -16,7 +16,7 @@ npm run verify
 
 ## AI 工程作品集
 
-- [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow。
+- [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow；固定离线评估集量化工具选择、安全阻断、grounding 代理和端到端成功率。
 - [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
 - [React Solution Console](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW，提供架构叙事、安全实验室、隐私安全 trace、固定规则评测，以及“多人照护确认过敏后菜单自动排除并替换”的业务闭环。
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。

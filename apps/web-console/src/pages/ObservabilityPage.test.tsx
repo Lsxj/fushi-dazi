@@ -19,7 +19,12 @@ describe('ObservabilityPage', () => {
     expect(screen.getByText('provider: none')).toBeInTheDocument()
     expect(screen.getByText(/summary-only/)).toBeInTheDocument()
     expect(screen.getByText('未知食材必须阻断')).toBeInTheDocument()
-    expect(screen.getAllByText('PASS')).toHaveLength(4)
+    expect(screen.getByText('AI 工具编排评测')).toBeInTheDocument()
+    expect(screen.getByText('Tool selection')).toBeInTheDocument()
+    expect(screen.getByText('Safety block recall')).toBeInTheDocument()
+    expect(screen.getByText(/Grounding proxy 不是回答事实准确率/)).toBeInTheDocument()
+    expect(screen.getByText('锁定品类试吃必须被规则阻断')).toBeInTheDocument()
+    expect(screen.getAllByText('PASS')).toHaveLength(6)
     expect(screen.queryByText('鳕鱼')).not.toBeInTheDocument()
   })
 
@@ -52,7 +57,8 @@ describe('ObservabilityPage', () => {
     const user = userEvent.setup()
     server.use(
       http.get('*/api/v1/observability/traces', () => HttpResponse.error()),
-      http.get('*/api/v1/evaluations/safety', () => HttpResponse.error())
+      http.get('*/api/v1/evaluations/safety', () => HttpResponse.error()),
+      http.get('*/api/v1/evaluations/agentic', () => HttpResponse.error())
     )
     renderApp(<ObservabilityPage />, '/observability')
 

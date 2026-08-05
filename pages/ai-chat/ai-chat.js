@@ -1,4 +1,7 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const agentRouting_1 = require("../../utils/agentRouting");
+const safety_1 = require("../../utils/safety");
 const MAX_HISTORY = 20;
 let nextId = 1;
 let cloudAvailable = false;
@@ -144,42 +147,45 @@ Page({
         }
     },
     runMock(question) {
-        const KEYWORD_TOOL = [
-            { re: /今天.*吃什么|今天.*菜单|中午|早上|晚上|晚餐|早餐/, name: 'generate_today_menu' },
-            { re: /这周|本周|最近.*吃|吃过|记录|回顾|总结|历史|打卡/, name: 'get_feeding_history' },
-            { re: /换|替换|别的/, name: 'generate_today_menu' },
-            { re: /拉稀|红疹|呕吐|发烧|嗜睡|便秘|反应/, name: 'record_reaction' },
-            { re: /试试|尝试|引入|新食材/, name: 'check_food_safety' },
-            { re: /档案|月龄|状态|过敏|现在/, name: 'read_baby_profile' },
-            { re: /哪些菜|食谱|菜单|推荐|能吃/, name: 'list_recipes' },
-        ];
         const ANSWERS = {
-            generate_today_menu: '今天三餐我帮你安排好了:\n• 早餐: 牛肉南瓜粥\n• 午餐: 鳕鱼西兰花米糊\n• 下午: 香蕉苹果泥\n\n都用了你冰箱里的食材。',
-            record_reaction: '看起来像是中度反应,我先帮你记下来,建议进入 7 天观察期。',
-            check_food_safety: '我帮你查了 — 安全。但这是首次引入,建议小份试,观察 4 小时。',
-            read_baby_profile: '小蘑菇 10 月龄,fish/cruciferous/leafy 几个品类都开放。',
-            list_recipes: '我帮你列了 17 道 applicable 的菜 — 要看哪一类?',
+            generate_today_menu: '当前是本地预览 mock，不会生成或写入真实菜单。连接云函数后可运行确定性菜单工具。',
+            record_reaction: '当前是本地预览 mock，不会写入真实反应记录。连接云函数后可运行反应分析工具。',
+            read_baby_profile: '当前是本地预览 mock，不展示虚构档案；请以「我的」页面中的实际档案为准。',
+            list_recipes: '当前是本地预览 mock，不返回虚构数量；请前往食谱页查看实际适用食谱。',
             get_feeding_history: '我会先读取已记录的辅食打卡和反应记录,再按时间总结。当前是本地预览 mock,真实数据以云函数返回为准。',
         };
         setTimeout(() => {
-            const match = KEYWORD_TOOL.find((k) => k.re.test(question));
-            let toolName;
-            let input = {};
-            if (!match) {
-                toolName = 'read_baby_profile';
-            }
-            else {
-                toolName = match.name;
-                if (toolName === 'record_reaction') {
-                    input = { type: 'rash', severity: 'moderate', occurredAt: new Date().toISOString() };
+            const route = (0, agentRouting_1.routeAgentRequest)(question) ?? {
+                name: 'read_baby_profile',
+                input: {},
+            };
+            let answer = ANSWERS[route.name] || '好的,我帮你处理。';
+            if (route.name === 'check_food_safety') {
+                const profile = wx.getStorageSync('babyProfile');
+                const foods = Array.isArray(route.input.foods)
+                    ? route.input.foods.filter((food) => typeof food === 'string')
+                    : [];
+                if (!profile || foods.length === 0) {
+                    answer = '本地 mock 没有拿到完整的安全档案，暂时不能判断是否适合尝试。';
                 }
-                else if (toolName === 'check_food_safety') {
-                    const m = question.match(/试试\s*(\S+)/);
-                    input = { foods: [m ? m[1] : '虾'] };
+                else {
+                    const result = (0, safety_1.checkFoodsSafety)(foods, profile);
+                    answer = result.safe
+                        ? '确定性安全规则未发现阻断项。首次引入仍建议小份尝试，并按排敏流程观察。'
+                        : `确定性安全规则已阻断这次尝试：${result.results
+                            .filter((item) => !item.safe)
+                            .map((item) => item.reason)
+                            .filter(Boolean)
+                            .join('；')}。请不要喂食。`;
                 }
             }
-            this.appendAssistant(ANSWERS[toolName] || '好的,我帮你处理。', [
-                { name: toolName, input, inputJson: JSON.stringify(input, null, 2), ok: true },
+            this.appendAssistant(answer, [
+                {
+                    name: route.name,
+                    input: route.input,
+                    inputJson: JSON.stringify(route.input, null, 2),
+                    ok: true,
+                },
             ]);
             this.setData({ loading: false });
         }, 600);

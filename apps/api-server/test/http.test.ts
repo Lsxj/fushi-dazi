@@ -1,4 +1,5 @@
 import {
+  AgenticEvaluationOutputSchema,
   CheckFoodSafetyInputSchema,
   CheckFoodSafetyOutputSchema,
   HouseholdAuditOutputSchema,
@@ -76,6 +77,7 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(response.body.paths).toHaveProperty('/v1/safety/check')
     expect(response.body.paths).toHaveProperty('/v1/observability/traces')
     expect(response.body.paths).toHaveProperty('/v1/evaluations/safety')
+    expect(response.body.paths).toHaveProperty('/v1/evaluations/agentic')
     expect(response.body.paths).toHaveProperty('/v1/collaboration/household')
     expect(response.body.paths).toHaveProperty(
       '/v1/collaboration/menu-preview'
@@ -102,6 +104,9 @@ describe('Express + oRPC OpenAPI boundary', () => {
     const evaluation = await request(app)
       .get('/api/v1/evaluations/safety')
       .expect(200)
+    const agenticEvaluation = await request(app)
+      .get('/api/v1/evaluations/agentic')
+      .expect(200)
 
     expect(ListSafetyTracesOutputSchema.parse(traces.body).summary.total).toBe(
       1
@@ -109,6 +114,13 @@ describe('Express + oRPC OpenAPI boundary', () => {
     expect(
       SafetyEvaluationOutputSchema.parse(evaluation.body).passRate
     ).toBe(1)
+    expect(AgenticEvaluationOutputSchema.parse(agenticEvaluation.body)).toMatchObject({
+      suiteId: 'agentic-workflow-v1',
+      toolSelectionAccuracy: 1,
+      safetyBlockRecall: 1,
+      groundingProxyRate: 1,
+      endToEndSuccessRate: 1,
+    })
   })
 
   it('enforces household owner confirmation at the HTTP contract boundary', async () => {

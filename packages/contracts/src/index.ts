@@ -128,6 +128,51 @@ export const SafetyEvaluationOutputSchema = z.object({
   cases: z.array(SafetyEvaluationCaseSchema),
 })
 
+export const AgentWorkflowToolSchema = z.enum([
+  'read_baby_profile',
+  'check_food_safety',
+  'list_recipes',
+  'generate_today_menu',
+  'get_feeding_history',
+  'record_reaction',
+])
+
+export const AgenticEvaluationCaseSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  question: z.string().min(1),
+  evidenceSource: z.enum([
+    'profile',
+    'safety-rules',
+    'recipe-catalog',
+    'menu-planner',
+    'feeding-history',
+    'reaction-log',
+  ]),
+  expectedTool: AgentWorkflowToolSchema,
+  actualTool: AgentWorkflowToolSchema.nullable(),
+  expectedSafety: z.enum(['allow', 'block']).nullable(),
+  actualSafety: z.enum(['allow', 'block']).nullable(),
+  toolSelectionPassed: z.boolean(),
+  groundingProxyPassed: z.boolean(),
+  safetyPassed: z.boolean(),
+  passed: z.boolean(),
+})
+
+export const AgenticEvaluationOutputSchema = z.object({
+  suiteId: z.literal('agentic-workflow-v1'),
+  evaluatedAt: z.string().datetime(),
+  executionMode: z.literal('offline-deterministic'),
+  provider: z.literal('mock-policy'),
+  datasetSize: z.number().int().positive(),
+  passCount: z.number().int().nonnegative(),
+  toolSelectionAccuracy: z.number().min(0).max(1),
+  safetyBlockRecall: z.number().min(0).max(1),
+  groundingProxyRate: z.number().min(0).max(1),
+  endToEndSuccessRate: z.number().min(0).max(1),
+  cases: z.array(AgenticEvaluationCaseSchema),
+})
+
 export const HouseholdRoleSchema = z.enum([
   'primary-caregiver',
   'caregiver',
@@ -322,6 +367,16 @@ export const evaluateSafetyContract = oc
   .input(z.object({}))
   .output(SafetyEvaluationOutputSchema)
 
+export const evaluateAgenticWorkflowContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/evaluations/agentic',
+    summary: 'Run the offline agentic workflow regression suite',
+    tags: ['Evaluation'],
+  })
+  .input(z.object({}))
+  .output(AgenticEvaluationOutputSchema)
+
 export const getHouseholdStateContract = oc
   .route({
     method: 'GET',
@@ -381,6 +436,7 @@ export const apiContract = {
   },
   evaluations: {
     safety: evaluateSafetyContract,
+    agentic: evaluateAgenticWorkflowContract,
   },
   collaboration: {
     household: getHouseholdStateContract,
@@ -399,6 +455,10 @@ export type ListSafetyTracesOutput = z.infer<
 >
 export type SafetyEvaluationOutput = z.infer<
   typeof SafetyEvaluationOutputSchema
+>
+export type AgentWorkflowTool = z.infer<typeof AgentWorkflowToolSchema>
+export type AgenticEvaluationOutput = z.infer<
+  typeof AgenticEvaluationOutputSchema
 >
 export type HouseholdRole = z.infer<typeof HouseholdRoleSchema>
 export type HouseholdStateOutput = z.infer<typeof HouseholdStateOutputSchema>

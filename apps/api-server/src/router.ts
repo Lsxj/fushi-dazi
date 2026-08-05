@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
 
 import { checkFoodsSafety } from '../../../utils/safety.js'
+import { evaluateAgenticWorkflow } from '../../../utils/agentEvaluation.js'
 import {
   confirmAllergyChange,
   getHouseholdMenuPreview,
@@ -63,6 +64,9 @@ const listTraces = os.observability.traces.handler(() => listSafetyTraces())
 const evaluateSafety = os.evaluations.safety.handler(() =>
   evaluateSafetyRules()
 )
+const evaluateAgentic = os.evaluations.agentic.handler(() =>
+  evaluateAgenticWorkflow()
+)
 const getHousehold = os.collaboration.household.handler(() =>
   getHouseholdState()
 )
@@ -88,6 +92,7 @@ export const router = os.router({
   },
   evaluations: {
     safety: evaluateSafety,
+    agentic: evaluateAgentic,
   },
   collaboration: {
     household: getHousehold,

@@ -1,4 +1,5 @@
 import type {
+  AgenticEvaluationOutput,
   CheckFoodSafetyInput,
   CheckFoodSafetyOutput,
   HouseholdAuditOutput,
@@ -135,6 +136,49 @@ const evaluationResponse: SafetyEvaluationOutput = {
   })),
 }
 
+const agenticEvaluationResponse: AgenticEvaluationOutput = {
+  suiteId: 'agentic-workflow-v1',
+  evaluatedAt: '2026-08-05T03:00:00.000Z',
+  executionMode: 'offline-deterministic',
+  provider: 'mock-policy',
+  datasetSize: 9,
+  passCount: 9,
+  toolSelectionAccuracy: 1,
+  safetyBlockRecall: 1,
+  groundingProxyRate: 1,
+  endToEndSuccessRate: 1,
+  cases: [
+    {
+      id: 'daily-menu',
+      label: '今日菜单调用确定性规划器',
+      question: '今天吃什么？',
+      evidenceSource: 'menu-planner',
+      expectedTool: 'generate_today_menu',
+      actualTool: 'generate_today_menu',
+      expectedSafety: null,
+      actualSafety: null,
+      toolSelectionPassed: true,
+      groundingProxyPassed: true,
+      safetyPassed: true,
+      passed: true,
+    },
+    {
+      id: 'locked-category-trial',
+      label: '锁定品类试吃必须被规则阻断',
+      question: '想试试虾',
+      evidenceSource: 'safety-rules',
+      expectedTool: 'check_food_safety',
+      actualTool: 'check_food_safety',
+      expectedSafety: 'block',
+      actualSafety: 'block',
+      toolSelectionPassed: true,
+      groundingProxyPassed: true,
+      safetyPassed: true,
+      passed: true,
+    },
+  ],
+}
+
 const householdResponse: HouseholdStateOutput = {
   householdId: 'demo-household-001',
   dataSource: 'synthetic-demo',
@@ -266,6 +310,11 @@ export const evaluationHandler = http.get(
   () => HttpResponse.json(evaluationResponse)
 )
 
+export const agenticEvaluationHandler = http.get(
+  '*/api/v1/evaluations/agentic',
+  () => HttpResponse.json(agenticEvaluationResponse)
+)
+
 export const householdHandler = http.get(
   '*/api/v1/collaboration/household',
   () =>
@@ -350,6 +399,7 @@ export const server = setupServer(
   successHandler,
   tracesHandler,
   evaluationHandler,
+  agenticEvaluationHandler,
   householdHandler,
   householdMenuPreviewHandler,
   householdAuditHandler,

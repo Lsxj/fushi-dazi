@@ -20,6 +20,8 @@
 const path = require('path')
 const fs = require('fs')
 
+process.env.LOCAL = '1'
+
 const FUSHI_ROOT = path.resolve(__dirname, '../..')
 const shim = require('../_shared/wx-shim')
 const chatAi = require('./index.js')

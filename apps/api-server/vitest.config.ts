@@ -15,6 +15,8 @@ export default defineConfig({
         'src/openapi.ts',
         'src/router.ts',
         '../../utils/menuPreview.ts',
+        '../../utils/agentRouting.ts',
+        '../../utils/agentEvaluation.ts',
       ],
       reporter: ['text', 'json-summary', 'html'],
       thresholds: {
