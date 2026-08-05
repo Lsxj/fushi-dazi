@@ -337,6 +337,76 @@ export const HouseholdMenuPreviewOutputSchema = z.object({
   ),
 })
 
+export const ReleaseEvidenceSchema = z.object({
+  safetySuiteId: z.literal('safety-regression-v1'),
+  safetyEvaluatedAt: z.string().datetime(),
+  safetyPassCount: z.number().int().nonnegative(),
+  safetyDatasetSize: z.number().int().positive(),
+  safetyPassRate: z.number().min(0).max(1),
+  safetyBlockRecall: z.number().min(0).max(1),
+  agenticSuiteId: z.literal('agentic-workflow-v1'),
+  agenticEvaluatedAt: z.string().datetime(),
+  agenticPassCount: z.number().int().nonnegative(),
+  agenticDatasetSize: z.number().int().positive(),
+  agenticEndToEndSuccessRate: z.number().min(0).max(1),
+  agenticProvider: z.literal('mock-policy'),
+  gatePassed: z.boolean(),
+  decisionSource: z.literal('deterministic-release-policy'),
+})
+
+export const ReleaseReviewSchema = z.object({
+  reviewerId: z.string().trim().min(2).max(80),
+  decision: z.enum(['approved', 'blocked']),
+  note: z.string().trim().min(4).max(500),
+  evidenceConfirmed: z.literal(true),
+  reviewedAt: z.string().datetime(),
+})
+
+export const ReleaseCandidateSchema = z.object({
+  candidateId: z.string().uuid(),
+  version: z.string().trim().regex(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/),
+  createdBy: z.string().trim().min(2).max(80),
+  createdAt: z.string().datetime(),
+  status: z.enum(['awaiting-review', 'approved', 'blocked']),
+  evidence: ReleaseEvidenceSchema,
+  review: ReleaseReviewSchema.optional(),
+})
+
+export const CreateReleaseCandidateInputSchema = z.object({
+  version: z.string().trim().regex(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/),
+  createdBy: z.string().trim().min(2).max(80),
+})
+
+export const CreateReleaseCandidateOutputSchema = z.object({
+  candidate: ReleaseCandidateSchema,
+  persistenceMode: z.enum(['process-memory', 'local-file']),
+})
+
+export const ReviewReleaseCandidateInputSchema = z.object({
+  candidateId: z.string().uuid(),
+  reviewerId: z.string().trim().min(2).max(80),
+  decision: z.enum(['approved', 'blocked']),
+  note: z.string().trim().min(4).max(500),
+  evidenceConfirmed: z.literal(true),
+})
+
+export const ReviewReleaseCandidateOutputSchema = z.object({
+  candidate: ReleaseCandidateSchema.optional(),
+  result: z.enum(['review-recorded', 'approval-denied-by-gate', 'candidate-not-found', 'already-reviewed']),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
+})
+
+export const ListReleaseCandidatesOutputSchema = z.object({
+  candidates: z.array(ReleaseCandidateSchema),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
+  policy: z.object({
+    approvalRequiresSafetyPassRate: z.literal(1),
+    approvalRequiresSafetyBlockRecall: z.literal(1),
+    approvalRequiresAgenticSuccessRate: z.literal(1),
+    automaticDeployment: z.literal(false),
+  }),
+})
+
 export const checkFoodSafetyContract = oc
   .route({
     method: 'POST',
@@ -427,6 +497,36 @@ export const getHouseholdMenuPreviewContract = oc
   .input(z.object({}))
   .output(HouseholdMenuPreviewOutputSchema)
 
+export const listReleaseCandidatesContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/releases/candidates',
+    summary: 'List local release candidates and review evidence',
+    tags: ['Release'],
+  })
+  .input(z.object({}))
+  .output(ListReleaseCandidatesOutputSchema)
+
+export const createReleaseCandidateContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/releases/candidates',
+    summary: 'Capture current deterministic evaluation evidence for review',
+    tags: ['Release'],
+  })
+  .input(CreateReleaseCandidateInputSchema)
+  .output(CreateReleaseCandidateOutputSchema)
+
+export const reviewReleaseCandidateContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/releases/candidates/review',
+    summary: 'Record a human release review without deploying',
+    tags: ['Release'],
+  })
+  .input(ReviewReleaseCandidateInputSchema)
+  .output(ReviewReleaseCandidateOutputSchema)
+
 export const apiContract = {
   safety: {
     check: checkFoodSafetyContract,
@@ -444,6 +544,11 @@ export const apiContract = {
     requestAllergyChange: requestAllergyChangeContract,
     confirmAllergyChange: confirmAllergyChangeContract,
     audit: listHouseholdAuditContract,
+  },
+  releases: {
+    candidates: listReleaseCandidatesContract,
+    createCandidate: createReleaseCandidateContract,
+    reviewCandidate: reviewReleaseCandidateContract,
   },
 }
 
@@ -479,4 +584,21 @@ export type HouseholdAuditRecord = z.infer<typeof HouseholdAuditRecordSchema>
 export type HouseholdAuditOutput = z.infer<typeof HouseholdAuditOutputSchema>
 export type HouseholdMenuPreviewOutput = z.infer<
   typeof HouseholdMenuPreviewOutputSchema
+>
+export type ReleaseEvidence = z.infer<typeof ReleaseEvidenceSchema>
+export type ReleaseCandidate = z.infer<typeof ReleaseCandidateSchema>
+export type CreateReleaseCandidateInput = z.infer<
+  typeof CreateReleaseCandidateInputSchema
+>
+export type CreateReleaseCandidateOutput = z.infer<
+  typeof CreateReleaseCandidateOutputSchema
+>
+export type ReviewReleaseCandidateInput = z.infer<
+  typeof ReviewReleaseCandidateInputSchema
+>
+export type ReviewReleaseCandidateOutput = z.infer<
+  typeof ReviewReleaseCandidateOutputSchema
+>
+export type ListReleaseCandidatesOutput = z.infer<
+  typeof ListReleaseCandidatesOutputSchema
 >

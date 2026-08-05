@@ -42,7 +42,7 @@ npm run verify
 pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
-质量门禁会依次完成小程序 TypeScript 构建与回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 2 项真实 Chromium E2E。API 四项覆盖率均超过 93%，React 控制台行覆盖率为 96.75%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
+质量门禁会依次完成小程序 TypeScript 构建与回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 2 项真实 Chromium E2E。API 行覆盖率为 98.77%，React 控制台行覆盖率为 94.38%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
 
 ## AI 工程作品集
 

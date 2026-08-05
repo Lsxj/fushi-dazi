@@ -17,6 +17,11 @@ import {
   listSafetyTraces,
   recordSafetyTrace,
 } from './observability.js'
+import {
+  createReleaseCandidate,
+  listReleaseCandidates,
+  reviewReleaseCandidate,
+} from './releases.js'
 
 const os = implement(apiContract)
 
@@ -82,6 +87,15 @@ const confirmChange = os.collaboration.confirmAllergyChange.handler(
 const listCollaborationAudit = os.collaboration.audit.handler(() =>
   listHouseholdAudit()
 )
+const listCandidates = os.releases.candidates.handler(() =>
+  listReleaseCandidates()
+)
+const createCandidate = os.releases.createCandidate.handler(({ input }) =>
+  createReleaseCandidate(input)
+)
+const reviewCandidate = os.releases.reviewCandidate.handler(({ input }) =>
+  reviewReleaseCandidate(input)
+)
 
 export const router = os.router({
   safety: {
@@ -100,5 +114,10 @@ export const router = os.router({
     requestAllergyChange: requestChange,
     confirmAllergyChange: confirmChange,
     audit: listCollaborationAudit,
+  },
+  releases: {
+    candidates: listCandidates,
+    createCandidate,
+    reviewCandidate,
   },
 })

@@ -7,6 +7,9 @@ import {
   HouseholdStateOutputSchema,
   ListSafetyTracesOutputSchema,
   RequestAllergyChangeOutputSchema,
+  CreateReleaseCandidateOutputSchema,
+  ListReleaseCandidatesOutputSchema,
+  ReviewReleaseCandidateOutputSchema,
   SafetyEvaluationOutputSchema,
 } from '@fushi/contracts'
 import request from 'supertest'
@@ -15,6 +18,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app.js'
 import { clearCollaborationState } from '../src/collaboration.js'
 import { clearSafetyTraces } from '../src/observability.js'
+import { clearReleaseState } from '../src/releases.js'
 import { getOpenAPISpec } from '../src/openapi.js'
 import { baseInput } from './fixtures.js'
 
@@ -24,6 +28,7 @@ describe('Express + oRPC OpenAPI boundary', () => {
   beforeEach(() => {
     clearSafetyTraces()
     clearCollaborationState()
+    clearReleaseState()
   })
 
   it('serves health metadata that identifies the deterministic engine', async () => {
@@ -89,6 +94,8 @@ describe('Express + oRPC OpenAPI boundary', () => {
       '/v1/collaboration/allergy-changes/confirm'
     )
     expect(response.body.paths).toHaveProperty('/v1/collaboration/audit')
+    expect(response.body.paths).toHaveProperty('/v1/releases/candidates')
+    expect(response.body.paths).toHaveProperty('/v1/releases/candidates/review')
   })
 
   it('serves typed observability and evaluation reports', async () => {
@@ -196,6 +203,38 @@ describe('Express + oRPC OpenAPI boundary', () => {
         { slot: 'breakfast', recipeName: '南瓜大米粥' },
         { slot: 'lunch', recipeName: '鳕鱼蔬菜粥' },
       ],
+    })
+  })
+
+  it('creates and reviews a release candidate through the typed boundary', async () => {
+    const createdResponse = await request(app)
+      .post('/api/v1/releases/candidates')
+      .set('Content-Type', 'application/json')
+      .send({ version: '1.2.0-rc.1', createdBy: 'product-operator' })
+      .expect(200)
+    const created = CreateReleaseCandidateOutputSchema.parse(createdResponse.body)
+    const reviewedResponse = await request(app)
+      .post('/api/v1/releases/candidates/review')
+      .set('Content-Type', 'application/json')
+      .send({
+        candidateId: created.candidate.candidateId,
+        reviewerId: 'safety-reviewer',
+        decision: 'approved',
+        note: '自动检查已核对，批准进入人工发布步骤',
+        evidenceConfirmed: true,
+      })
+      .expect(200)
+    const listResponse = await request(app)
+      .get('/api/v1/releases/candidates')
+      .expect(200)
+
+    expect(ReviewReleaseCandidateOutputSchema.parse(reviewedResponse.body)).toMatchObject({
+      result: 'review-recorded',
+      candidate: { status: 'approved' },
+    })
+    expect(ListReleaseCandidatesOutputSchema.parse(listResponse.body)).toMatchObject({
+      candidates: [{ version: '1.2.0-rc.1', status: 'approved' }],
+      policy: { automaticDeployment: false },
     })
   })
 

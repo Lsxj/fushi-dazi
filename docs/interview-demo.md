@@ -94,7 +94,7 @@ pnpm run web:dev
 - `apps/web-console/`：React Query 管服务端状态，Zustand 管本地交互状态。
 - `mcp-server/`：23 个工具、10 个资源、3 个提示词。
 - `skills/fushi-safety-change/` 与 `AGENTS.md`：把重复的安全开发流程变成团队可复用资产。
-- `npm run verify`：API 34/34、React/MSW 23/23、Playwright 2/2、MCP 冒烟 46/46、集成 11/11。
+- `npm run verify`：API 40/40、React/MSW 24/24、Playwright 2/2、MCP 冒烟 46/46、集成 11/11。
 
 建议话术：
 

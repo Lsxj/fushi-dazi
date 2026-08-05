@@ -5,6 +5,8 @@ import type {
   HouseholdAuditOutput,
   HouseholdMenuPreviewOutput,
   HouseholdStateOutput,
+  ListReleaseCandidatesOutput,
+  ReleaseCandidate,
   ListSafetyTracesOutput,
   SafetyEvaluationOutput,
 } from '@fushi/contracts'
@@ -218,9 +220,11 @@ const householdResponse: HouseholdStateOutput = {
 }
 
 let collaborationProfileIsAllergic = false
+let releaseCandidates: ReleaseCandidate[] = []
 
 export function resetCollaborationMockState() {
   collaborationProfileIsAllergic = false
+  releaseCandidates = []
 }
 
 function menuPreviewResponse(): HouseholdMenuPreviewOutput {
@@ -395,6 +399,96 @@ export const allergyChangeConfirmHandler = http.post(
   }
 )
 
+export const releaseCandidatesHandler = http.get(
+  '*/api/v1/releases/candidates',
+  () =>
+    HttpResponse.json({
+      candidates: releaseCandidates,
+      persistenceMode: 'process-memory',
+      policy: {
+        approvalRequiresSafetyPassRate: 1,
+        approvalRequiresSafetyBlockRecall: 1,
+        approvalRequiresAgenticSuccessRate: 1,
+        automaticDeployment: false,
+      },
+    } satisfies ListReleaseCandidatesOutput)
+)
+
+export const createReleaseCandidateHandler = http.post(
+  '*/api/v1/releases/candidates',
+  async ({ request }) => {
+    const input = (await request.json()) as {
+      version: string
+      createdBy: string
+    }
+    const candidate: ReleaseCandidate = {
+      candidateId: '5a78fbe0-26b5-4228-b086-42c4f665e258',
+      version: input.version,
+      createdBy: input.createdBy,
+      createdAt: '2026-08-05T08:00:00.000Z',
+      status: 'awaiting-review',
+      evidence: {
+        safetySuiteId: 'safety-regression-v1',
+        safetyEvaluatedAt: evaluationResponse.evaluatedAt,
+        safetyPassCount: evaluationResponse.passCount,
+        safetyDatasetSize: evaluationResponse.datasetSize,
+        safetyPassRate: 1,
+        safetyBlockRecall: 1,
+        agenticSuiteId: 'agentic-workflow-v1',
+        agenticEvaluatedAt: agenticEvaluationResponse.evaluatedAt,
+        agenticPassCount: agenticEvaluationResponse.passCount,
+        agenticDatasetSize: agenticEvaluationResponse.datasetSize,
+        agenticEndToEndSuccessRate: 1,
+        agenticProvider: 'mock-policy',
+        gatePassed: true,
+        decisionSource: 'deterministic-release-policy',
+      },
+    }
+    releaseCandidates = [candidate, ...releaseCandidates]
+    return HttpResponse.json({ candidate, persistenceMode: 'process-memory' })
+  }
+)
+
+export const reviewReleaseCandidateHandler = http.post(
+  '*/api/v1/releases/candidates/review',
+  async ({ request }) => {
+    const input = (await request.json()) as {
+      candidateId: string
+      reviewerId: string
+      decision: 'approved' | 'blocked'
+      note: string
+    }
+    const current = releaseCandidates.find(
+      (candidate) => candidate.candidateId === input.candidateId
+    )
+    if (!current) {
+      return HttpResponse.json({
+        result: 'candidate-not-found',
+        persistenceMode: 'process-memory',
+      })
+    }
+    const candidate: ReleaseCandidate = {
+      ...current,
+      status: input.decision,
+      review: {
+        reviewerId: input.reviewerId,
+        decision: input.decision,
+        note: input.note,
+        evidenceConfirmed: true,
+        reviewedAt: '2026-08-05T08:05:00.000Z',
+      },
+    }
+    releaseCandidates = releaseCandidates.map((item) =>
+      item.candidateId === candidate.candidateId ? candidate : item
+    )
+    return HttpResponse.json({
+      candidate,
+      result: 'review-recorded',
+      persistenceMode: 'process-memory',
+    })
+  }
+)
+
 export const server = setupServer(
   successHandler,
   tracesHandler,
@@ -404,5 +498,8 @@ export const server = setupServer(
   householdMenuPreviewHandler,
   householdAuditHandler,
   allergyChangeRequestHandler,
-  allergyChangeConfirmHandler
+  allergyChangeConfirmHandler,
+  releaseCandidatesHandler,
+  createReleaseCandidateHandler,
+  reviewReleaseCandidateHandler
 )

@@ -12,6 +12,8 @@ export default defineConfig({
         'src/collaboration.ts',
         'src/collaboration-store.ts',
         'src/observability.ts',
+        'src/releases.ts',
+        'src/release-store.ts',
         'src/openapi.ts',
         'src/router.ts',
         '../../utils/menuPreview.ts',

@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
 
@@ -28,5 +29,29 @@ describe('OperationsDashboardPage', () => {
       await screen.findByRole('heading', { name: '运营状态加载失败' })
     ).toBeInTheDocument()
     expect(screen.queryByText('READY FOR REVIEW')).not.toBeInTheDocument()
+  })
+
+  it('captures evidence and records an explicit human release review', async () => {
+    const user = userEvent.setup()
+    renderApp(<OperationsDashboardPage />)
+
+    await user.click(
+      await screen.findByRole('button', { name: '生成审核候选' })
+    )
+    expect(await screen.findByText('v1.0.5-rc.1')).toBeInTheDocument()
+    const approve = screen.getByRole('button', { name: '批准进入人工发布' })
+    expect(approve).toBeDisabled()
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: /我已核对安全阻断召回/,
+      })
+    )
+    await user.click(approve)
+
+    expect(await screen.findByText('approved')).toBeInTheDocument()
+    expect(
+      screen.getByText(/已核对自动检查证据，批准进入人工发布步骤/)
+    ).toBeInTheDocument()
   })
 })

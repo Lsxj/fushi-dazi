@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router'
 
 import { apiClient } from '../api/client'
@@ -9,6 +10,10 @@ function percent(value: number): string {
 }
 
 export function OperationsDashboardPage() {
+  const [version, setVersion] = useState('1.0.5-rc.1')
+  const [reviewerId, setReviewerId] = useState('safety-reviewer')
+  const [reviewNote, setReviewNote] = useState('已核对自动检查证据，批准进入人工发布步骤')
+  const [evidenceConfirmed, setEvidenceConfirmed] = useState(false)
   const household = useQuery({
     queryKey: ['collaboration', 'household'],
     queryFn: () => apiClient.collaboration.household({}),
@@ -29,6 +34,10 @@ export function OperationsDashboardPage() {
     queryKey: ['evaluations', 'agentic'],
     queryFn: () => apiClient.evaluations.agentic({}),
   })
+  const releaseCandidates = useQuery({
+    queryKey: ['releases', 'candidates'],
+    queryFn: () => apiClient.releases.candidates({}),
+  })
 
   const queries = [
     household,
@@ -36,6 +45,7 @@ export function OperationsDashboardPage() {
     traces,
     safetyEvaluation,
     agenticEvaluation,
+    releaseCandidates,
   ]
   const isPending = queries.some((query) => query.isPending)
   const isError = queries.some((query) => query.isError)
@@ -48,6 +58,34 @@ export function OperationsDashboardPage() {
     safetyEvaluation.data?.passRate === 1 &&
     safetyEvaluation.data.safetyBlockRecall === 1 &&
     agenticEvaluation.data?.endToEndSuccessRate === 1
+  const latestCandidate = releaseCandidates.data?.candidates[0]
+
+  const createCandidate = useMutation({
+    mutationFn: () =>
+      apiClient.releases.createCandidate({
+        version,
+        createdBy: 'product-operator',
+      }),
+    onSuccess: () => releaseCandidates.refetch(),
+  })
+  const reviewCandidate = useMutation({
+    mutationFn: (decision: 'approved' | 'blocked') => {
+      if (!latestCandidate || !evidenceConfirmed) {
+        throw new Error('请先确认已核对自动检查证据')
+      }
+      return apiClient.releases.reviewCandidate({
+        candidateId: latestCandidate.candidateId,
+        reviewerId,
+        decision,
+        note: reviewNote,
+        evidenceConfirmed: true,
+      })
+    },
+    onSuccess: () => {
+      setEvidenceConfirmed(false)
+      return releaseCandidates.refetch()
+    },
+  })
 
   return (
     <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
@@ -100,7 +138,8 @@ export function OperationsDashboardPage() {
         audit.data &&
         traces.data &&
         safetyEvaluation.data &&
-        agenticEvaluation.data && (
+        agenticEvaluation.data &&
+        releaseCandidates.data && (
           <>
             <section aria-label="关键运营指标" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
@@ -146,6 +185,124 @@ export function OperationsDashboardPage() {
                     <strong className="block text-sm">查看失败案例与 trace</strong>
                     <span className="mt-1 block text-xs text-white/45">区分规则、工具和数据来源问题</span>
                   </Link>
+                </div>
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-black">发布候选审核</h3>
+                      <p className="mt-1 text-xs leading-5 text-white/50">
+                        固化本次评测证据并留存人工结论；批准不会自动部署。
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-white/8 px-3 py-1 font-mono text-[10px] text-white/55">
+                      {releaseCandidates.data.persistenceMode}
+                    </span>
+                  </div>
+
+                  {latestCandidate?.status !== 'awaiting-review' && (
+                    <form
+                      className="mt-4 flex flex-col gap-3 sm:flex-row"
+                      onSubmit={(event) => {
+                        event.preventDefault()
+                        createCandidate.mutate()
+                      }}
+                    >
+                      <label className="flex-1 text-xs font-bold text-white/65">
+                        候选版本
+                        <input
+                          className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-[#78d5b9]"
+                          onChange={(event) => setVersion(event.target.value)}
+                          pattern="\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?"
+                          required
+                          value={version}
+                        />
+                      </label>
+                      <button
+                        className="self-end rounded-xl bg-[#78d5b9] px-4 py-2.5 text-sm font-black text-[#183f35] disabled:opacity-50"
+                        disabled={createCandidate.isPending || !releaseReady}
+                        type="submit"
+                      >
+                        {createCandidate.isPending ? '正在固化…' : '生成审核候选'}
+                      </button>
+                    </form>
+                  )}
+
+                  {latestCandidate && (
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[.055] p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <span className="font-mono text-base font-black">v{latestCandidate.version}</span>
+                          <p className="mt-1 text-xs text-white/45">
+                            {latestCandidate.evidence.safetyPassCount}/{latestCandidate.evidence.safetyDatasetSize} 安全用例 · {latestCandidate.evidence.agenticPassCount}/{latestCandidate.evidence.agenticDatasetSize} AI 工作流
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#9de4cf]">
+                          {latestCandidate.status}
+                        </span>
+                      </div>
+
+                      {latestCandidate.status === 'awaiting-review' ? (
+                        <div className="mt-4 grid gap-3">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="text-xs font-bold text-white/65">
+                              审核人标识
+                              <input
+                                className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none"
+                                onChange={(event) => setReviewerId(event.target.value)}
+                                value={reviewerId}
+                              />
+                            </label>
+                            <label className="text-xs font-bold text-white/65">
+                              审核说明
+                              <input
+                                className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none"
+                                onChange={(event) => setReviewNote(event.target.value)}
+                                value={reviewNote}
+                              />
+                            </label>
+                          </div>
+                          <label className="flex items-start gap-2 text-xs leading-5 text-white/60">
+                            <input
+                              checked={evidenceConfirmed}
+                              className="mt-1"
+                              onChange={(event) => setEvidenceConfirmed(event.target.checked)}
+                              type="checkbox"
+                            />
+                            我已核对安全阻断召回、完整回归结果和 mock-policy 边界。
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              className="rounded-xl bg-[#78d5b9] px-4 py-2 text-xs font-black text-[#183f35] disabled:opacity-40"
+                              disabled={!evidenceConfirmed || reviewCandidate.isPending}
+                              onClick={() => reviewCandidate.mutate('approved')}
+                              type="button"
+                            >
+                              批准进入人工发布
+                            </button>
+                            <button
+                              className="rounded-xl border border-[#ff9b78]/30 px-4 py-2 text-xs font-black text-[#ffb398] disabled:opacity-40"
+                              disabled={!evidenceConfirmed || reviewCandidate.isPending}
+                              onClick={() => reviewCandidate.mutate('blocked')}
+                              type="button"
+                            >
+                              阻断候选版本
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-xl bg-black/10 p-3 text-xs leading-5 text-white/60">
+                          <strong className="text-white/85">{latestCandidate.review?.reviewerId}</strong>
+                          {' · '}{latestCandidate.review?.note}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {(createCandidate.isError || reviewCandidate.isError) && (
+                    <p className="mt-3 text-xs text-[#ffb398]">
+                      操作失败，请检查输入和 API 连接后重试。
+                    </p>
+                  )}
                 </div>
               </section>
 
