@@ -11,7 +11,7 @@
 - **可运行证据**：React 19 + Express + oRPC、23 个 MCP 工具、9 个 agentic 固定评估案例、18 个 React/MSW 测试、2 个真实 Chromium E2E、46 个 MCP 冒烟测试和 11 步集成流程。
 - **诚实边界**：家庭协作是独立 Web 合成演示；当前为单节点本地持久化和 mock IdP，不冒充生产云数据库或已上线小程序功能。
 
-面试材料：[架构决策记录](./docs/adr/README.md) · [7 分钟演示脚本](./docs/interview-demo.md)
+面试材料：[架构决策记录](./docs/adr/README.md) · [7 分钟演示脚本](./docs/interview-demo.md) · [SAP 定向简历项目模块](./docs/resume-project-sap.md) · [SAP 面试追问清单](./docs/interview-qa-sap.md)
 
 ## 快速运行 Solution Console
 
