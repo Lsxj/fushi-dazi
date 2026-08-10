@@ -16,14 +16,14 @@
 
 [github.com/Lsxj/fushi-dazi](https://github.com/Lsxj/fushi-dazi)
 
-面向 4–24 月龄儿童多照护者家庭，设计并实现连接宝宝档案、排敏、库存、菜单、饮食执行与反应记录的辅助决策产品；重点解决 AI 建议不能绕过食物安全规则，以及多人修改过敏档案可能引发误喂的问题。
+面向 4–24 月龄宝宝家庭，独立设计并实现由微信小程序和 React 管理后台组成的辅食辅助决策产品：家长在小程序管理档案、排敏、菜单、库存和饮食记录，并通过 AI 获取应用内帮助；当菜单或 AI 回答出现疑问时，可授权提交最小诊断信息，由后台完成调查、安全复核和审计。
 
-- 设计 **rule-first / LLM-second** 架构：将食谱适用性、过敏状态、尝试窗口和菜单重算沉淀为共享确定性规则，LLM 仅负责意图理解、工具编排与解释，使小程序、API 和 MCP 工作流复用同一安全边界。
-- 在 **pnpm monorepo** 中完成 React 19 与 TypeScript 后端的端到端实现：以 **Zod + oRPC** 先定义共享契约，再接入 Express/OpenAPI 与 React；使用 React Query 管理服务端状态、Zustand 管理本地交互状态，并在核心 workspace 边界启用 TypeScript strict mode。
-- 将多人照护场景实现为可审计业务闭环：危险档案变更必须经过 RBAC、字面量显式确认和乐观并发版本校验；成功后原子持久化档案与审计事件并重算菜单，过期写入被拒绝且不改变原状态。
-- 将重复的 AI 开发与业务操作固化为 **23 个 MCP tools、10 个 resources、3 个 prompts**，并编写项目级 `AGENTS.md` 与安全变更 Skill，把契约优先、负向测试、人工确认和质量门禁沉淀为团队可复用工程资产。
-- 建立本地可重复的质量门禁：API 50/50、React/MSW 25/25、Playwright Chromium E2E 3/3、MCP 单元 9/9、冒烟 46/46、集成 11/11；API 行覆盖率 98.55%，React 行覆盖率 94.27%。9 个固定 agentic 案例覆盖工具选择、安全阻断与 grounding 代理，离线 `mock-policy` 全部通过，明确不等同于线上模型准确率。
-- 通过 ADR 记录规则边界、contract-first、显式授权与离线评估等关键取舍，并明确当前单节点文件存储、mock IdP、合成数据和未完成线上模型验证的边界，为后续迁移数据库、真实认证和生产可观测性保留演进路径。
+- 打通 **家长端到内部支持端** 的完整流程：小程序内的问题上报携带客户端版本、发生时间和可选诊断标识；React 后台支持工单认领、结构化调查、Critical 安全升级和处理时间线，形成与 Built-In Support / Case Management 相近的应用内支持场景，同时禁止后台代替家长修改永久过敏档案。
+- 设计 **rule-first / LLM-second** 架构：将食谱适用性、过敏状态、尝试窗口和菜单重算放入共享 TypeScript 规则，LLM 仅负责理解问题、选择工具和解释结果，使小程序、API 与 MCP Agent 使用同一安全判断来源。
+- 在 **pnpm workspace** 中以 **Zod + oRPC** 先定义共享契约，再实现 Express/OpenAPI 服务和 React 19 客户端；使用 React Query 管理工单、Trace 与评测等服务端状态，Zustand 仅管理页面内交互状态，避免前后端类型和状态职责漂移。
+- 将重复的产品操作和 AI 开发流程封装为 **23 个 MCP tools、10 个 resources、3 个 prompts**，并编写项目级 `AGENTS.md` 与安全变更 Skill，把工具调用边界、负向测试、人工确认和质量门禁沉淀为可复用工程资产。
+- 建立可重复质量门：70 项 API、36 项 React/MSW、3 项 Playwright Chromium E2E、9 项 MCP 单元、46 项冒烟和 11 步集成测试全部通过；API / React 行覆盖率分别为 96.92% / 89.16%，9 个固定 agentic 案例覆盖工具选择、安全阻断和 grounding proxy，并明确标注为离线 `mock-policy` 结果。
+- 通过 ADR 记录确定性安全、contract-first、显式授权和离线评估等取舍；明确当前单节点文件存储、本地演示身份、合成数据和未验证线上模型的限制，不将 Docker、Kubernetes、Istio 或 ArgoCD 描述为本项目已实现能力。
 
 **技术栈：** TypeScript、Node.js、Express、oRPC、Zod、React 19、React Router、TanStack Query、Zustand、Vite、Tailwind CSS、Vitest、MSW、Playwright、MCP、pnpm workspaces、GitHub Actions
 
@@ -35,14 +35,14 @@
 
 [github.com/Lsxj/fushi-dazi](https://github.com/Lsxj/fushi-dazi)
 
-Designed and implemented a decision-support product for caregivers of children aged 4–24 months, connecting child profiles, allergen trials, pantry inventory, meal plans, feeding records, and reaction tracking. The core design constraint was preventing AI suggestions or concurrent caregiver edits from bypassing food-safety rules.
+Independently designed and implemented a complementary-feeding decision-support product for caregivers of children aged 4–24 months, comprising a WeChat Mini Program and a React operations console. Caregivers manage profiles, allergen trials, menus, inventory, and feeding records in the Mini Program, use AI for in-context assistance, and can submit minimal diagnostics for investigation and safety review when a menu or AI response appears incorrect.
 
-- Designed a **rule-first, LLM-second** architecture that keeps recipe applicability, allergy state, trial windows, and menu recomputation in shared deterministic rules; limited the LLM boundary to intent interpretation, tool orchestration, and explanation across the mini-program, API, and MCP workflows.
-- Delivered an end-to-end React 19 and TypeScript backend in a **pnpm monorepo** using **Zod and oRPC** contract-first schemas, Express/OpenAPI, React Query for server state, Zustand for local interaction state, and strict TypeScript at the core workspace boundaries.
-- Implemented an auditable multi-caregiver mutation flow with RBAC, literal confirmation, optimistic version checks, atomic profile/audit persistence, and deterministic menu recomputation; stale writes are rejected without changing the profile or menu.
-- Turned repeated engineering and product workflows into **23 MCP tools, 10 resources, and 3 prompts**, supported by a repository-level `AGENTS.md` and a reusable safety-change Skill that codifies contract-first delivery, negative tests, human approval, and quality gates.
-- Built a reproducible local quality gate covering 50 API tests, 25 React/MSW tests, 3 Playwright Chromium E2E flows, 9 MCP unit tests, 46 smoke tests, and an 11-step integration flow; API line coverage is 98.55% and React line coverage is 94.27%. Added 9 deterministic agentic regression cases for tool selection, safety-block recall, and a grounding proxy, explicitly reported as offline `mock-policy` results rather than live-model accuracy.
-- Documented architectural trade-offs through ADRs and made the current single-node file store, mock identity provider, synthetic data, and unverified live-model path explicit, with an evolution path toward production persistence, authentication, and observability.
+- Connected the **caregiver experience to an internal support workflow**: in-app reports carry client version, occurrence time, and optional diagnostic identifiers; the React console supports assignment, structured investigation, Critical-case escalation, and an auditable resolution timeline, demonstrating a Built-In Support / case-management pattern without allowing operators to modify permanent allergy records.
+- Designed a **rule-first, LLM-second** architecture that keeps recipe applicability, allergy state, trial windows, and menu recomputation in shared deterministic TypeScript rules; constrained the LLM to interpreting requests, selecting tools, and explaining rule results across the Mini Program, API, and MCP Agent.
+- Used **Zod and oRPC** to define shared contracts before implementing the Express/OpenAPI service and React 19 client in a **pnpm workspace**; applied React Query to cases, traces, and evaluations, while limiting Zustand to local interaction state to prevent type and state-ownership drift.
+- Turned repeated product operations and AI engineering checks into **23 MCP tools, 10 resources, and 3 prompts**, backed by a repository-level `AGENTS.md` and reusable safety-change Skill covering tool boundaries, negative tests, human approval, and quality gates.
+- Built a reproducible quality gate with 70 API, 36 React/MSW, 3 Playwright Chromium E2E, 9 MCP unit, 46 smoke, and an 11-step integration test suite; achieved 96.92% API and 89.16% React line coverage, with 9 fixed agentic cases for tool selection, safety blocking, and a grounding proxy explicitly reported as offline `mock-policy` results.
+- Recorded deterministic safety, contract-first delivery, explicit consent, and offline evaluation trade-offs in ADRs; kept the single-node file store, local demo identity, synthetic data, and unverified live-model path explicit, without claiming Docker, Kubernetes, Istio, or ArgoCD implementation in this project.
 
 **Stack:** TypeScript, Node.js, Express, oRPC, Zod, React 19, React Router, TanStack Query, Zustand, Vite, Tailwind CSS, Vitest, MSW, Playwright, MCP, pnpm workspaces, GitHub Actions
 
@@ -78,7 +78,7 @@ Designed and implemented a decision-support product for caregivers of children a
 
 ### Advisory
 
-- 第一页只保留 4–5 条最强项目 bullet；优先保留 rule-first、contract-first、多人照护安全闭环、AI workflow 和测试证据。
+- 第一页只保留 4–5 条最强项目 bullet；优先保留小程序到支持后台的端到端闭环、rule-first、contract-first、AI workflow 和测试证据。生产边界可留到面试展开。
 - 不把 23 个工具或 100% 离线评测单独当作业务影响；面试时始终解释它们证明的是工程范围和回归稳定性。
 - `faker`、Jira-linked commits、Storybook、Stryker 和 SonarQube 没有证据，不应为了 ATS 写入技能表。
 

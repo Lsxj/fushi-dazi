@@ -4,9 +4,19 @@ import {
   SupportCaseReason,
   SupportCaseReceipt,
 } from '../../utils/support'
+import { callSupportApi } from '../../utils/supportTransport'
 
 const RECEIPT_KEY = 'supportCaseReceipt'
-const LOCAL_SUPPORT_API = 'http://127.0.0.1:3000/api'
+
+interface CreateSupportCaseResponse {
+  case?: { caseId: string; status: string }
+  trackingToken?: string
+}
+
+interface TrackSupportCaseResponse {
+  found?: boolean
+  case?: { status: string }
+}
 
 Page({
   data: {
@@ -15,7 +25,7 @@ Page({
     consent: false,
     submitting: false,
     receipt: null as SupportCaseReceipt | null,
-    serviceMode: '本地联调',
+    serviceMode: '云端支持服务',
   },
 
   onShow() {
@@ -31,7 +41,7 @@ Page({
     this.setData({ consent: event.detail.value })
   },
 
-  submitCase() {
+  async submitCase() {
     if (!this.data.selectedReason) {
       wx.showToast({ title: '请先选择问题类型', icon: 'none' })
       return
@@ -45,70 +55,64 @@ Page({
       return
     }
 
-    const apiBaseUrl =
-      (wx.getStorageSync('supportApiBaseUrl') as string) || LOCAL_SUPPORT_API
     const reason = this.data.selectedReason as SupportCaseReason
     const payload = buildSupportCasePayload(reason, new Date().toISOString())
     this.setData({ submitting: true })
-    ;(wx as any).request({
-      url: `${apiBaseUrl}/v1/support/cases`,
-      method: 'POST',
-      data: payload,
-      success: (response) => {
-        const body = response.data as {
-          case?: { caseId: string; status: string }
-          trackingToken?: string
-        }
-        if (response.statusCode !== 200 || !body.case || !body.trackingToken) {
-          wx.showToast({ title: '提交失败，请稍后重试', icon: 'none' })
-          return
-        }
-        const receipt: SupportCaseReceipt = {
-          caseId: body.case.caseId,
-          trackingToken: body.trackingToken,
-          status: body.case.status,
-          reason,
-          submittedAt: new Date().toISOString(),
-        }
-        wx.setStorageSync(RECEIPT_KEY, receipt)
-        this.setData({ receipt, consent: false })
-        wx.showToast({ title: '工单已提交', icon: 'success' })
-      },
-      fail: () => {
-        wx.showModal({
-          title: '支持服务未连接',
-          content: '当前内测版只配置了本地联调地址，未上传任何数据。请启动本地 API 或等待正式支持服务上线。',
-          showCancel: false,
-        })
-      },
-      complete: () => this.setData({ submitting: false }),
-    })
+    try {
+      const response = await callSupportApi<CreateSupportCaseResponse>(
+        '/api/v1/support/cases',
+        payload as unknown as Record<string, unknown>
+      )
+      const body = response.data
+      if (response.statusCode !== 200 || !body.case || !body.trackingToken) {
+        wx.showToast({ title: '提交失败，请稍后重试', icon: 'none' })
+        return
+      }
+      const receipt: SupportCaseReceipt = {
+        caseId: body.case.caseId,
+        trackingToken: body.trackingToken,
+        status: body.case.status,
+        reason,
+        submittedAt: new Date().toISOString(),
+      }
+      wx.setStorageSync(RECEIPT_KEY, receipt)
+      this.setData({ receipt, consent: false })
+      wx.showToast({ title: '工单已提交', icon: 'success' })
+    } catch (error) {
+      console.warn('support case submission failed:', error)
+      wx.showModal({
+        title: '暂时无法提交',
+        content: '云端支持服务暂时不可用，本次没有保存工单。请检查网络后重试。',
+        showCancel: false,
+      })
+    } finally {
+      this.setData({ submitting: false })
+    }
   },
 
-  refreshStatus() {
+  async refreshStatus() {
     const receipt = this.data.receipt
     if (!receipt) return
-    const apiBaseUrl =
-      (wx.getStorageSync('supportApiBaseUrl') as string) || LOCAL_SUPPORT_API
-    ;(wx as any).request({
-      url: `${apiBaseUrl}/v1/support/cases/track`,
-      method: 'POST',
-      data: {
+    try {
+      const response = await callSupportApi<TrackSupportCaseResponse>(
+        '/api/v1/support/cases/track',
+        {
         caseId: receipt.caseId,
         trackingToken: receipt.trackingToken,
-      },
-      success: (response) => {
-        const body = response.data as { found?: boolean; case?: { status: string } }
-        if (!body.found || !body.case) {
-          wx.showToast({ title: '没有查到工单', icon: 'none' })
-          return
         }
-        const nextReceipt = { ...receipt, status: body.case.status }
-        wx.setStorageSync(RECEIPT_KEY, nextReceipt)
-        this.setData({ receipt: nextReceipt })
-        wx.showToast({ title: '状态已更新', icon: 'none' })
-      },
-      fail: () => wx.showToast({ title: '支持服务未连接', icon: 'none' }),
-    })
+      )
+      const body = response.data
+      if (response.statusCode !== 200 || !body.found || !body.case) {
+        wx.showToast({ title: '没有查到工单', icon: 'none' })
+        return
+      }
+      const nextReceipt = { ...receipt, status: body.case.status }
+      wx.setStorageSync(RECEIPT_KEY, nextReceipt)
+      this.setData({ receipt: nextReceipt })
+      wx.showToast({ title: '状态已更新', icon: 'none' })
+    } catch (error) {
+      console.warn('support case tracking failed:', error)
+      wx.showToast({ title: '暂时无法查询', icon: 'none' })
+    }
   },
 })

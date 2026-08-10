@@ -1,10 +1,18 @@
 import { apiContract } from '@fushi/contracts'
-import { implement } from '@orpc/server'
+import type { SupportOperator } from '@fushi/contracts'
+import { implement, ORPCError } from '@orpc/server'
 import { randomUUID } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
 
 import { checkFoodsSafety } from '../../../utils/safety.js'
 import { evaluateAgenticWorkflow } from '../../../utils/agentEvaluation.js'
+import {
+  createDemoOperatorSession,
+  parseCloudBaseOperatorRoles,
+  readCloudBaseOperatorSession,
+  readOperatorSession,
+  revokeOperatorSession,
+} from './auth.js'
 import {
   confirmAllergyChange,
   getHouseholdMenuPreview,
@@ -29,7 +37,46 @@ import {
   updateSupportCase,
 } from './support.js'
 
-const os = implement(apiContract)
+interface ApiContext {
+  authorization?: string
+  cookie?: string
+  setCookie?: (cookie: string) => void
+}
+
+const os = implement(apiContract).$context<ApiContext>()
+
+async function resolveOperatorSession(context: ApiContext) {
+  if (process.env.FUSHI_AUTH_MODE === 'cloudbase') {
+    return readCloudBaseOperatorSession({
+      authorization: context.authorization,
+      envId: process.env.CLOUDBASE_ENV_ID ?? '',
+      operatorRoles: parseCloudBaseOperatorRoles(process.env.FUSHI_ADMIN_OPERATORS),
+    })
+  }
+  return readOperatorSession(context.cookie)
+}
+
+async function requireOperator(context: ApiContext): Promise<SupportOperator> {
+  const session = await resolveOperatorSession(context)
+  if (!session.authenticated || !session.operator) {
+    throw new ORPCError('UNAUTHORIZED')
+  }
+  return session.operator
+}
+
+const getSession = os.auth.session.handler(({ context }) =>
+  resolveOperatorSession(context)
+)
+const demoLogin = os.auth.demoLogin.handler(({ input, context }) => {
+  const session = createDemoOperatorSession(input.operatorId)
+  context.setCookie?.(session.cookie)
+  return session.output
+})
+const logout = os.auth.logout.handler(({ context }) => {
+  const session = revokeOperatorSession(context.cookie)
+  context.setCookie?.(session.cookie)
+  return session.output
+})
 
 const checkFoodSafety = os.safety.check.handler(({ input }) => {
   const traceId = randomUUID()
@@ -108,12 +155,24 @@ const createCase = os.support.createCase.handler(({ input }) =>
 const trackCase = os.support.trackCase.handler(({ input }) =>
   trackSupportCase(input)
 )
-const listCases = os.support.cases.handler(() => listSupportCases())
-const updateCase = os.support.updateCase.handler(({ input }) =>
-  updateSupportCase(input)
+const listCases = os.support.cases.handler(async ({ context }) => {
+  await requireOperator(context)
+  return listSupportCases(
+    process.env.FUSHI_AUTH_MODE === 'cloudbase'
+      ? 'cloudbase-access-token'
+      : 'local-demo-session'
+  )
+})
+const updateCase = os.support.updateCase.handler(async ({ input, context }) =>
+  updateSupportCase({ ...input, actor: await requireOperator(context) })
 )
 
 export const router = os.router({
+  auth: {
+    session: getSession,
+    demoLogin,
+    logout,
+  },
   safety: {
     check: checkFoodSafety,
   },

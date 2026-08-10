@@ -83,7 +83,45 @@ Agentic 评测接口运行 9 个固定的合成家庭问题，复用小程序与
 `profileVersion`、被排除食谱及具体规则理由。该接口不调用 LLM。
 
 支持工单使用 `new → investigating → escalated → resolved → closed` 状态机和
-`expectedCaseVersion` 乐观并发。关键安全工单必须先升级，再由绑定角色的安全审核人解决；伪造角色、过期版本和非法流转均被拒绝并写入 metadata-only 审计。家庭追踪需要 case ID 与仅提交端持有的 tracking token。当前 operator directory 和文件存储只用于本地演示，不能替代生产 OIDC 与数据库。
+`expectedCaseVersion` 乐观并发。关键安全工单必须先升级，再由绑定角色的安全审核人解决；伪造角色、过期版本和非法流转均被拒绝并写入 metadata-only 审计。家庭追踪需要 case ID 与仅提交端持有的 tracking token，服务端只保存 token 的 SHA-256 哈希。
+
+默认开发模式仍使用原子文件。部署到 CloudBase HTTP 云函数时，通过环境变量切换到事务型云数据库存储：
+
+```bash
+HOST=0.0.0.0 \
+FUSHI_SUPPORT_STORE=cloudbase \
+CLOUDBASE_ENV_ID=cloud1-your-env \
+FUSHI_SUPPORT_COLLECTION=support_cases \
+pnpm --filter @fushi/api-server start
+```
+
+需要预先在对应环境创建 `support_cases` 集合。每个工单及其审计记录保存在同一文档，状态更新在数据库事务中完成版本检查、工单写入和审计写入。本地运行使用演示身份；线上管理员 API 验证 CloudBase Access Token，并通过 `FUSHI_ADMIN_OPERATORS` 在服务端完成 UID 到角色的映射。
+
+`cloudfunctions/support-api/` 只是部署壳，业务实现仍来自当前 API、共享契约和规则层。部署脚本默认只做构建、健康检查和只读云端预检：
+
+```bash
+./scripts/deploy-support-http-function.sh --check
+```
+
+真实部署必须显式设置 `ALLOW_HTTP_FUNCTION_DEPLOY=1`，并可能使用 CloudBase 配额。云函数通过 `FUSHI_ROUTE_SCOPE=support-intake` 只开放创建工单、凭令牌查询状态和健康检查；演示登录及后台管理接口全部返回 404。小程序通过 `wx.cloud.callHTTPFunction` 访问服务。
+
+管理员 API 使用独立的 `admin-api` HTTP 云函数，与小程序入口隔离。它只开放会话检查、工单读取/更新和关联 Trace 查询，通过 `FUSHI_ADMIN_OPERATORS` 将已验证的 CloudBase UID 映射为服务端角色。部署前检查：
+
+```bash
+./scripts/deploy-admin-api.sh --check
+```
+
+真实部署必须显式设置 `ALLOW_ADMIN_API_DEPLOY=1`。对应 HTTP 网关路由必须启用 CloudBase 身份认证；API 会再次调用 CloudBase 用户信息接口验证 Bearer Token，并拒绝不在 UID 白名单中的账号。
+
+浏览器跨域访问还必须配置逗号分隔的 `FUSHI_ADMIN_ALLOWED_ORIGINS`。未列入白名单的预检请求返回 403，不能使用 `*` 代替明确的后台站点来源。
+
+当前部署入口：
+
+```text
+https://cloud1-d8g02cdnld86f3823-1451658149.ap-shanghai.app.tcloudbase.com/api
+```
+
+网关使用 `/api` 前缀匹配并保留原始路径，开启身份认证、安全域名校验，以及总 QPS 20 / 单 IP QPS 5 的限流。匿名请求应返回 `401 MISSING_CREDENTIALS`。
 
 ## 测试策略
 

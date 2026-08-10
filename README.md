@@ -1,17 +1,60 @@
 # 辅食搭子
 
-4–24 月龄宝宝家长辅食运营系统，以及围绕真实照护场景构建的 AI Solution Architecture 作品集。
+辅食搭子是一套面向 4–24 月龄宝宝家庭的辅食辅助决策产品，由家长使用的微信小程序和内部人员使用的 Web 管理后台组成。项目用一条真实业务链路展示：AI 如何参与日常帮助、确定性规则如何保护安全、用户问题如何进入后台并被追踪处理。
 
 产品范围、当前完成度和发布门槛见 [PRD.md](./PRD.md)。
 
-## 30 秒看懂
+## 先看产品：两个端分别做什么
 
-- **真实问题**：把宝宝档案、排敏、身体状态、库存、菜单、饮食执行和反应记录串成连续决策；多人照护时避免错误修改过敏档案和误喂。
-- **架构答案**：LLM 负责理解、编排和解释，确定性规则负责食物安全；Zod + oRPC 统一 React/Express 契约；不可逆变更使用角色授权、显式确认、档案版本和审计记录。
-- **可运行证据**：React 19 + Express + oRPC、23 个 MCP 工具、9 个 agentic 固定评估案例、23 个 React/MSW 测试、2 个真实 Chromium E2E、46 个 MCP 冒烟测试和 11 步集成流程。
-- **诚实边界**：Web 是内部运营与安全控制台；家庭角色切换仅保留在开发者合成场景。当前仍为单节点本地持久化和 mock IdP，不冒充生产云数据库或已上线小程序功能。
+| 产品端 | 谁使用 | 解决的问题 | 主要能力 |
+|---|---|---|---|
+| 微信小程序 | 宝宝家长和实际照护者 | 每天吃什么、如何排敏、库存是否够、吃完后如何记录，以及出现反应后怎么办 | 建档、菜单与周计划、食谱、库存、饮食打卡、排敏、反应记录、AI 问答和问题上报 |
+| Web 管理后台 | 产品运营、安全支持和工程人员 | 当 AI 回答、菜单结果或数据状态出现疑问时，如何定位原因、人工复核并留下处理记录 | 工单处理、安全规则验证、AI 质量与 Trace、发布前评测、审计和开发者工具 |
 
-面试材料：[架构决策记录](./docs/adr/README.md) · [7 分钟演示脚本](./docs/interview-demo.md) · [SAP 定向简历项目模块](./docs/resume-project-sap.md) · [SAP 面试追问清单](./docs/interview-qa-sap.md)
+小程序负责家庭每天真正发生的使用场景；后台负责产品出现问题后的支持、安全和质量闭环。后台不会代替家长修改宝宝的永久过敏档案。
+
+## 一条完整的用户故事
+
+1. 家长在小程序建立宝宝档案，记录已吃食材、排敏状态和家庭库存。
+2. 系统结合档案和确定性食物安全规则生成菜单；AI 可以回答问题、查食谱或调用工具，但不能越过规则推荐不安全食材。
+3. 如果家长发现菜单疑似包含不安全食材，或 AI 回答缺少安全提醒，可以在小程序中选择问题类型并明确同意上传最小诊断信息。
+4. 工单进入 Web 管理后台。支持人员查看问题、关联的规则 Trace、档案版本和菜单日期，记录调查结论。
+5. 普通问题由支持人员解决；关键安全问题必须升级给安全审核人。每次成功或被拒绝的操作都会进入处理时间线。
+
+这条链路让用户不需要离开产品即可报告问题，也让内部人员能够基于应用上下文定位、处理和审计，而不是依赖零散截图或重复沟通。
+
+进一步阅读：[架构决策记录](./docs/adr/README.md) · [产品需求文档](./PRD.md) · [项目演示脚本](./docs/interview-demo.md)
+
+## 两个端如何连接
+
+```mermaid
+flowchart LR
+    FAMILY["家长｜微信小程序"] -->|"建档、菜单、记录、AI 问答"| MINI["家长端业务流程"]
+    MINI --> RULES["共享食物安全规则"]
+    MINI -->|"明确授权后提交问题"| API["TypeScript API｜Express + oRPC"]
+    AI["LLM / MCP Agent"] -->|"调用受限工具"| RULES
+    API --> CASES["工单、Trace 与审计"]
+    ADMIN["支持与安全人员｜React 后台"] --> API
+    CASES --> ADMIN
+```
+
+共享规则是两个端之间最重要的边界：小程序用它约束菜单和 AI 工具，后台用它复现和解释当时为什么放行或阻断。
+
+## 技术实现为什么这样设计
+
+- **AI 与规则分工**：LLM 负责理解自然语言、选择工具和解释结果；能否食用、食谱是否适用、排敏状态如何变化由 TypeScript 确定性规则判断。这让高风险结果可解释、可测试，也能在没有模型密钥时运行。
+- **前后端共享契约**：`packages/contracts/` 用 Zod 定义输入输出，再由 oRPC 同时服务 Express API 和 React 客户端，避免后台页面和服务端各写一套类型。
+- **服务端状态与页面状态分开**：React Query 管理工单、Trace 和评测等服务端数据；Zustand 只管理页面内的实验输入，减少状态来源混乱。
+- **安全操作可追踪**：家长上传诊断信息需要明确同意；后台写入携带版本号；关键安全工单需要安全审核角色；所有允许和拒绝结果都有审计记录。
+- **AI 开发流程可以复用**：MCP Server、项目 Skill 和 `AGENTS.md` 不只是演示名词，它们把查档案、检查安全、生成菜单和安全变更检查等重复工作固化为团队可复用工具。
+
+## 工程质量
+
+- **类型安全**：Zod + oRPC 作为 API 契约的单一来源，React 与 Express 不重复维护请求和响应类型。
+- **自动化测试**：Vitest 覆盖规则和 API，MSW 覆盖前端成功与失败路径，Playwright 验证 React→API→规则的真实浏览器链路。
+- **离线可运行**：没有模型密钥时使用明确标注的 mock provider，确定性安全规则、工单流程和固定评估仍可运行。
+- **隐私最小化**：支持工单只上传用户明确授权的结构化诊断信息；Trace 使用 `summary-only` 模式，不保存宝宝姓名、食材明细或自由备注。
+- **当前边界**：本地运行默认使用单节点文件持久化和演示会话；线上支持工单使用 CloudBase 事务数据库、隔离的用户/管理员 HTTP 云函数和 Access Token 管理员认证。小程序主数据仍以本地缓存为主，尚未实现完整的跨设备双向同步。
 
 ## 快速运行运营与安全控制台
 
@@ -28,6 +71,8 @@ pnpm run web:dev
 
 访问 `http://127.0.0.1:4173/`，建议依次查看运营总览、`/safety` 规则验证、`/observability` AI 质量、`/support` 家庭支持和 `/developer` 开发者工具。
 
+线上支持工单后台部署在 [CloudBase `/admin`](https://cloud1-d8g02cdnld86f3823-1451658149.tcloudbaseapp.com/admin/)，仅接受已加入服务端 UID 白名单的管理员账号。线上构建不会暴露本地合成开发者场景。
+
 ## 本地质量门禁
 
 无需 GitHub Actions 或付费服务，在项目根目录执行：
@@ -42,9 +87,9 @@ npm run verify
 pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
-质量门禁会依次完成小程序 TypeScript 构建与隐私回归、pnpm workspace 构建、Zod/oRPC HTTP 合约测试、React + MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 3 项真实 Chromium E2E。API 行覆盖率为 98.55%，React 控制台行覆盖率为 94.27%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
+质量门禁会依次完成小程序 TypeScript 构建与隐私回归、pnpm workspace 构建、70 项 API 测试、36 项 React/MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 3 项真实 Chromium E2E。当前 API 行覆盖率为 96.92%，React 控制台行覆盖率为 89.16%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
 
-## AI 工程作品集
+## 工程组成与运行证据
 
 - [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow；固定离线评估集量化工具选择、安全阻断、grounding 代理和端到端成功率。
 - [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
@@ -52,7 +97,7 @@ pnpm --filter @fushi/web-console exec playwright install chromium
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
 - [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
 - [Architecture Decision Records](./docs/adr/README.md)：记录规则边界、contract-first、不可逆确认与离线评估的关键取舍。
-- [7 分钟面试演示](./docs/interview-demo.md)：从真实业务问题进入可运行页面、工程证据和生产扩展边界。
+- [端到端演示步骤](./docs/interview-demo.md)：用一条家长问题处理链路验证规则边界、人工复核、审计和失败处理。
 - Mock provider：无模型密钥也能离线演示，且调用方可以明确识别 mock / live 状态。
 
 ## 怎么打开它
@@ -117,7 +162,7 @@ fushi-ditu/
 │   ├── reactions.ts          # 反应记录与回溯
 │   └── storage.ts            # 冰箱存储管理
 ├── cloudfunctions/chat-ai/   # 小程序 AI 云函数
-├── docs/                     # ADR 与面试演示脚本
+├── docs/                     # ADR、运行说明与端到端演示步骤
 ├── mcp-server/               # 开发者演示用 MCP Server
 └── pages/
     ├── index/                # 今日

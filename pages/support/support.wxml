@@ -45,6 +45,6 @@
     </view>
 
     <button class="submit-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitCase">提交支持工单</button>
-    <view class="footer-note">正式支持服务尚未部署时，请求会明确失败且不会上传数据。</view>
+    <view class="footer-note">提交后可凭本机保存的工单凭证查询状态；网络失败时不会生成工单。</view>
   </view>
 </view>

@@ -10,6 +10,7 @@ import type {
   ReleaseCandidate,
   SupportCase,
   SupportCaseAuditRecord,
+  SupportOperator,
   ListSafetyTracesOutput,
   SafetyEvaluationOutput,
 } from '@fushi/contracts'
@@ -115,6 +116,8 @@ const traceResponse: ListSafetyTracesOutput = {
     blocked: 1,
     averageDurationMs: 1.14,
   },
+  persistenceMode: 'process-memory',
+  retentionDays: 30,
   privacyMode: 'summary-only',
 }
 
@@ -236,6 +239,7 @@ const initialSupportCase: SupportCase = {
     clientVersion: '1.0.4',
     occurredAt: '2026-08-05T09:00:00.000Z',
     menuDate: '2026-08-06',
+    traceId: '8c3a2010-e3da-4fd0-a7e6-c2e760436ba8',
     profileVersion: 3,
   },
   createdAt: '2026-08-05T09:00:00.000Z',
@@ -256,12 +260,17 @@ const initialSupportAudit: SupportCaseAuditRecord = {
 }
 let supportCases: SupportCase[] = [initialSupportCase]
 let supportAudits: SupportCaseAuditRecord[] = [initialSupportAudit]
+let authenticatedOperator: SupportOperator | undefined = {
+  id: 'demo-support-agent',
+  role: 'support-agent',
+}
 
 export function resetCollaborationMockState() {
   collaborationProfileIsAllergic = false
   releaseCandidates = []
   supportCases = [initialSupportCase]
   supportAudits = [initialSupportAudit]
+  authenticatedOperator = { id: 'demo-support-agent', role: 'support-agent' }
 }
 
 function menuPreviewResponse(): HouseholdMenuPreviewOutput {
@@ -526,9 +535,52 @@ export const reviewReleaseCandidateHandler = http.post(
   }
 )
 
+function operatorSessionResponse() {
+  return {
+    authenticated: Boolean(authenticatedOperator),
+    ...(authenticatedOperator
+      ? {
+          operator: authenticatedOperator,
+          expiresAt: '2026-08-05T17:00:00.000Z',
+        }
+      : {}),
+    identityMode: 'local-demo-session' as const,
+    sessionTransport: 'http-only-cookie' as const,
+  }
+}
+
+export const operatorSessionHandler = http.get('*/api/v1/auth/session', () =>
+  HttpResponse.json(operatorSessionResponse())
+)
+
+export const demoOperatorLoginHandler = http.post(
+  '*/api/v1/auth/demo-login',
+  async ({ request }) => {
+    const input = (await request.json()) as { operatorId: SupportOperator['id'] }
+    authenticatedOperator =
+      input.operatorId === 'demo-safety-reviewer'
+        ? { id: 'demo-safety-reviewer', role: 'safety-reviewer' }
+        : { id: 'demo-support-agent', role: 'support-agent' }
+    return HttpResponse.json(operatorSessionResponse())
+  }
+)
+
+export const operatorLogoutHandler = http.post('*/api/v1/auth/logout', () => {
+  authenticatedOperator = undefined
+  return HttpResponse.json(operatorSessionResponse())
+})
+
 export const supportCasesHandler = http.get('*/api/v1/support/cases', () => {
+  if (!authenticatedOperator) return new HttpResponse(null, { status: 401 })
   const response: ListSupportCasesOutput = {
     cases: supportCases,
+    evaluatedAt: '2026-08-05T10:00:00.000Z',
+    slaPolicy: {
+      critical: { firstResponseMinutes: 15, resolutionMinutes: 240 },
+      high: { firstResponseMinutes: 60, resolutionMinutes: 480 },
+      medium: { firstResponseMinutes: 240, resolutionMinutes: 1440 },
+      low: { firstResponseMinutes: 480, resolutionMinutes: 2880 },
+    },
     summary: {
       total: supportCases.length,
       unassigned: supportCases.filter((supportCase) => !supportCase.assignedTo).length,
@@ -539,10 +591,13 @@ export const supportCasesHandler = http.get('*/api/v1/support/cases', () => {
           supportCase.status !== 'closed'
       ).length,
       escalated: supportCases.filter((supportCase) => supportCase.status === 'escalated').length,
+      slaBreached: supportCases.filter(
+        (supportCase) => supportCase.status === 'new' && supportCase.severity === 'critical'
+      ).length,
     },
     auditRecords: supportAudits,
     persistenceMode: 'process-memory',
-    identityMode: 'mock-operator-directory',
+    identityMode: 'local-demo-session',
     privacyMode: 'metadata-only',
   }
   return HttpResponse.json(response)
@@ -552,12 +607,15 @@ export const updateSupportCaseHandler = http.post(
   '*/api/v1/support/cases/update',
   async ({ request }) => {
     const input = (await request.json()) as {
-      action: 'assign-self' | 'escalate' | 'resolve' | 'close'
+      action: 'assign-self' | 'record-investigation' | 'escalate' | 'resolve' | 'close'
       caseId: string
       expectedCaseVersion: number
-      actor: { id: string; role: 'support-agent' | 'safety-reviewer' }
+      finding?: NonNullable<SupportCase['investigation']>['finding']
+      evidence?: NonNullable<SupportCase['investigation']>['evidence']
       resolutionCode?: SupportCase['resolutionCode']
     }
+    const actor = authenticatedOperator
+    if (!actor) return new HttpResponse(null, { status: 401 })
     const current = supportCases.find((supportCase) => supportCase.caseId === input.caseId)
     if (!current) {
       return HttpResponse.json({ result: 'case-not-found', persistenceMode: 'process-memory' })
@@ -565,7 +623,7 @@ export const updateSupportCaseHandler = http.post(
     if (
       input.action === 'resolve' &&
       current.severity === 'critical' &&
-      input.actor.role !== 'safety-reviewer'
+      actor.role !== 'safety-reviewer'
     ) {
       return HttpResponse.json({
         case: current,
@@ -584,8 +642,34 @@ export const updateSupportCaseHandler = http.post(
         persistenceMode: 'process-memory',
       })
     }
+    if (input.action === 'resolve' && !current.investigation) {
+      return HttpResponse.json({
+        case: current,
+        result: 'investigation-required',
+        persistenceMode: 'process-memory',
+      })
+    }
+    if (input.action === 'resolve' && current.investigation) {
+      const privacyResolutionMatches =
+        current.category === 'privacy-request'
+          ? input.resolutionCode === 'deletion-accepted' &&
+            current.investigation.finding === 'privacy-request-validated'
+          : input.resolutionCode !== 'deletion-accepted' &&
+            current.investigation.finding !== 'privacy-request-validated'
+      if (
+        !privacyResolutionMatches ||
+        current.investigation.finding === 'insufficient-evidence'
+      ) {
+        return HttpResponse.json({
+          case: current,
+          result: 'resolution-incompatible',
+          persistenceMode: 'process-memory',
+        })
+      }
+    }
     const nextStatus: SupportCase['status'] = {
       'assign-self': 'investigating',
+      'record-investigation': current.status,
       escalate: 'escalated',
       resolve: 'resolved',
       close: 'closed',
@@ -595,7 +679,18 @@ export const updateSupportCaseHandler = http.post(
       caseVersion: current.caseVersion + 1,
       status: nextStatus,
       updatedAt: '2026-08-05T09:05:00.000Z',
-      ...(input.action === 'assign-self' ? { assignedTo: input.actor.id } : {}),
+      ...(input.action === 'assign-self' ? { assignedTo: actor.id } : {}),
+      ...(input.action === 'record-investigation' && input.finding && input.evidence
+        ? {
+            investigation: {
+              finding: input.finding,
+              evidence: input.evidence,
+              recordedBy: actor.id,
+              recordedRole: actor.role,
+              recordedAt: '2026-08-05T09:05:00.000Z',
+            },
+          }
+        : {}),
       ...(input.action === 'resolve' && input.resolutionCode
         ? { resolutionCode: input.resolutionCode }
         : {}),
@@ -607,10 +702,11 @@ export const updateSupportCaseHandler = http.post(
       auditId: `${String(updated.caseVersion).padStart(8, '0')}-351a-4bfa-9410-a3b776876749`,
       caseId: updated.caseId,
       timestamp: updated.updatedAt,
-      actorId: input.actor.id,
-      actorRole: input.actor.role,
+      actorId: actor.id,
+      actorRole: actor.role,
       action: {
         'assign-self': 'case-assigned',
+        'record-investigation': 'case-investigation-recorded',
         escalate: 'case-escalated',
         resolve: 'case-resolved',
         close: 'case-closed',
@@ -618,7 +714,7 @@ export const updateSupportCaseHandler = http.post(
       decision: 'allowed',
       fromStatus: current.status,
       toStatus: updated.status,
-      reasonCode: input.resolutionCode ?? input.action,
+      reasonCode: input.resolutionCode ?? input.finding ?? input.action,
       caseVersion: updated.caseVersion,
       privacyMode: 'metadata-only',
     }
@@ -633,6 +729,9 @@ export const updateSupportCaseHandler = http.post(
 )
 
 export const server = setupServer(
+  operatorSessionHandler,
+  demoOperatorLoginHandler,
+  operatorLogoutHandler,
   successHandler,
   tracesHandler,
   evaluationHandler,

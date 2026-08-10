@@ -9,6 +9,13 @@ declare namespace WechatMiniprogram {
         fail?: (err: any) => void
         complete?: (res: any) => void
       }): Promise<any>
+      callHTTPFunction?<T = unknown>(opts: {
+        name: string
+        path: string
+        method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+        data?: Record<string, unknown>
+        header?: Record<string, string>
+      }): Promise<{ statusCode: number; data: T | string; header?: Record<string, string> }>
     }
     getStorageSync<T = any>(key: string): T
     setStorageSync(key: string, data: any): void

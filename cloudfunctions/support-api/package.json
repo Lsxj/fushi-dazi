@@ -1,0 +1,14 @@
+{
+  "name": "fushi-support-api-function",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cloudbase/js-sdk": "^3.7.1",
+    "@cloudbase/signature-nodejs": "^1.1.0",
+    "ws": "^8.21.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

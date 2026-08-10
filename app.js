@@ -43,7 +43,7 @@ App({
     onLaunch() {
         if (wx.cloud) {
             try {
-                wx.cloud.init({ traceUser: true });
+                wx.cloud.init({ env: 'cloud1-d8g02cdnld86f3823', traceUser: true });
             }
             catch (err) {
                 console.warn('wx.cloud.init failed; chat-ai will use local mock:', err);

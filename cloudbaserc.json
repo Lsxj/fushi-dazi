@@ -10,6 +10,41 @@
       "timeout": 30,
       "memorySize": 256,
       "installDependency": true
+    },
+    {
+      "name": "support-api",
+      "runtime": "Nodejs20.19",
+      "timeout": 30,
+      "memorySize": 512,
+      "installDependency": true,
+      "envVariables": {
+        "NODE_ENV": "production",
+        "HOST": "0.0.0.0",
+        "PORT": "9000",
+        "FUSHI_ROUTE_SCOPE": "support-intake",
+        "FUSHI_SUPPORT_STORE": "cloudbase",
+        "CLOUDBASE_ENV_ID": "cloud1-d8g02cdnld86f3823",
+        "FUSHI_SUPPORT_COLLECTION": "support_cases"
+      }
+    },
+    {
+      "name": "admin-api",
+      "runtime": "Nodejs20.19",
+      "timeout": 30,
+      "memorySize": 512,
+      "installDependency": true,
+      "envVariables": {
+        "NODE_ENV": "production",
+        "HOST": "0.0.0.0",
+        "PORT": "9000",
+        "FUSHI_ROUTE_SCOPE": "admin-console",
+        "FUSHI_AUTH_MODE": "cloudbase",
+        "FUSHI_ADMIN_OPERATORS": "2074771023912120322:safety-reviewer",
+        "FUSHI_ADMIN_ALLOWED_ORIGINS": "https://cloud1-d8g02cdnld86f3823-1451658149.tcloudbaseapp.com",
+        "FUSHI_SUPPORT_STORE": "cloudbase",
+        "CLOUDBASE_ENV_ID": "cloud1-d8g02cdnld86f3823",
+        "FUSHI_SUPPORT_COLLECTION": "support_cases"
+      }
     }
   ]
 }

@@ -18,6 +18,7 @@ describe('ObservabilityPage', () => {
     expect(screen.getByText('1.14 ms')).toBeInTheDocument()
     expect(screen.getByText('provider: none')).toBeInTheDocument()
     expect(screen.getByText(/summary-only/)).toBeInTheDocument()
+    expect(screen.getByText('process-memory · 30 天保留')).toBeInTheDocument()
     expect(screen.getByText('未知食材必须阻断')).toBeInTheDocument()
     expect(screen.getByText('AI 工具编排评测')).toBeInTheDocument()
     expect(screen.getByText('Tool selection')).toBeInTheDocument()
@@ -39,6 +40,8 @@ describe('ObservabilityPage', () => {
             blocked: 0,
             averageDurationMs: 0,
           },
+          persistenceMode: 'process-memory',
+          retentionDays: 30,
           privacyMode: 'summary-only',
         })
       )

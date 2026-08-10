@@ -101,7 +101,11 @@ export function ObservabilityPage() {
             className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
           >
             {[
-              ['Observed executions', String(traces.data.summary.total), '内存 trace'],
+              [
+                'Observed executions',
+                String(traces.data.summary.total),
+                `${traces.data.persistenceMode} · ${traces.data.retentionDays} 天保留`,
+              ],
               ['Blocked rate', percent(blockedRate), '规则阻断占比'],
               [
                 'Average latency',

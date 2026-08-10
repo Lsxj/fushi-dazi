@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 
 import { Icon } from './Icon'
+import { isCloudBaseConsole } from '../auth/cloudbase'
 
 const navigation = [
   { to: '/', label: '运营总览', end: true },
@@ -13,6 +14,9 @@ const navigation = [
 
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const visibleNavigation = isCloudBaseConsole()
+    ? navigation.filter((item) => item.to === '/support')
+    : navigation
 
   return (
     <div className="min-h-screen bg-[#f4f4ef] text-[#18211c]">
@@ -37,7 +41,7 @@ export function AppShell() {
           </NavLink>
 
           <nav className="hidden items-center gap-1 rounded-full border border-black/8 bg-white/70 p-1 md:flex">
-            {navigation.map((item) => (
+            {visibleNavigation.map((item) => (
               <NavLink
                 className={({ isActive }) =>
                   `rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -75,7 +79,7 @@ export function AppShell() {
         </div>
         {menuOpen && (
           <nav className="border-t border-black/8 bg-[#f4f4ef] px-5 py-3 md:hidden">
-            {navigation.map((item) => (
+            {visibleNavigation.map((item) => (
               <NavLink
                 className={({ isActive }) =>
                   `block rounded-xl px-4 py-3 text-sm font-semibold ${

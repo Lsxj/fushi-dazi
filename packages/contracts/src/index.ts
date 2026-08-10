@@ -105,6 +105,8 @@ export const ListSafetyTracesOutputSchema = z.object({
     blocked: z.number().int().nonnegative(),
     averageDurationMs: z.number().nonnegative(),
   }),
+  persistenceMode: z.enum(['process-memory', 'local-file']),
+  retentionDays: z.literal(30),
   privacyMode: z.literal('summary-only'),
 })
 
@@ -423,9 +425,52 @@ export const SupportCaseStatusSchema = z.enum([
   'closed',
 ])
 
+export const SupportInvestigationFindingSchema = z.enum([
+  'confirmed-product-defect',
+  'client-state-stale',
+  'working-as-designed',
+  'privacy-request-validated',
+  'insufficient-evidence',
+])
+
+export const SupportInvestigationEvidenceSchema = z.enum([
+  'diagnostic-context',
+  'safety-trace-reference',
+  'profile-version-reference',
+  'menu-date-reference',
+])
+
+const SupportInvestigationEvidenceListSchema = z
+  .array(SupportInvestigationEvidenceSchema)
+  .min(1)
+  .max(4)
+  .refine((items) => new Set(items).size === items.length, {
+    message: 'investigation evidence must be unique',
+  })
+
+export const SupportInvestigationSchema = z.object({
+  finding: SupportInvestigationFindingSchema,
+  evidence: SupportInvestigationEvidenceListSchema,
+  recordedBy: z.string().min(1),
+  recordedRole: z.enum(['support-agent', 'safety-reviewer']),
+  recordedAt: z.string().datetime(),
+})
+
 export const SupportOperatorSchema = z.object({
-  id: z.enum(['demo-support-agent', 'demo-safety-reviewer']),
+  id: z.string().trim().min(1).max(128),
   role: z.enum(['support-agent', 'safety-reviewer']),
+})
+
+export const DemoOperatorLoginInputSchema = z.object({
+  operatorId: z.enum(['demo-support-agent', 'demo-safety-reviewer']),
+})
+
+export const OperatorSessionOutputSchema = z.object({
+  authenticated: z.boolean(),
+  operator: SupportOperatorSchema.optional(),
+  expiresAt: z.string().datetime().optional(),
+  identityMode: z.enum(['local-demo-session', 'cloudbase-access-token']),
+  sessionTransport: z.enum(['http-only-cookie', 'bearer-access-token']),
 })
 
 export const SupportCaseSchema = z.object({
@@ -446,6 +491,7 @@ export const SupportCaseSchema = z.object({
   assignedTo: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  investigation: SupportInvestigationSchema.optional(),
   resolutionCode: z
     .enum(['fix-planned', 'guidance-provided', 'no-defect-found', 'deletion-accepted'])
     .optional(),
@@ -457,7 +503,14 @@ export const SupportCaseAuditRecordSchema = z.object({
   timestamp: z.string().datetime(),
   actorId: z.string(),
   actorRole: z.enum(['family-reporter', 'support-agent', 'safety-reviewer']),
-  action: z.enum(['case-created', 'case-assigned', 'case-escalated', 'case-resolved', 'case-closed']),
+  action: z.enum([
+    'case-created',
+    'case-assigned',
+    'case-investigation-recorded',
+    'case-escalated',
+    'case-resolved',
+    'case-closed',
+  ]),
   decision: z.enum(['allowed', 'denied']),
   fromStatus: SupportCaseStatusSchema.optional(),
   toStatus: SupportCaseStatusSchema,
@@ -496,17 +549,30 @@ export const TrackSupportCaseOutputSchema = z.object({
   privacyMode: z.literal('metadata-only'),
 })
 
+export const SupportSlaTargetSchema = z.object({
+  firstResponseMinutes: z.number().int().positive(),
+  resolutionMinutes: z.number().int().positive(),
+})
+
 export const ListSupportCasesOutputSchema = z.object({
   cases: z.array(SupportCaseSchema),
+  evaluatedAt: z.string().datetime(),
+  slaPolicy: z.object({
+    critical: SupportSlaTargetSchema,
+    high: SupportSlaTargetSchema,
+    medium: SupportSlaTargetSchema,
+    low: SupportSlaTargetSchema,
+  }),
   summary: z.object({
     total: z.number().int().nonnegative(),
     unassigned: z.number().int().nonnegative(),
     criticalOpen: z.number().int().nonnegative(),
     escalated: z.number().int().nonnegative(),
+    slaBreached: z.number().int().nonnegative(),
   }),
   auditRecords: z.array(SupportCaseAuditRecordSchema),
-  persistenceMode: z.enum(['process-memory', 'local-file']),
-  identityMode: z.literal('mock-operator-directory'),
+  persistenceMode: z.enum(['process-memory', 'local-file', 'cloudbase']),
+  identityMode: z.enum(['local-demo-session', 'cloudbase-access-token']),
   privacyMode: z.literal('metadata-only'),
 })
 
@@ -515,26 +581,29 @@ export const UpdateSupportCaseInputSchema = z.discriminatedUnion('action', [
     action: z.literal('assign-self'),
     caseId: z.string().uuid(),
     expectedCaseVersion: z.number().int().positive(),
-    actor: SupportOperatorSchema,
+  }),
+  z.object({
+    action: z.literal('record-investigation'),
+    caseId: z.string().uuid(),
+    expectedCaseVersion: z.number().int().positive(),
+    finding: SupportInvestigationFindingSchema,
+    evidence: SupportInvestigationEvidenceListSchema,
   }),
   z.object({
     action: z.literal('escalate'),
     caseId: z.string().uuid(),
     expectedCaseVersion: z.number().int().positive(),
-    actor: SupportOperatorSchema,
   }),
   z.object({
     action: z.literal('resolve'),
     caseId: z.string().uuid(),
     expectedCaseVersion: z.number().int().positive(),
-    actor: SupportOperatorSchema,
     resolutionCode: z.enum(['fix-planned', 'guidance-provided', 'no-defect-found', 'deletion-accepted']),
   }),
   z.object({
     action: z.literal('close'),
     caseId: z.string().uuid(),
     expectedCaseVersion: z.number().int().positive(),
-    actor: SupportOperatorSchema,
   }),
 ])
 
@@ -548,8 +617,11 @@ export const UpdateSupportCaseOutputSchema = z.object({
     'case-version-conflict',
     'invalid-state-transition',
     'safety-reviewer-required',
+    'investigation-required',
+    'evidence-unavailable',
+    'resolution-incompatible',
   ]),
-  persistenceMode: z.enum(['process-memory', 'local-file']),
+  persistenceMode: z.enum(['process-memory', 'local-file', 'cloudbase']),
 })
 
 export const checkFoodSafetyContract = oc
@@ -712,7 +784,42 @@ export const updateSupportCaseContract = oc
   .input(UpdateSupportCaseInputSchema)
   .output(UpdateSupportCaseOutputSchema)
 
+export const getOperatorSessionContract = oc
+  .route({
+    method: 'GET',
+    path: '/v1/auth/session',
+    summary: 'Read the current local demo operator session',
+    tags: ['Authentication'],
+  })
+  .input(z.object({}))
+  .output(OperatorSessionOutputSchema)
+
+export const demoOperatorLoginContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/auth/demo-login',
+    summary: 'Create a local demo operator session',
+    tags: ['Authentication'],
+  })
+  .input(DemoOperatorLoginInputSchema)
+  .output(OperatorSessionOutputSchema)
+
+export const operatorLogoutContract = oc
+  .route({
+    method: 'POST',
+    path: '/v1/auth/logout',
+    summary: 'Revoke the current local demo operator session',
+    tags: ['Authentication'],
+  })
+  .input(z.object({}))
+  .output(OperatorSessionOutputSchema)
+
 export const apiContract = {
+  auth: {
+    session: getOperatorSessionContract,
+    demoLogin: demoOperatorLoginContract,
+    logout: operatorLogoutContract,
+  },
   safety: {
     check: checkFoodSafetyContract,
   },
@@ -794,6 +901,9 @@ export type ListReleaseCandidatesOutput = z.infer<
   typeof ListReleaseCandidatesOutputSchema
 >
 export type SupportCase = z.infer<typeof SupportCaseSchema>
+export type SupportOperator = z.infer<typeof SupportOperatorSchema>
+export type DemoOperatorLoginInput = z.infer<typeof DemoOperatorLoginInputSchema>
+export type OperatorSessionOutput = z.infer<typeof OperatorSessionOutputSchema>
 export type SupportCaseAuditRecord = z.infer<typeof SupportCaseAuditRecordSchema>
 export type CreateSupportCaseInput = z.infer<typeof CreateSupportCaseInputSchema>
 export type CreateSupportCaseOutput = z.infer<typeof CreateSupportCaseOutputSchema>

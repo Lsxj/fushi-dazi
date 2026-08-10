@@ -4,6 +4,7 @@ import type {
   ListSupportCasesOutput,
   SupportCase,
   SupportCaseAuditRecord,
+  SupportOperator,
   TrackSupportCaseInput,
   TrackSupportCaseOutput,
   UpdateSupportCaseInput,
@@ -11,37 +12,52 @@ import type {
 } from '@fushi/contracts'
 import { randomUUID } from 'node:crypto'
 
+import { findSafetyTrace } from './observability.js'
+
 import {
+  createCloudBaseSupportStore,
   createFileSupportStore,
-  createInitialSupportState,
   createMemorySupportStore,
   getDefaultSupportStorePath,
+  hashTrackingToken,
   type StoredSupportCase,
-  type SupportPersistedState,
   type SupportStore,
 } from './support-store.js'
 
-const MAX_CASES = 200
-const MAX_AUDIT_RECORDS = 1000
-const roleByActor = {
+export const SUPPORT_SLA_POLICY: ListSupportCasesOutput['slaPolicy'] = {
+  critical: { firstResponseMinutes: 15, resolutionMinutes: 240 },
+  high: { firstResponseMinutes: 60, resolutionMinutes: 480 },
+  medium: { firstResponseMinutes: 240, resolutionMinutes: 1440 },
+  low: { firstResponseMinutes: 480, resolutionMinutes: 2880 },
+}
+const demoRoleByActor: Record<string, SupportOperator['role']> = {
   'demo-support-agent': 'support-agent',
   'demo-safety-reviewer': 'safety-reviewer',
 } as const
 
-let supportStore: SupportStore =
-  process.env.NODE_ENV === 'test'
-    ? createMemorySupportStore()
-    : createFileSupportStore(
-        process.env.FUSHI_SUPPORT_STORE_PATH ?? getDefaultSupportStorePath()
-      )
-let state = supportStore.load()
-
-function persist(): void {
-  supportStore.save(state)
+type AuthenticatedUpdateSupportCaseInput = UpdateSupportCaseInput & {
+  actor: SupportOperator
 }
 
+function createConfiguredSupportStore(): SupportStore {
+  if (process.env.NODE_ENV === 'test') return createMemorySupportStore()
+  if (process.env.FUSHI_SUPPORT_STORE === 'cloudbase') {
+    return createCloudBaseSupportStore({
+      envId: process.env.CLOUDBASE_ENV_ID ?? '',
+      ...(process.env.FUSHI_SUPPORT_COLLECTION
+        ? { collectionName: process.env.FUSHI_SUPPORT_COLLECTION }
+        : {}),
+    })
+  }
+  return createFileSupportStore(
+    process.env.FUSHI_SUPPORT_STORE_PATH ?? getDefaultSupportStorePath()
+  )
+}
+
+let supportStore: SupportStore = createConfiguredSupportStore()
+
 function publicCase(storedCase: StoredSupportCase): SupportCase {
-  const { trackingToken: _trackingToken, ...supportCase } = storedCase
+  const { trackingTokenHash: _trackingTokenHash, ...supportCase } = storedCase
   return structuredClone(supportCase)
 }
 
@@ -61,27 +77,27 @@ function classify(reason: CreateSupportCaseInput['reason']): Pick<SupportCase, '
 function actionName(action: UpdateSupportCaseInput['action']): SupportCaseAuditRecord['action'] {
   return {
     'assign-self': 'case-assigned',
+    'record-investigation': 'case-investigation-recorded',
     escalate: 'case-escalated',
     resolve: 'case-resolved',
     close: 'case-closed',
   }[action] as SupportCaseAuditRecord['action']
 }
 
-function recordAudit(
+function createAudit(
   input: Omit<SupportCaseAuditRecord, 'auditId' | 'timestamp' | 'privacyMode'>
 ): SupportCaseAuditRecord {
-  const record: SupportCaseAuditRecord = {
+  return {
     ...input,
     auditId: randomUUID(),
     timestamp: new Date().toISOString(),
     privacyMode: 'metadata-only',
   }
-  state.auditRecords = [record, ...state.auditRecords].slice(0, MAX_AUDIT_RECORDS)
-  persist()
-  return record
 }
 
-export function createSupportCase(input: CreateSupportCaseInput): CreateSupportCaseOutput {
+export async function createSupportCase(
+  input: CreateSupportCaseInput
+): Promise<CreateSupportCaseOutput> {
   const now = new Date().toISOString()
   const trackingToken = randomUUID()
   const classification = classify(input.reason)
@@ -96,10 +112,9 @@ export function createSupportCase(input: CreateSupportCaseInput): CreateSupportC
     context: structuredClone(input.context),
     createdAt: now,
     updatedAt: now,
-    trackingToken,
+    trackingTokenHash: hashTrackingToken(trackingToken),
   }
-  state.cases = [supportCase, ...state.cases].slice(0, MAX_CASES)
-  const audit = recordAudit({
+  const audit = createAudit({
     caseId: supportCase.caseId,
     actorId: 'anonymous-family',
     actorRole: 'family-reporter',
@@ -109,6 +124,7 @@ export function createSupportCase(input: CreateSupportCaseInput): CreateSupportC
     reasonCode: input.reason,
     caseVersion: 1,
   })
+  await supportStore.createCase(supportCase, audit)
   return {
     case: publicCase(supportCase),
     trackingToken,
@@ -117,11 +133,13 @@ export function createSupportCase(input: CreateSupportCaseInput): CreateSupportC
   }
 }
 
-export function trackSupportCase(input: TrackSupportCaseInput): TrackSupportCaseOutput {
-  const found = state.cases.find(
-    (supportCase) =>
-      supportCase.caseId === input.caseId && supportCase.trackingToken === input.trackingToken
-  )
+export async function trackSupportCase(
+  input: TrackSupportCaseInput
+): Promise<TrackSupportCaseOutput> {
+  const candidate = await supportStore.findCase(input.caseId)
+  const found = candidate?.trackingTokenHash === hashTrackingToken(input.trackingToken)
+    ? candidate
+    : undefined
   return {
     ...(found ? { case: publicCase(found) } : {}),
     found: Boolean(found),
@@ -129,10 +147,25 @@ export function trackSupportCase(input: TrackSupportCaseInput): TrackSupportCase
   }
 }
 
-export function listSupportCases(): ListSupportCasesOutput {
+export async function listSupportCases(
+  identityMode: ListSupportCasesOutput['identityMode'] = 'local-demo-session'
+): Promise<ListSupportCasesOutput> {
+  const state = await supportStore.list()
   const cases = state.cases.map(publicCase)
+  const evaluatedAt = new Date().toISOString()
+  const evaluatedAtMs = new Date(evaluatedAt).getTime()
+  const slaBreached = cases.filter((supportCase) => {
+    if (supportCase.status === 'resolved' || supportCase.status === 'closed') return false
+    const target = SUPPORT_SLA_POLICY[supportCase.severity]
+    const targetMinutes = supportCase.status === 'new'
+      ? target.firstResponseMinutes
+      : target.resolutionMinutes
+    return evaluatedAtMs > new Date(supportCase.createdAt).getTime() + targetMinutes * 60_000
+  }).length
   return {
     cases,
+    evaluatedAt,
+    slaPolicy: SUPPORT_SLA_POLICY,
     summary: {
       total: cases.length,
       unassigned: cases.filter((supportCase) => !supportCase.assignedTo).length,
@@ -143,20 +176,21 @@ export function listSupportCases(): ListSupportCasesOutput {
           supportCase.status !== 'closed'
       ).length,
       escalated: cases.filter((supportCase) => supportCase.status === 'escalated').length,
+      slaBreached,
     },
     auditRecords: structuredClone(state.auditRecords),
     persistenceMode: supportStore.mode,
-    identityMode: 'mock-operator-directory',
+    identityMode,
     privacyMode: 'metadata-only',
   }
 }
 
-function denied(
+async function denied(
   supportCase: StoredSupportCase,
-  input: UpdateSupportCaseInput,
+  input: AuthenticatedUpdateSupportCaseInput,
   result: Exclude<UpdateSupportCaseOutput['result'], 'updated' | 'case-not-found'>
-): UpdateSupportCaseOutput {
-  const audit = recordAudit({
+): Promise<UpdateSupportCaseOutput> {
+  const audit = createAudit({
     caseId: supportCase.caseId,
     actorId: input.actor.id,
     actorRole: input.actor.role,
@@ -167,6 +201,7 @@ function denied(
     reasonCode: result,
     caseVersion: supportCase.caseVersion,
   })
+  await supportStore.appendAudit(supportCase.caseId, audit)
   return {
     case: publicCase(supportCase),
     auditId: audit.auditId,
@@ -175,20 +210,41 @@ function denied(
   }
 }
 
-export function updateSupportCase(input: UpdateSupportCaseInput): UpdateSupportCaseOutput {
-  const index = state.cases.findIndex((supportCase) => supportCase.caseId === input.caseId)
-  if (index < 0) return { result: 'case-not-found', persistenceMode: supportStore.mode }
-  const current = state.cases[index]
-  if (roleByActor[input.actor.id] !== input.actor.role) {
+export async function updateSupportCase(
+  input: AuthenticatedUpdateSupportCaseInput
+): Promise<UpdateSupportCaseOutput> {
+  const current = await supportStore.findCase(input.caseId)
+  if (!current) return { result: 'case-not-found', persistenceMode: supportStore.mode }
+  const expectedDemoRole = demoRoleByActor[input.actor.id]
+  if (expectedDemoRole && expectedDemoRole !== input.actor.role) {
     return denied(current, input, 'identity-role-mismatch')
   }
   if (current.caseVersion !== input.expectedCaseVersion) {
     return denied(current, input, 'case-version-conflict')
   }
 
+  if (input.action === 'record-investigation') {
+    const unavailableEvidence = input.evidence.some((evidence) => {
+      if (evidence === 'safety-trace-reference') {
+        return !current.context.traceId || !findSafetyTrace(current.context.traceId)
+      }
+      if (evidence === 'profile-version-reference') return !current.context.profileVersion
+      if (evidence === 'menu-date-reference') return !current.context.menuDate
+      return false
+    })
+    if (unavailableEvidence) {
+      return denied(current, input, 'evidence-unavailable')
+    }
+  }
+
   let nextStatus: SupportCase['status']
   if (input.action === 'assign-self' && current.status === 'new') {
     nextStatus = 'investigating'
+  } else if (
+    input.action === 'record-investigation' &&
+    (current.status === 'investigating' || current.status === 'escalated')
+  ) {
+    nextStatus = current.status
   } else if (input.action === 'escalate' && current.status === 'investigating') {
     nextStatus = 'escalated'
   } else if (
@@ -200,6 +256,21 @@ export function updateSupportCase(input: UpdateSupportCaseInput): UpdateSupportC
     }
     if (current.severity === 'critical' && current.status !== 'escalated') {
       return denied(current, input, 'invalid-state-transition')
+    }
+    if (!current.investigation) {
+      return denied(current, input, 'investigation-required')
+    }
+    const privacyResolutionMatches =
+      current.category === 'privacy-request'
+        ? input.resolutionCode === 'deletion-accepted' &&
+          current.investigation.finding === 'privacy-request-validated'
+        : input.resolutionCode !== 'deletion-accepted' &&
+          current.investigation.finding !== 'privacy-request-validated'
+    if (
+      !privacyResolutionMatches ||
+      current.investigation.finding === 'insufficient-evidence'
+    ) {
+      return denied(current, input, 'resolution-incompatible')
     }
     nextStatus = 'resolved'
   } else if (input.action === 'close' && current.status === 'resolved') {
@@ -214,12 +285,20 @@ export function updateSupportCase(input: UpdateSupportCaseInput): UpdateSupportC
     status: nextStatus,
     updatedAt: new Date().toISOString(),
     ...(input.action === 'assign-self' ? { assignedTo: input.actor.id } : {}),
+    ...(input.action === 'record-investigation'
+      ? {
+          investigation: {
+            finding: input.finding,
+            evidence: [...input.evidence],
+            recordedBy: input.actor.id,
+            recordedRole: input.actor.role,
+            recordedAt: new Date().toISOString(),
+          },
+        }
+      : {}),
     ...(input.action === 'resolve' ? { resolutionCode: input.resolutionCode } : {}),
   }
-  state.cases = state.cases.map((supportCase, caseIndex) =>
-    caseIndex === index ? updated : supportCase
-  )
-  const audit = recordAudit({
+  const audit = createAudit({
     caseId: updated.caseId,
     actorId: input.actor.id,
     actorRole: input.actor.role,
@@ -227,9 +306,20 @@ export function updateSupportCase(input: UpdateSupportCaseInput): UpdateSupportC
     decision: 'allowed',
     fromStatus: current.status,
     toStatus: updated.status,
-    reasonCode: input.action === 'resolve' ? input.resolutionCode : input.action,
+    reasonCode:
+      input.action === 'resolve'
+        ? input.resolutionCode
+        : input.action === 'record-investigation'
+          ? input.finding
+          : input.action,
     caseVersion: updated.caseVersion,
   })
+  const replaced = await supportStore.replaceCase(current.caseVersion, updated, audit)
+  if (!replaced) {
+    const latest = await supportStore.findCase(input.caseId)
+    if (!latest) return { result: 'case-not-found', persistenceMode: supportStore.mode }
+    return denied(latest, input, 'case-version-conflict')
+  }
   return {
     case: publicCase(updated),
     auditId: audit.auditId,
@@ -240,10 +330,8 @@ export function updateSupportCase(input: UpdateSupportCaseInput): UpdateSupportC
 
 export function setSupportStoreForTests(store: SupportStore): void {
   supportStore = store
-  state = supportStore.load()
 }
 
-export function clearSupportState(): void {
-  state = createInitialSupportState()
-  persist()
+export async function clearSupportState(): Promise<void> {
+  await supportStore.clear()
 }
