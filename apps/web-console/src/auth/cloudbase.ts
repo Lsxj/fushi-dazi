@@ -110,16 +110,11 @@ export async function signInCloudBaseOperator(
     throw new Error('请输入管理员账号和密码')
   }
   const auth = await requireAuth()
-  const credentials = normalizedIdentifier.includes('@')
-    ? { email: normalizedIdentifier, password }
-    : { username: normalizedIdentifier, password }
-  let result: Awaited<ReturnType<typeof auth.signInWithPassword>>
   try {
-    result = await auth.signInWithPassword(credentials)
+    await auth.signIn({ username: normalizedIdentifier, password })
   } catch (error) {
     throw safeCloudBaseLoginError(error)
   }
-  if (result.error) throw safeCloudBaseLoginError(result.error)
   const token = await auth.getAccessToken()
   if (!token.accessToken) {
     throw new Error('CloudBase 登录已通过，但未返回有效访问令牌')

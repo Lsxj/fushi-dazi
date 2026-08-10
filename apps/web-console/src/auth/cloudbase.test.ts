@@ -4,7 +4,7 @@ const cloudbaseMocks = vi.hoisted(() => {
   const auth = {
     getAccessToken: vi.fn(),
     getCurrentUser: vi.fn(),
-    signInWithPassword: vi.fn(),
+    signIn: vi.fn(),
     signOut: vi.fn(),
   }
   return {
@@ -33,7 +33,7 @@ describe('CloudBase browser authentication boundary', () => {
   beforeEach(() => {
     cloudbaseMocks.auth.getAccessToken.mockReset()
     cloudbaseMocks.auth.getCurrentUser.mockReset()
-    cloudbaseMocks.auth.signInWithPassword.mockReset()
+    cloudbaseMocks.auth.signIn.mockReset()
     cloudbaseMocks.auth.signOut.mockReset()
     cloudbaseMocks.init.mockClear()
   })
@@ -106,10 +106,7 @@ describe('CloudBase browser authentication boundary', () => {
   })
 
   it('supports both email and username password identities', async () => {
-    cloudbaseMocks.auth.signInWithPassword.mockResolvedValue({
-      data: { user: { id: 'operator-1' } },
-      error: null,
-    })
+    cloudbaseMocks.auth.signIn.mockResolvedValue({ user: { id: 'operator-1' } })
     cloudbaseMocks.auth.getAccessToken.mockResolvedValue({
       accessToken: 'access-token',
       env: 'env-test',
@@ -119,11 +116,11 @@ describe('CloudBase browser authentication boundary', () => {
     await cloudbase.signInCloudBaseOperator('operator@example.com', 'secret')
     await cloudbase.signInCloudBaseOperator('administrator', 'secret')
 
-    expect(cloudbaseMocks.auth.signInWithPassword).toHaveBeenNthCalledWith(1, {
-      email: 'operator@example.com',
+    expect(cloudbaseMocks.auth.signIn).toHaveBeenNthCalledWith(1, {
+      username: 'operator@example.com',
       password: 'secret',
     })
-    expect(cloudbaseMocks.auth.signInWithPassword).toHaveBeenNthCalledWith(2, {
+    expect(cloudbaseMocks.auth.signIn).toHaveBeenNthCalledWith(2, {
       username: 'administrator',
       password: 'secret',
     })
@@ -131,16 +128,16 @@ describe('CloudBase browser authentication boundary', () => {
 
   it('maps provider failures to safe operator-facing diagnostics', async () => {
     const cloudbase = await loadCloudBase(true)
-    cloudbaseMocks.auth.signInWithPassword.mockResolvedValueOnce({
-      data: null,
-      error: { code: 'INVALID_CREDENTIALS', message: 'user not found' },
+    cloudbaseMocks.auth.signIn.mockRejectedValueOnce({
+      code: 'INVALID_CREDENTIALS',
+      message: 'user not found',
     })
 
     await expect(
       cloudbase.signInCloudBaseOperator('administrator', 'wrong')
     ).rejects.toThrow('账号或密码无效')
 
-    cloudbaseMocks.auth.signInWithPassword.mockRejectedValueOnce({
+    cloudbaseMocks.auth.signIn.mockRejectedValueOnce({
       code: 'PROVIDER_NOT_ENABLED',
       message: 'password sign-in disabled',
     })
@@ -148,7 +145,7 @@ describe('CloudBase browser authentication boundary', () => {
       cloudbase.signInCloudBaseOperator('administrator', 'secret')
     ).rejects.toThrow('未启用邮箱或用户名密码登录')
 
-    cloudbaseMocks.auth.signInWithPassword.mockRejectedValueOnce({
+    cloudbaseMocks.auth.signIn.mockRejectedValueOnce({
       code: 'EMAIL_NOT_VERIFIED',
       message: 'email unverified',
     })
@@ -160,10 +157,7 @@ describe('CloudBase browser authentication boundary', () => {
   it('reports a distinct failure when authentication returns no token', async () => {
     const cloudbase = await loadCloudBase(true)
 
-    cloudbaseMocks.auth.signInWithPassword.mockResolvedValueOnce({
-      data: { user: { id: 'operator-1' } },
-      error: null,
-    })
+    cloudbaseMocks.auth.signIn.mockResolvedValueOnce({ user: { id: 'operator-1' } })
     cloudbaseMocks.auth.getAccessToken.mockResolvedValueOnce({
       accessToken: '',
       env: 'env-test',
