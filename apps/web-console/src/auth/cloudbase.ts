@@ -1,4 +1,5 @@
 const environmentId = import.meta.env.VITE_CLOUDBASE_ENV_ID?.trim()
+const sessionRestoreTimeoutMs = 3_000
 
 interface CloudBaseSdk {
   init(config: cloudbase.ICloudbaseConfig): cloudbase.ICloudbase
@@ -7,6 +8,25 @@ interface CloudBaseSdk {
 type CloudBaseApp = cloudbase.ICloudbase
 
 let appPromise: Promise<CloudBaseApp | undefined> | undefined
+
+async function restoreWithin<T>(operation: Promise<T>): Promise<T | undefined> {
+  return new Promise((resolve) => {
+    const timeout = globalThis.setTimeout(
+      () => resolve(undefined),
+      sessionRestoreTimeoutMs
+    )
+    operation.then(
+      (value) => {
+        globalThis.clearTimeout(timeout)
+        resolve(value)
+      },
+      () => {
+        globalThis.clearTimeout(timeout)
+        resolve(undefined)
+      }
+    )
+  })
+}
 
 function getApp(): Promise<CloudBaseApp | undefined> {
   if (!appPromise) {
@@ -64,12 +84,20 @@ function safeCloudBaseLoginError(error: unknown): Error {
 }
 
 export async function getCloudBaseAccessToken(): Promise<string | undefined> {
-  const app = await getApp()
+  const app = await restoreWithin(getApp())
   if (!app) return undefined
   const auth = app.auth()
-  const user = await auth.getCurrentUser()
+  const user = await restoreWithin(auth.getCurrentUser())
   if (!user) return undefined
-  const token = await auth.getAccessToken()
+  const token = await restoreWithin(auth.getAccessToken())
+  if (
+    !token ||
+    typeof token !== 'object' ||
+    !('accessToken' in token) ||
+    typeof token.accessToken !== 'string'
+  ) {
+    return undefined
+  }
   return token.accessToken || undefined
 }
 

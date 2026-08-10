@@ -38,7 +38,10 @@ describe('CloudBase browser authentication boundary', () => {
     cloudbaseMocks.init.mockClear()
   })
 
-  afterEach(() => vi.unstubAllEnvs())
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  })
 
   it('fails closed when the production environment is not configured', async () => {
     const cloudbase = await loadCloudBase(false)
@@ -66,6 +69,28 @@ describe('CloudBase browser authentication boundary', () => {
 
     expect(cloudbase.isCloudBaseConsole()).toBe(true)
     await expect(cloudbase.getCloudBaseAccessToken()).resolves.toBeUndefined()
+    expect(cloudbaseMocks.auth.getAccessToken).not.toHaveBeenCalled()
+  })
+
+  it('fails closed when restoring the previous CloudBase session rejects', async () => {
+    cloudbaseMocks.auth.getCurrentUser.mockRejectedValue(
+      new Error('identity service unavailable')
+    )
+    const cloudbase = await loadCloudBase(true)
+
+    await expect(cloudbase.getCloudBaseAccessToken()).resolves.toBeUndefined()
+    expect(cloudbaseMocks.auth.getAccessToken).not.toHaveBeenCalled()
+  })
+
+  it('shows the login boundary when previous-session restoration times out', async () => {
+    vi.useFakeTimers()
+    cloudbaseMocks.auth.getCurrentUser.mockReturnValue(new Promise(() => {}))
+    const cloudbase = await loadCloudBase(true)
+
+    const token = cloudbase.getCloudBaseAccessToken()
+    await vi.advanceTimersByTimeAsync(3_000)
+
+    await expect(token).resolves.toBeUndefined()
     expect(cloudbaseMocks.auth.getAccessToken).not.toHaveBeenCalled()
   })
 
