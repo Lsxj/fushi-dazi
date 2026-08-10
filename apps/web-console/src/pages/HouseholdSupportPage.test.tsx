@@ -95,6 +95,7 @@ describe('HouseholdSupportPage', () => {
   })
 
   it('shows real CloudBase credentials without allowing a client-selected role', async () => {
+    const user = userEvent.setup()
     server.use(
       http.get('*/api/v1/auth/session', () =>
         HttpResponse.json({
@@ -111,6 +112,14 @@ describe('HouseholdSupportPage', () => {
     expect(screen.getByRole('button', { name: '登录后台' })).toBeInTheDocument()
     expect(screen.queryByText('使用安全审核人身份登录')).not.toBeInTheDocument()
     expect(screen.getByText(/前端不能自行选择角色/)).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('管理员邮箱或用户名'), 'operator@example.com')
+    await user.type(screen.getByLabelText('密码'), 'password123')
+    await user.click(screen.getByRole('button', { name: '登录后台' }))
+
+    expect(
+      await screen.findByText('CloudBase 管理员登录尚未配置')
+    ).toBeInTheDocument()
   })
 
   it('does not auto-attach a missing trace as investigation evidence', async () => {

@@ -221,10 +221,14 @@ export function HouseholdSupportPage() {
   const cloudLogin = useMutation({
     mutationFn: async () => {
       await signInCloudBaseOperator(operatorIdentifier, operatorPassword)
-      return apiClient.auth.session({})
+      const data = await apiClient.auth.session({})
+      if (!data.authenticated) {
+        await signOutCloudBaseOperator()
+        throw new Error('CloudBase 登录成功，但当前账号没有后台访问权限')
+      }
+      return data
     },
     onSuccess: async (data) => {
-      if (!data.authenticated) throw new Error('当前账号没有后台访问权限')
       setOperatorPassword('')
       queryClient.setQueryData(['auth', 'session'], data)
       await Promise.all([cases.refetch(), traces.refetch()])
@@ -363,7 +367,9 @@ export function HouseholdSupportPage() {
               </button>
               {cloudLogin.isError && (
                 <p className="text-xs font-bold text-[#b45336]">
-                  登录失败，请检查账号、密码和管理员权限。
+                  {cloudLogin.error instanceof Error
+                    ? cloudLogin.error.message
+                    : '登录失败，请检查登录方式和账号配置'}
                 </p>
               )}
             </form>

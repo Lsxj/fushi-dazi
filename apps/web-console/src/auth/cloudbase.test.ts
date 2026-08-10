@@ -104,16 +104,36 @@ describe('CloudBase browser authentication boundary', () => {
     })
   })
 
-  it('surfaces identity rejection and missing-token failures', async () => {
+  it('maps provider failures to safe operator-facing diagnostics', async () => {
     const cloudbase = await loadCloudBase(true)
     cloudbaseMocks.auth.signInWithPassword.mockResolvedValueOnce({
       data: null,
-      error: { message: 'invalid credentials' },
+      error: { code: 'INVALID_CREDENTIALS', message: 'user not found' },
     })
 
     await expect(
       cloudbase.signInCloudBaseOperator('administrator', 'wrong')
-    ).rejects.toThrow('invalid credentials')
+    ).rejects.toThrow('账号或密码无效')
+
+    cloudbaseMocks.auth.signInWithPassword.mockRejectedValueOnce({
+      code: 'PROVIDER_NOT_ENABLED',
+      message: 'password sign-in disabled',
+    })
+    await expect(
+      cloudbase.signInCloudBaseOperator('administrator', 'secret')
+    ).rejects.toThrow('未启用邮箱或用户名密码登录')
+
+    cloudbaseMocks.auth.signInWithPassword.mockRejectedValueOnce({
+      code: 'EMAIL_NOT_VERIFIED',
+      message: 'email unverified',
+    })
+    await expect(
+      cloudbase.signInCloudBaseOperator('operator@example.com', 'secret')
+    ).rejects.toThrow('邮箱尚未完成验证')
+  })
+
+  it('reports a distinct failure when authentication returns no token', async () => {
+    const cloudbase = await loadCloudBase(true)
 
     cloudbaseMocks.auth.signInWithPassword.mockResolvedValueOnce({
       data: { user: { id: 'operator-1' } },
@@ -125,7 +145,7 @@ describe('CloudBase browser authentication boundary', () => {
     })
     await expect(
       cloudbase.signInCloudBaseOperator('administrator', 'secret')
-    ).rejects.toThrow('CloudBase 未返回访问令牌')
+    ).rejects.toThrow('登录已通过，但未返回有效访问令牌')
   })
 
   it('revokes the CloudBase session on logout', async () => {
