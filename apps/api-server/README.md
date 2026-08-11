@@ -111,9 +111,9 @@ pnpm --filter @fushi/api-server start
 ./scripts/deploy-admin-api.sh --check
 ```
 
-真实部署必须显式设置 `ALLOW_ADMIN_API_DEPLOY=1`。对应 HTTP 网关路由必须启用 CloudBase 身份认证；API 会再次调用 CloudBase 用户信息接口验证 Bearer Token，并拒绝不在 UID 白名单中的账号。
+真实部署必须显式设置 `ALLOW_ADMIN_API_DEPLOY=1`。对应 HTTP 网关路由必须使用 `WEB_SCF` 上游类型并启用 CloudBase 身份认证；API 会再次调用 CloudBase 用户信息接口验证 Bearer Token，并拒绝不在 UID 白名单中的账号。
 
-浏览器跨域访问还必须配置逗号分隔的 `FUSHI_ADMIN_ALLOWED_ORIGINS`。未列入白名单的预检请求返回 403，不能使用 `*` 代替明确的后台站点来源。
+CloudBase 托管环境由 HTTP 网关统一返回 CORS 响应头，不在 `admin-api` 上重复配置 `FUSHI_ADMIN_ALLOWED_ORIGINS`，否则浏览器会拒绝包含多个 `Access-Control-Allow-Origin` 值的响应。只有绕过网关直接部署 API 时，才使用该变量配置逗号分隔的明确来源；不能使用 `*`。
 
 当前部署入口：
 
@@ -121,7 +121,7 @@ pnpm --filter @fushi/api-server start
 https://cloud1-d8g02cdnld86f3823-1451658149.ap-shanghai.app.tcloudbase.com/api
 ```
 
-网关使用 `/api` 前缀匹配并保留原始路径，开启身份认证、安全域名校验，以及总 QPS 20 / 单 IP QPS 5 的限流。匿名请求应返回 `401 MISSING_CREDENTIALS`。
+网关使用 `/api` 前缀匹配并保留原始路径，以 `WEB_SCF` 类型转发到 `admin-api`，开启身份认证、安全域名校验，以及总 QPS 20 / 单 IP QPS 5 的限流。匿名请求应返回 `401 MISSING_CREDENTIALS`。
 
 ## 测试策略
 

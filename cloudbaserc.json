@@ -13,6 +13,7 @@
     },
     {
       "name": "support-api",
+      "type": "HTTP",
       "runtime": "Nodejs20.19",
       "timeout": 30,
       "memorySize": 512,
@@ -29,6 +30,7 @@
     },
     {
       "name": "admin-api",
+      "type": "HTTP",
       "runtime": "Nodejs20.19",
       "timeout": 30,
       "memorySize": 512,
@@ -40,7 +42,6 @@
         "FUSHI_ROUTE_SCOPE": "admin-console",
         "FUSHI_AUTH_MODE": "cloudbase",
         "FUSHI_ADMIN_OPERATORS": "2074771023912120322:safety-reviewer",
-        "FUSHI_ADMIN_ALLOWED_ORIGINS": "https://cloud1-d8g02cdnld86f3823-1451658149.tcloudbaseapp.com",
         "FUSHI_SUPPORT_STORE": "cloudbase",
         "CLOUDBASE_ENV_ID": "cloud1-d8g02cdnld86f3823",
         "FUSHI_SUPPORT_COLLECTION": "support_cases"

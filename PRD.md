@@ -323,7 +323,7 @@
 - [x] 为支持工单增加 CloudBase 云数据库适配器：独立工单文档、事务内版本检查与审计写入、tracking token 哈希存储；默认本地模式保持可测试。
 - [x] 将支持 API 部署为 CloudBase HTTP 云函数，小程序通过 `wx.cloud.callHTTPFunction` 提交与查询工单；用户入口与带身份认证的管理员网关保持隔离。
 - [x] 将管理员 API 部署为独立 `admin-api` HTTP 云函数；`/api` 网关路由启用 CloudBase 身份认证和限流，API 再校验 Access Token 与管理员 UID 白名单。小程序入口不能调用后台管理路由。
-- [x] Web Console 增加 CloudBase 密码登录、Access Token 注入、线上支持工单专用路由和显式 CORS 白名单；本地演示登录继续保留且不会进入线上构建路径。
+- [x] Web Console 增加 CloudBase 密码登录、Access Token 注入和线上支持工单专用路由；CloudBase 网关统一管理显式 CORS 白名单，避免网关与应用重复写入响应头；本地演示登录继续保留且不会进入线上构建路径。
 - [x] 将 Web Console 发布到 CloudBase `/admin` 静态托管，使用 Hash Router 与部署 base path，验证静态资源和授权头 CORS 预检。
 - [ ] 用真实管理员账号完成“小程序提交—后台处理—小程序查询状态”的线上验收。
 
@@ -361,6 +361,7 @@
 
 | 日期 | 版本 | 说明 |
 |---|---|---|
+| 2026-08-11 | v0.24-draft | 修正管理员 API 的 HTTP 路由类型为 `WEB_SCF`，并将线上 CORS 收敛为 CloudBase 网关单一责任，避免重复 `Access-Control-Allow-Origin` 导致浏览器拒绝响应 |
 | 2026-08-10 | v0.23-draft | Web Console 接入 CloudBase 管理员登录与 Bearer Token；管理员 API 增加显式 CORS 白名单，线上构建收敛为真实支持工单入口；同步修正云端支持链路和身份边界说明 |
 | 2026-08-06 | v0.22-draft | 将支持后台收敛为“发生了什么—为什么—下一步”核心流程：简化 SLA、自动汇总真实证据、合并审计时间线并隐藏实现字段；README 增加核心业务与架构图，面试主线缩短为 5 分钟 |
 | 2026-08-05 | v0.21-draft | 建立小程序到内部后台的 metadata-only 支持工单闭环；用户明确授权后提交结构化诊断信息，后台支持认领、升级、安全复核、解决、关闭、版本冲突保护和审计，明确正式服务地址与真实身份仍未接入 |
