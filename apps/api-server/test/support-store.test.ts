@@ -24,6 +24,12 @@ function createFakeCloudDatabase(seed: Record<string, Record<string, unknown>> =
       return {}
     },
   })
+  const transactionDoc = (id: string) => ({
+    ...doc(id),
+    get: async () => ({
+      data: documents.has(id) ? structuredClone(documents.get(id)) : null,
+    }),
+  })
   const query = {
     limit: (value: number) => {
       resultLimit = value
@@ -41,12 +47,18 @@ function createFakeCloudDatabase(seed: Record<string, Record<string, unknown>> =
     doc,
     orderBy: () => query,
   })
+  const transactionCollection = () => ({
+    ...query,
+    doc: transactionDoc,
+    orderBy: () => query,
+  })
   return {
     documents,
     database: {
       collection,
-      runTransaction: async <T>(operation: (transaction: { collection: typeof collection }) => Promise<T>) =>
-        operation({ collection }),
+      runTransaction: async <T>(
+        operation: (transaction: { collection: typeof transactionCollection }) => Promise<T>
+      ) => operation({ collection: transactionCollection }),
     },
   }
 }

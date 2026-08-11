@@ -46,8 +46,12 @@ interface CloudResult {
   data: unknown[]
 }
 
+interface CloudDocumentResult {
+  data: unknown[] | unknown | null
+}
+
 interface CloudDocument {
-  get(): Promise<CloudResult>
+  get(): Promise<CloudDocumentResult>
   set(data: Record<string, unknown>): Promise<unknown>
 }
 
@@ -270,7 +274,8 @@ export function createCloudBaseSupportStore(
 
   async function getDocument(document: CloudDocument): Promise<CloudSupportDocument | undefined> {
     const result = await document.get()
-    return result.data[0] === undefined ? undefined : parseCloudDocument(result.data[0])
+    const candidate = Array.isArray(result.data) ? result.data[0] : result.data
+    return candidate == null ? undefined : parseCloudDocument(candidate)
   }
 
   return {
