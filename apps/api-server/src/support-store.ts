@@ -40,6 +40,7 @@ export interface SupportStore {
 export interface CloudBaseSupportStoreOptions {
   envId: string
   collectionName?: string
+  accessKey?: string
 }
 
 interface CloudResult {
@@ -223,9 +224,13 @@ export function createCloudBaseSupportStore(
 ): SupportStore {
   const envId = options.envId.trim()
   const collectionName = options.collectionName?.trim() || DEFAULT_COLLECTION
+  const accessKey = options.accessKey?.trim()
   if (!envId) throw new Error('support cloud store: CLOUDBASE_ENV_ID is required')
   if (!/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(collectionName)) {
     throw new Error('support cloud store: invalid collection name')
+  }
+  if (!databaseForTests && !accessKey) {
+    throw new Error('support cloud store: CLOUDBASE_APIKEY is required')
   }
 
   let databasePromise = databaseForTests
@@ -233,7 +238,7 @@ export function createCloudBaseSupportStore(
     : undefined
   const getDatabase = (): Promise<CloudDatabase> => {
     databasePromise ??= import('@cloudbase/js-sdk').then(({ default: cloudbase }) => {
-      const app = cloudbase.init({ env: envId })
+      const app = cloudbase.init({ env: envId, accessKey })
       return app.database() as unknown as CloudDatabase
     })
     return databasePromise

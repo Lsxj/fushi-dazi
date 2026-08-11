@@ -233,6 +233,9 @@ describe('support persistence stores', () => {
     expect(() =>
       createCloudBaseSupportStore({ envId: 'cloud-test', collectionName: 'not valid' }, {})
     ).toThrow('invalid collection name')
+    expect(() => createCloudBaseSupportStore({ envId: 'cloud-test' })).toThrow(
+      'CLOUDBASE_APIKEY is required'
+    )
 
     const fake = createFakeCloudDatabase({
       [storedCase.caseId]: { ...storedCase, auditRecords: [{}] },
