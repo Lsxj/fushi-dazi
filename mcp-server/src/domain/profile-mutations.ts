@@ -4,7 +4,7 @@
  * These are the WRITE tools. Each one mutates babyProfile.json. They carry
  * the highest risk in the system — especially mark_food_allergic, which is
  * one-way: the food is filtered out of all future plans until the parent
- * manually reverts. Interviewers will ask about guardrails here, so every
+ * manually reverts. Every
  * irreversible action has at least two layers:
  *
  *   1. **Schema-level**: zod makes consent flags `z.literal(true)`, so

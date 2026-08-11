@@ -1,8 +1,8 @@
 /**
  * Domain layer: reaction tools (record_reaction / analyze_suspect_foods).
  *
- * analyze_suspect_foods is the KILLER DEMO field. It runs purely on rules —
- * ZERO LLM — and emits a `ruleTrace` so the interviewer can verify exactly
+ * analyze_suspect_foods runs purely on rules — ZERO LLM — and emits a
+ * `ruleTrace` so operators and developers can verify exactly
  * why each suspect was elevated or skipped:
  *
  *   - introducingChecked: ingredients currently in the 3-day introducing window
@@ -10,8 +10,8 @@
  *   - confirmedSkipped: ingredients in the parent's confirmedFoods whitelist
  *   - tryingDayLabel: which day of the 3-day trying protocol we're on
  *
- * The demo punchline: "Tell me which food caused this reaction" is not a
- * pattern-match call to an LLM. It's a deterministic rule walk over the
+ * "Tell me which food caused this reaction" is not a pattern-match call to
+ * an LLM. It's a deterministic rule walk over the
  * baby's profile + journal + the 72h traceback window.
  */
 import { readJson, writeJson } from '../shim/storage.js'
@@ -177,8 +177,8 @@ export interface AnalyzeSuspectFoodsOutput {
 
 /**
  * Re-run the suspect analysis for a previously recorded reaction and
- * surface the rule trace. This is the "show your work" tool the LLM (or
- * the interviewer) can read to verify every classification.
+ * surface the rule trace. This is the "show your work" tool the LLM,
+ * operators, and developers can read to verify every classification.
  */
 export function analyzeSuspectFoods(
   input: AnalyzeSuspectFoodsInput

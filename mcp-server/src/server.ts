@@ -14,7 +14,7 @@
  * Day 6: + 1 tool (get_week_summary). v0.5.0.
  * Day 8: + 1 tool (narrate_week) — wraps get_week_summary + LLM narration.
  *         LLM provider is in src/llm/ (anthropic SDK if ANTHROPIC_API_KEY,
- *         mock otherwise). v0.6.0 — interview-ready + LLM integration demo.
+ *         mock otherwise). v0.6.0 — LLM integration with an explicit provider state.
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { registerProfileTools } from './tools/profile-tools.js'

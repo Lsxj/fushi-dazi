@@ -23,7 +23,7 @@
 
 这条链路让用户不需要离开产品即可报告问题，也让内部人员能够基于应用上下文定位、处理和审计，而不是依赖零散截图或重复沟通。
 
-进一步阅读：[架构决策记录](./docs/adr/README.md) · [产品需求文档](./PRD.md) · [项目演示脚本](./docs/interview-demo.md)
+进一步阅读：[架构决策记录](./docs/adr/README.md) · [产品需求文档](./PRD.md)
 
 ## 两个端如何连接
 
@@ -97,7 +97,6 @@ pnpm --filter @fushi/web-console exec playwright install chromium
 - [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
 - [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
 - [Architecture Decision Records](./docs/adr/README.md)：记录规则边界、contract-first、不可逆确认与离线评估的关键取舍。
-- [端到端演示步骤](./docs/interview-demo.md)：用一条家长问题处理链路验证规则边界、人工复核、审计和失败处理。
 - Mock provider：无模型密钥也能离线演示，且调用方可以明确识别 mock / live 状态。
 
 ## 怎么打开它

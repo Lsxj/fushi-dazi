@@ -28,7 +28,7 @@ const textResult = (uri: string, data: unknown) => ({
  * a read API, which (a) violates MCP's tool/resource split (clients trust
  * resources to be safe to read without confirm), (b) makes the same URI
  * return different data across sessions (non-deterministic), and (c) is a
- * classic interview trap that betrays shallow protocol understanding.
+ * common protocol pitfall that would violate caller expectations.
  *
  * If the resource is missing, the LLM should be told to call the
  * generate_today_menu tool (which IS allowed to write).

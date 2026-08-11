@@ -1,8 +1,8 @@
 /**
  * Reaction tools (Day 4): record_reaction / analyze_suspect_foods.
  *
- * analyze_suspect_foods is the KILLER DEMO — it surfaces a ruleTrace so
- * the LLM (and the interviewer) can verify exactly which branch each
+ * analyze_suspect_foods surfaces a ruleTrace so the LLM and operators can
+ * verify exactly which branch each
  * ingredient hit. Both tools are pure rules; they do not call any LLM.
  */
 import { z } from 'zod'

@@ -12,8 +12,8 @@
  *     becomes an issue.
  *   - Local dev: mock provider lets the full tool-use loop run without an
  *     API key (or network).
- *   - Interview: the boundary between "rule system" and "LLM" is the
- *     whole point — this module IS the boundary.
+ *   - Architecture: the boundary between the rule system and the LLM is
+ *     explicit and testable in this module.
  */
 
 'use strict'

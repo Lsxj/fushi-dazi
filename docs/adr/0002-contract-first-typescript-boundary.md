@@ -29,7 +29,7 @@
 
 ### 使用 GraphQL
 
-暂未采用。当前接口以明确的命令和查询为主，REST/RPC 边界更简单，也更贴近目标岗位的 Express + oRPC 栈。
+暂未采用。当前接口以明确的命令和查询为主，REST/RPC 边界更简单，也与项目现有的 Express + oRPC 技术栈一致。
 
 ## Consequences
 

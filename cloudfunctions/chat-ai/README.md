@@ -104,7 +104,7 @@ LOCAL=1               → __dirname/_localdata/
 云函数 + 真小程序(wx.cloud.callFunction) → cloudDB
 ```
 
-## 给面试时的 talking points
+## 架构要点
 
 1. **架构**:小程序 + 云函数 + LLM 三层,云函数是边界(fushi-ditu 业务能力 0 改动复用)
 2. **多租户**:wx.login openid 天然隔离,cloudDB 按 openid 文档

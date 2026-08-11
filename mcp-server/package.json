@@ -2,7 +2,7 @@
   "name": "fushi-mcp-server",
   "version": "0.1.0",
   "private": true,
-  "description": "MCP server wrapping fushi-ditu (辅食搭子) capabilities for AI Agent Developer interview demo",
+  "description": "MCP server exposing fushi-ditu (辅食搭子) capabilities to AI agents",
   "type": "module",
   "bin": {
     "fushi-mcp": "./dist/index.js"

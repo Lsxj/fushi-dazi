@@ -13,5 +13,5 @@
 
 - 设计评审：先看 Context、Decision 和 Alternatives。
 - 代码评审：检查 Consequences 中的约束是否仍成立。
-- 面试演示：配合 [5 分钟演示脚本](../interview-demo.md)，用业务问题解释技术取舍。
+- 架构讲解：从业务问题出发，用 ADR 中的证据解释技术取舍。
 - 未来变更：若决策被替代，新增 ADR 并将旧记录标为 Superseded，不覆盖历史。

@@ -27,6 +27,11 @@ apps/api-server/.data/
 # Local recovery snapshots may contain user data
 recovery/
 
+# Private career and interview materials
+docs/*interview*.md
+docs/*resume*.md
+docs/*sap*.md
+
 # Editor and OS files
 .DS_Store
 .idea/

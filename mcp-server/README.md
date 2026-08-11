@@ -1,6 +1,6 @@
 # fushi-mcp — 辅食搭子 MCP Server
 
-> An MCP server that wraps [辅食搭子](../) (a WeChat mini-program for 4-24 月龄 baby food tracking) into a tool surface for AI agents. Built as an interview demo for AI Agent Developer roles.
+> An MCP server that wraps [辅食搭子](../) (a WeChat mini-program for 4-24 月龄 baby food tracking) into a tool surface for AI agents while keeping food-safety decisions deterministic.
 
 ## What this is
 
@@ -207,7 +207,7 @@ mcp-server/
 
 ## Known trade-offs (the honest list)
 
-These are the things I'd address before shipping to real parents. None block the interview demo.
+These are the things to address before shipping to real parents. They remain visible so callers can distinguish prototype behavior from production guarantees.
 
 1. **Cross-project type boundary** — `mcp-server` imports the mini-program domain through `../../../utils/*.js`, so TypeScript also checks those source files. The MCP config now loads the real WeChat runtime types and passes with `strict` + `noImplicitAny`; `noUncheckedIndexedAccess` remains disabled for this combined legacy graph. A future monorepo extraction should publish the domain as a declaration-emitting package so the MCP package can enable that check independently.
 2. **Storage is per-server, not synced with the WeChat mini-program** — same `fushi-ditu` is the source of truth in production, but this demo runs in isolation. An export/import protocol would be needed.
@@ -251,10 +251,10 @@ Only **one tool** (`narrate_week`) touches the LLM. The system prompt hard-rules
 - 不推荐具体食材(交给其他工具)
 - ≤ 200 字,中文,匹配 tone
 
-The rest of the server is **rule-first, LLM-second**: the LLM is the explainer, never the decider. This is the boundary the interview demo leans on.
+The rest of the server is **rule-first, LLM-second**: the LLM is the explainer, never the decider. This is the central safety boundary.
 
 ---
 
 ## License & context
 
-This is a demo project, not a production system. The fushi-ditu mini-program is a side project; the MCP server is the artifact for an interview. If you're reading this as an interviewer: the question I was asked was "how would you expose a complex rule system to an LLM?" — this repo is my answer.
+This is an engineering prototype, not a production system. It explores how to expose a complex rule system to an LLM while keeping safety decisions deterministic, auditable, and testable.
