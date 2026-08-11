@@ -44,7 +44,6 @@ function createConfiguredSupportStore(): SupportStore {
   if (process.env.FUSHI_SUPPORT_STORE === 'cloudbase') {
     return createCloudBaseSupportStore({
       envId: process.env.CLOUDBASE_ENV_ID ?? '',
-      accessKey: process.env.CLOUDBASE_APIKEY,
       ...(process.env.FUSHI_SUPPORT_COLLECTION
         ? { collectionName: process.env.FUSHI_SUPPORT_COLLECTION }
         : {}),

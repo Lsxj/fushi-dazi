@@ -40,7 +40,6 @@ export interface SupportStore {
 export interface CloudBaseSupportStoreOptions {
   envId: string
   collectionName?: string
-  accessKey?: string
 }
 
 interface CloudResult {
@@ -81,6 +80,20 @@ export function hashTrackingToken(trackingToken: string): string {
 
 export function createInitialSupportState(): SupportPersistedState {
   return { schemaVersion: 1, cases: [], auditRecords: [] }
+}
+
+export function withManagedCloudBaseCredentials<T>(operation: () => T): T {
+  const configuredApiKey = process.env.CLOUDBASE_APIKEY
+  try {
+    delete process.env.CLOUDBASE_APIKEY
+    return operation()
+  } finally {
+    if (configuredApiKey === undefined) {
+      delete process.env.CLOUDBASE_APIKEY
+    } else {
+      process.env.CLOUDBASE_APIKEY = configuredApiKey
+    }
+  }
 }
 
 function clone<T>(value: T): T {
@@ -218,28 +231,39 @@ function cloudDocument(supportCase: StoredSupportCase, audits: SupportCaseAuditR
   }
 }
 
+function logCloudBaseFailure(operation: string, error: unknown): void {
+  const candidate = error && typeof error === 'object'
+    ? error as Record<string, unknown>
+    : {}
+  console.error('[support-store] CloudBase operation failed', {
+    operation,
+    name: typeof candidate.name === 'string' ? candidate.name : 'Error',
+    code: typeof candidate.code === 'string' ? candidate.code : 'UNKNOWN',
+    message: typeof candidate.message === 'string'
+      ? candidate.message.slice(0, 500)
+      : 'CloudBase request failed',
+  })
+}
+
 export function createCloudBaseSupportStore(
   options: CloudBaseSupportStoreOptions,
   databaseForTests?: unknown
 ): SupportStore {
   const envId = options.envId.trim()
   const collectionName = options.collectionName?.trim() || DEFAULT_COLLECTION
-  const accessKey = options.accessKey?.trim()
   if (!envId) throw new Error('support cloud store: CLOUDBASE_ENV_ID is required')
   if (!/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(collectionName)) {
     throw new Error('support cloud store: invalid collection name')
   }
-  if (!databaseForTests && !accessKey) {
-    throw new Error('support cloud store: CLOUDBASE_APIKEY is required')
-  }
-
   let databasePromise = databaseForTests
     ? Promise.resolve(databaseForTests as CloudDatabase)
     : undefined
   const getDatabase = (): Promise<CloudDatabase> => {
-    databasePromise ??= import('@cloudbase/js-sdk').then(({ default: cloudbase }) => {
-      const app = cloudbase.init({ env: envId, accessKey })
-      return app.database() as unknown as CloudDatabase
+    databasePromise ??= import('@cloudbase/node-sdk').then(({ default: cloudbase }) => {
+      return withManagedCloudBaseCredentials(() => {
+        const app = cloudbase.init({ env: envId })
+        return app.database() as unknown as CloudDatabase
+      })
     })
     return databasePromise
   }
@@ -266,20 +290,25 @@ export function createCloudBaseSupportStore(
       return supportCase
     },
     list: async () => {
-      const database = await getDatabase()
-      const result = await database
-        .collection(collectionName)
-        .orderBy('createdAt', 'desc')
-        .limit(MAX_CASES)
-        .get()
-      const documents = result.data.map(parseCloudDocument)
-      return {
-        schemaVersion: 1,
-        cases: documents.map(({ auditRecords: _auditRecords, ...supportCase }) => supportCase),
-        auditRecords: documents
-          .flatMap((document) => document.auditRecords)
-          .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
-          .slice(0, MAX_AUDIT_RECORDS),
+      try {
+        const database = await getDatabase()
+        const result = await database
+          .collection(collectionName)
+          .orderBy('createdAt', 'desc')
+          .limit(MAX_CASES)
+          .get()
+        const documents = result.data.map(parseCloudDocument)
+        return {
+          schemaVersion: 1,
+          cases: documents.map(({ auditRecords: _auditRecords, ...supportCase }) => supportCase),
+          auditRecords: documents
+            .flatMap((document) => document.auditRecords)
+            .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
+            .slice(0, MAX_AUDIT_RECORDS),
+        }
+      } catch (error) {
+        logCloudBaseFailure('list', error)
+        throw error
       }
     },
     appendAudit: async (caseId, audit) => {

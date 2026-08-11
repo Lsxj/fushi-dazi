@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   createCloudBaseSupportStore,
@@ -9,6 +9,7 @@ import {
   createMemorySupportStore,
   hashTrackingToken,
   parseSupportState,
+  withManagedCloudBaseCredentials,
   type StoredSupportCase,
 } from '../src/support-store.js'
 import type { SupportCaseAuditRecord } from '@fushi/contracts'
@@ -233,14 +234,80 @@ describe('support persistence stores', () => {
     expect(() =>
       createCloudBaseSupportStore({ envId: 'cloud-test', collectionName: 'not valid' }, {})
     ).toThrow('invalid collection name')
-    expect(() => createCloudBaseSupportStore({ envId: 'cloud-test' })).toThrow(
-      'CLOUDBASE_APIKEY is required'
-    )
+    expect(createCloudBaseSupportStore({ envId: 'cloud-test' }).mode).toBe('cloudbase')
 
     const fake = createFakeCloudDatabase({
       [storedCase.caseId]: { ...storedCase, auditRecords: [{}] },
     })
     const store = createCloudBaseSupportStore({ envId: 'cloud-test' }, fake.database)
     await expect(store.findCase(storedCase.caseId)).rejects.toThrow('document failed validation')
+  })
+
+  it('masks a configured API key only while managed credentials initialize', () => {
+    const previousApiKey = process.env.CLOUDBASE_APIKEY
+    process.env.CLOUDBASE_APIKEY = 'configured-server-key'
+    try {
+      expect(withManagedCloudBaseCredentials(() => process.env.CLOUDBASE_APIKEY)).toBeUndefined()
+      expect(process.env.CLOUDBASE_APIKEY).toBe('configured-server-key')
+      expect(() =>
+        withManagedCloudBaseCredentials(() => {
+          throw new Error('initialization failed')
+        })
+      ).toThrow('initialization failed')
+      expect(process.env.CLOUDBASE_APIKEY).toBe('configured-server-key')
+    } finally {
+      if (previousApiKey === undefined) delete process.env.CLOUDBASE_APIKEY
+      else process.env.CLOUDBASE_APIKEY = previousApiKey
+    }
+  })
+
+  it('logs only a bounded provider error summary when a cloud list fails', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const createFailingDatabase = (error: unknown) => {
+      const query = {
+        limit: () => query,
+        get: async () => { throw error },
+      }
+      return {
+        collection: () => ({ orderBy: () => query }),
+      }
+    }
+    const providerError = Object.assign(new Error('collection does not exist'), {
+      code: 'DATABASE_COLLECTION_NOT_EXIST',
+    })
+
+    try {
+      const providerStore = createCloudBaseSupportStore(
+        { envId: 'cloud-test' },
+        createFailingDatabase(providerError)
+      )
+      await expect(providerStore.list()).rejects.toBe(providerError)
+      expect(consoleError).toHaveBeenLastCalledWith(
+        '[support-store] CloudBase operation failed',
+        {
+          operation: 'list',
+          name: 'Error',
+          code: 'DATABASE_COLLECTION_NOT_EXIST',
+          message: 'collection does not exist',
+        }
+      )
+
+      const unknownStore = createCloudBaseSupportStore(
+        { envId: 'cloud-test' },
+        createFailingDatabase('provider unavailable')
+      )
+      await expect(unknownStore.list()).rejects.toBe('provider unavailable')
+      expect(consoleError).toHaveBeenLastCalledWith(
+        '[support-store] CloudBase operation failed',
+        {
+          operation: 'list',
+          name: 'Error',
+          code: 'UNKNOWN',
+          message: 'CloudBase request failed',
+        }
+      )
+    } finally {
+      consoleError.mockRestore()
+    }
   })
 })

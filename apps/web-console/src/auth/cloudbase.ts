@@ -3,11 +3,24 @@ import type { OperatorSessionOutput } from '@fushi/contracts'
 const environmentId = import.meta.env.VITE_CLOUDBASE_ENV_ID?.trim()
 const sessionRestoreTimeoutMs = 3_000
 
-interface CloudBaseSdk {
-  init(config: cloudbase.ICloudbaseConfig): cloudbase.ICloudbase
+interface CloudBaseAuth {
+  getAccessToken(): Promise<{ accessToken?: string }>
+  getCurrentUser(): Promise<unknown>
+  signIn(credentials: { username: string; password: string }): Promise<unknown>
+  signOut(): Promise<unknown>
 }
 
-type CloudBaseApp = cloudbase.ICloudbase
+interface CloudBaseApp {
+  auth(): CloudBaseAuth
+}
+
+interface CloudBaseSdk {
+  init(config: {
+    env: string
+    region: 'ap-shanghai'
+    persistence: 'local'
+  }): CloudBaseApp
+}
 
 let appPromise: Promise<CloudBaseApp | undefined> | undefined
 

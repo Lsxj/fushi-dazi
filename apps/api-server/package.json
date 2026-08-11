@@ -11,7 +11,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@cloudbase/js-sdk": "^3.7.1",
+    "@cloudbase/node-sdk": "^3.18.3",
     "@cloudbase/signature-nodejs": "^1.1.0",
     "@fushi/contracts": "workspace:*",
     "@orpc/openapi": "catalog:",

@@ -26,7 +26,6 @@ pnpm --filter @fushi/api-server exec esbuild \
   --sourcemap \
   --outfile="$OUTPUT_FILE" \
   --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
-  --external:@cloudbase/js-sdk \
   --external:@cloudbase/signature-nodejs \
   --external:ws
 
