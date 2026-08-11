@@ -1,3 +1,5 @@
+import type { OperatorSessionOutput } from '@fushi/contracts'
+
 const environmentId = import.meta.env.VITE_CLOUDBASE_ENV_ID?.trim()
 const sessionRestoreTimeoutMs = 3_000
 
@@ -56,6 +58,16 @@ export function isCloudBaseConsole(): boolean {
   return Boolean(environmentId && import.meta.env.VITE_API_BASE_URL?.trim())
 }
 
+const unauthenticatedCloudBaseSession: OperatorSessionOutput = {
+  authenticated: false,
+  identityMode: 'cloudbase-access-token',
+  sessionTransport: 'bearer-access-token',
+}
+
+export type RestoredCloudBaseOperatorSession = OperatorSessionOutput & {
+  recoveryNotice?: string
+}
+
 function safeCloudBaseLoginError(error: unknown): Error {
   const providerText =
     error && typeof error === 'object'
@@ -99,6 +111,28 @@ export async function getCloudBaseAccessToken(): Promise<string | undefined> {
     return undefined
   }
   return token.accessToken || undefined
+}
+
+export async function restoreCloudBaseOperatorSession(
+  readServerSession: () => Promise<OperatorSessionOutput>
+): Promise<RestoredCloudBaseOperatorSession> {
+  if (!(await getCloudBaseAccessToken())) {
+    return unauthenticatedCloudBaseSession
+  }
+
+  try {
+    return await readServerSession()
+  } catch {
+    try {
+      await signOutCloudBaseOperator()
+    } catch {
+      // The server session still fails closed even if local cleanup is unavailable.
+    }
+    return {
+      ...unauthenticatedCloudBaseSession,
+      recoveryNotice: '上次管理员会话已失效，请重新登录。',
+    }
+  }
 }
 
 export async function signInCloudBaseOperator(

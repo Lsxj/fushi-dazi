@@ -105,6 +105,28 @@ describe('CloudBase browser authentication boundary', () => {
     await expect(cloudbase.getCloudBaseAccessToken()).resolves.toBe('access-token')
   })
 
+  it('clears an invalid restored session and returns to the login boundary', async () => {
+    cloudbaseMocks.auth.getCurrentUser.mockResolvedValue({ uid: 'operator-1' })
+    cloudbaseMocks.auth.getAccessToken.mockResolvedValue({
+      accessToken: 'expired-access-token',
+      env: 'env-test',
+    })
+    cloudbaseMocks.auth.signOut.mockResolvedValue(undefined)
+    const cloudbase = await loadCloudBase(true)
+
+    const session = await cloudbase.restoreCloudBaseOperatorSession(() =>
+      Promise.reject(new Error('MISSING_CREDENTIALS'))
+    )
+
+    expect(session).toEqual({
+      authenticated: false,
+      identityMode: 'cloudbase-access-token',
+      sessionTransport: 'bearer-access-token',
+      recoveryNotice: '上次管理员会话已失效，请重新登录。',
+    })
+    expect(cloudbaseMocks.auth.signOut).toHaveBeenCalledOnce()
+  })
+
   it('supports both email and username password identities', async () => {
     cloudbaseMocks.auth.signIn.mockResolvedValue({ user: { id: 'operator-1' } })
     cloudbaseMocks.auth.getAccessToken.mockResolvedValue({

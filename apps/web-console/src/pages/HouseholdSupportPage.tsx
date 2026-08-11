@@ -9,11 +9,12 @@ import { useMemo, useState } from 'react'
 
 import { apiClient } from '../api/client'
 import {
-  getCloudBaseAccessToken,
   isCloudBaseConsole,
+  restoreCloudBaseOperatorSession,
   signInCloudBaseOperator,
   signOutCloudBaseOperator,
 } from '../auth/cloudbase'
+import type { RestoredCloudBaseOperatorSession } from '../auth/cloudbase'
 import { Icon } from '../components/Icon'
 
 const reasonLabels: Record<SupportCase['reason'], string> = {
@@ -126,15 +127,11 @@ export function HouseholdSupportPage() {
   const [resolutionCode, setResolutionCode] = useState<ResolutionCode>('fix-planned')
   const [operatorIdentifier, setOperatorIdentifier] = useState('')
   const [operatorPassword, setOperatorPassword] = useState('')
-  const session = useQuery({
+  const session = useQuery<RestoredCloudBaseOperatorSession>({
     queryKey: ['auth', 'session'],
     queryFn: async () => {
-      if (cloudConsole && !(await getCloudBaseAccessToken())) {
-        return {
-          authenticated: false as const,
-          identityMode: 'cloudbase-access-token' as const,
-          sessionTransport: 'bearer-access-token' as const,
-        }
+      if (cloudConsole) {
+        return restoreCloudBaseOperatorSession(() => apiClient.auth.session({}))
       }
       return apiClient.auth.session({})
     },
@@ -337,6 +334,11 @@ export function HouseholdSupportPage() {
               <p className="text-sm leading-6 text-[#68756e]">
                 使用已加入管理员白名单的 CloudBase 账号登录。账号身份和角色均由服务端校验，前端不能自行选择角色。
               </p>
+              {session.data.recoveryNotice && (
+                <p className="rounded-xl bg-[#fff0e8] px-4 py-3 text-sm font-semibold text-[#8a452d]">
+                  {session.data.recoveryNotice}
+                </p>
+              )}
               <label className="grid gap-1.5 text-xs font-bold text-[#516159]">
                 管理员邮箱或用户名
                 <input
