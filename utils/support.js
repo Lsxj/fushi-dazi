@@ -1,7 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SUPPORT_REASON_OPTIONS = void 0;
+exports.SUPPORT_REASON_OPTIONS = exports.SUPPORT_STATUS_LABELS = void 0;
+exports.getSupportStatusLabel = getSupportStatusLabel;
 exports.buildSupportCasePayload = buildSupportCasePayload;
+exports.SUPPORT_STATUS_LABELS = {
+    new: '待处理',
+    investigating: '处理中',
+    escalated: '安全复核中',
+    resolved: '已解决',
+    closed: '已关闭',
+};
+function getSupportStatusLabel(status) {
+    return exports.SUPPORT_STATUS_LABELS[status] ?? '状态未知';
+}
 exports.SUPPORT_REASON_OPTIONS = [
     {
         value: 'unsafe-food-in-menu',

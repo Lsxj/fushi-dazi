@@ -1,6 +1,10 @@
 const assert = require('assert')
 
-const { buildSupportCasePayload, SUPPORT_REASON_OPTIONS } = require('../utils/support.js')
+const {
+  buildSupportCasePayload,
+  getSupportStatusLabel,
+  SUPPORT_REASON_OPTIONS,
+} = require('../utils/support.js')
 const { parseSupportResponse, SUPPORT_FUNCTION_NAME } = require('../utils/supportTransport.js')
 
 const payload = buildSupportCasePayload(
@@ -16,6 +20,9 @@ assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, 'babyName'), fa
 assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, 'note'), false)
 assert.strictEqual(JSON.stringify(payload).includes('chatHistory'), false)
 assert.strictEqual(SUPPORT_REASON_OPTIONS.length, 5)
+assert.strictEqual(getSupportStatusLabel('new'), '待处理')
+assert.strictEqual(getSupportStatusLabel('closed'), '已关闭')
+assert.strictEqual(getSupportStatusLabel('unexpected'), '状态未知')
 assert.strictEqual(SUPPORT_FUNCTION_NAME, 'support-api')
 assert.deepStrictEqual(parseSupportResponse('{"found":true}'), { found: true })
 assert.deepStrictEqual(parseSupportResponse({ found: false }), { found: false })

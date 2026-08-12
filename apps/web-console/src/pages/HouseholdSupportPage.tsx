@@ -119,7 +119,7 @@ export function HouseholdSupportPage() {
   const queryClient = useQueryClient()
   const cloudConsole = isCloudBaseConsole()
   const [selectedCaseId, setSelectedCaseId] = useState<string>()
-  const [statusFilter, setStatusFilter] = useState<'open' | 'all'>('open')
+  const [statusFilter, setStatusFilter] = useState<'active' | 'all'>('active')
   const [severityFilter, setSeverityFilter] = useState<'all' | SupportCase['severity']>('all')
   const [categoryFilter, setCategoryFilter] = useState<'all' | SupportCase['category']>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -151,14 +151,14 @@ export function HouseholdSupportPage() {
       const normalizedSearch = searchQuery.trim().toLocaleLowerCase('zh-CN')
       return (cases.data?.cases ?? [])
         .filter((supportCase) => {
-          const isOpen = supportCase.status !== 'resolved' && supportCase.status !== 'closed'
+          const isActive = supportCase.status !== 'closed'
           const searchable = [
             supportCase.caseId,
             supportCase.context.clientVersion,
             reasonLabels[supportCase.reason],
           ].join(' ').toLocaleLowerCase('zh-CN')
           return (
-            (statusFilter === 'all' || isOpen) &&
+            (statusFilter === 'all' || isActive) &&
             (severityFilter === 'all' || supportCase.severity === severityFilter) &&
             (categoryFilter === 'all' || supportCase.category === categoryFilter) &&
             (!normalizedSearch || searchable.includes(normalizedSearch))
@@ -424,7 +424,7 @@ export function HouseholdSupportPage() {
         <>
           <section aria-label="工单摘要" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              ['待处理', visibleCases.length, '当前需要关注'],
+              ['未关闭', visibleCases.length, '包含待处理与已解决'],
               ['待认领', cases.data.summary.unassigned, '需要支持人员处理'],
               ['关键安全', cases.data.summary.criticalOpen, '必须由安全审核人解决'],
               ['SLA 超时', cases.data.summary.slaBreached, '需要优先介入'],
@@ -439,14 +439,14 @@ export function HouseholdSupportPage() {
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/8 bg-white/65 p-3">
             <div className="flex rounded-xl bg-[#edf0eb] p-1">
-              {(['open', 'all'] as const).map((filter) => (
+              {(['active', 'all'] as const).map((filter) => (
                 <button
                   className={`rounded-lg px-3 py-2 text-xs font-bold ${statusFilter === filter ? 'bg-white text-[#183f35] shadow-sm' : 'text-[#6f7b74]'}`}
                   key={filter}
                   onClick={() => setStatusFilter(filter)}
                   type="button"
                 >
-                  {filter === 'open' ? '处理中' : '全部'}
+                  {filter === 'active' ? '未关闭' : '全部'}
                 </button>
               ))}
             </div>
@@ -521,7 +521,7 @@ export function HouseholdSupportPage() {
                 <div className="border-b border-black/8 px-5 py-4">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#df5c34]">Operations queue</span>
                   <div className="mt-1 flex items-end justify-between gap-3">
-                    <h2 className="text-xl font-black text-[#183f35]">待处理队列</h2>
+                    <h2 className="text-xl font-black text-[#183f35]">未关闭队列</h2>
                     <span className="text-xs font-bold text-[#7a867f]">显示 {visibleCases.length} 条</span>
                   </div>
                 </div>
@@ -689,21 +689,21 @@ export function HouseholdSupportPage() {
 
                   <div className="mt-5 flex flex-wrap gap-2">
                     {selectedCase.status === 'new' && (
-                      <button className="rounded-xl bg-[#78d5b9] px-4 py-2.5 text-xs font-black text-[#183f35]" onClick={() => runAction('assign-self', selectedCase)} type="button">认领并开始调查</button>
+                      <button className="rounded-xl bg-[#78d5b9] px-4 py-2.5 text-xs font-black text-[#183f35] disabled:opacity-40" disabled={updateCase.isPending} onClick={() => runAction('assign-self', selectedCase)} type="button">认领并开始调查</button>
                     )}
                     {selectedCase.status === 'investigating' && (
                       <>
-                        <button className="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-black" onClick={() => runAction('escalate', selectedCase)} type="button">升级安全审核</button>
+                        <button className="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-black disabled:opacity-40" disabled={updateCase.isPending} onClick={() => runAction('escalate', selectedCase)} type="button">升级安全审核</button>
                         {selectedCase.severity !== 'critical' && selectedCase.investigation && selectedCase.investigation.finding !== 'insufficient-evidence' && (
-                          <button className="rounded-xl bg-[#78d5b9] px-4 py-2.5 text-xs font-black text-[#183f35]" onClick={() => resolve(selectedCase)} type="button">记录解决结论</button>
+                          <button className="rounded-xl bg-[#78d5b9] px-4 py-2.5 text-xs font-black text-[#183f35] disabled:opacity-40" disabled={updateCase.isPending} onClick={() => resolve(selectedCase)} type="button">记录解决结论</button>
                         )}
                       </>
                     )}
                     {selectedCase.status === 'escalated' && selectedCase.investigation && selectedCase.investigation.finding !== 'insufficient-evidence' && (
-                      <button className="rounded-xl bg-[#78d5b9] px-4 py-2.5 text-xs font-black text-[#183f35]" onClick={() => resolve(selectedCase)} type="button">安全复核并解决</button>
+                      <button className="rounded-xl bg-[#78d5b9] px-4 py-2.5 text-xs font-black text-[#183f35] disabled:opacity-40" disabled={updateCase.isPending} onClick={() => resolve(selectedCase)} type="button">安全复核并解决</button>
                     )}
                     {selectedCase.status === 'resolved' && (
-                      <button className="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-black" onClick={() => runAction('close', selectedCase)} type="button">关闭工单</button>
+                      <button className="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-black disabled:opacity-40" disabled={updateCase.isPending} onClick={() => runAction('close', selectedCase)} type="button">关闭工单</button>
                     )}
                   </div>
                   {updateCase.data?.result && updateCase.data.result !== 'updated' && (

@@ -5,6 +5,25 @@ export type SupportCaseReason =
   | 'profile-not-refreshed'
   | 'request-cloud-data-deletion'
 
+export type SupportCaseStatus =
+  | 'new'
+  | 'investigating'
+  | 'escalated'
+  | 'resolved'
+  | 'closed'
+
+export const SUPPORT_STATUS_LABELS: Record<SupportCaseStatus, string> = {
+  new: '待处理',
+  investigating: '处理中',
+  escalated: '安全复核中',
+  resolved: '已解决',
+  closed: '已关闭',
+}
+
+export function getSupportStatusLabel(status: string): string {
+  return SUPPORT_STATUS_LABELS[status as SupportCaseStatus] ?? '状态未知'
+}
+
 export interface SupportCasePayload {
   reason: SupportCaseReason
   context: {

@@ -56,11 +56,15 @@ describe('HouseholdSupportPage', () => {
     await user.click(await screen.findByRole('button', { name: '使用安全审核人身份登录' }))
     await user.selectOptions(screen.getByLabelText('解决结论'), 'guidance-provided')
     await user.click(screen.getByRole('button', { name: '安全复核并解决' }))
-    await user.click(screen.getByRole('button', { name: '全部' }))
-
     expect((await screen.findAllByText('已解决')).length).toBeGreaterThan(0)
     expect(screen.getByText('记录解决结论')).toBeInTheDocument()
     expect(screen.queryByText(/guidance-provided/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '关闭工单' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '关闭工单' }))
+    expect(await screen.findByRole('heading', { name: '没有符合条件的工单' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '全部' }))
+    expect((await screen.findAllByText('已关闭')).length).toBeGreaterThan(0)
   })
 
   it('fails closed when support data cannot be loaded', async () => {
@@ -72,7 +76,7 @@ describe('HouseholdSupportPage', () => {
     expect(
       await screen.findByRole('heading', { name: '支持工单加载失败' })
     ).toBeInTheDocument()
-    expect(screen.queryByText('待处理队列')).not.toBeInTheDocument()
+    expect(screen.queryByText('未关闭队列')).not.toBeInTheDocument()
   })
 
   it('requires a server session before loading the internal queue', async () => {
@@ -90,7 +94,7 @@ describe('HouseholdSupportPage', () => {
     expect(
       await screen.findByRole('heading', { name: '登录内部运营工作台' })
     ).toBeInTheDocument()
-    expect(screen.queryByText('待处理队列')).not.toBeInTheDocument()
+    expect(screen.queryByText('未关闭队列')).not.toBeInTheDocument()
     expect(screen.getByText(/前端不能在工单请求中伪造 actor/)).toBeInTheDocument()
   })
 

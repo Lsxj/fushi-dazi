@@ -8,7 +8,7 @@
 
     <view wx:if="{{receipt}}" class="card receipt-card">
       <view class="card-title">最近工单</view>
-      <view class="receipt-status">{{receipt.status}}</view>
+      <view class="receipt-status">{{receiptStatusLabel}}</view>
       <view class="receipt-id">编号 {{receipt.caseId}}</view>
       <button class="secondary-btn" bindtap="refreshStatus">刷新处理状态</button>
     </view>

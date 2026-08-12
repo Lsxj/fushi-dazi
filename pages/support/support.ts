@@ -1,5 +1,6 @@
 import {
   buildSupportCasePayload,
+  getSupportStatusLabel,
   SUPPORT_REASON_OPTIONS,
   SupportCaseReason,
   SupportCaseReceipt,
@@ -25,12 +26,16 @@ Page({
     consent: false,
     submitting: false,
     receipt: null as SupportCaseReceipt | null,
+    receiptStatusLabel: '',
     serviceMode: '云端支持服务',
   },
 
   onShow() {
     const receipt = wx.getStorageSync(RECEIPT_KEY) as SupportCaseReceipt | null
-    this.setData({ receipt: receipt || null })
+    this.setData({
+      receipt: receipt || null,
+      receiptStatusLabel: receipt ? getSupportStatusLabel(receipt.status) : '',
+    })
   },
 
   selectReason(event: WechatMiniprogram.TouchEvent) {
@@ -76,7 +81,11 @@ Page({
         submittedAt: new Date().toISOString(),
       }
       wx.setStorageSync(RECEIPT_KEY, receipt)
-      this.setData({ receipt, consent: false })
+      this.setData({
+        receipt,
+        receiptStatusLabel: getSupportStatusLabel(receipt.status),
+        consent: false,
+      })
       wx.showToast({ title: '工单已提交', icon: 'success' })
     } catch (error) {
       console.warn('support case submission failed:', error)
@@ -108,7 +117,10 @@ Page({
       }
       const nextReceipt = { ...receipt, status: body.case.status }
       wx.setStorageSync(RECEIPT_KEY, nextReceipt)
-      this.setData({ receipt: nextReceipt })
+      this.setData({
+        receipt: nextReceipt,
+        receiptStatusLabel: getSupportStatusLabel(nextReceipt.status),
+      })
       wx.showToast({ title: '状态已更新', icon: 'none' })
     } catch (error) {
       console.warn('support case tracking failed:', error)

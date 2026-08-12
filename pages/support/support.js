@@ -10,11 +10,15 @@ Page({
         consent: false,
         submitting: false,
         receipt: null,
+        receiptStatusLabel: '',
         serviceMode: '云端支持服务',
     },
     onShow() {
         const receipt = wx.getStorageSync(RECEIPT_KEY);
-        this.setData({ receipt: receipt || null });
+        this.setData({
+            receipt: receipt || null,
+            receiptStatusLabel: receipt ? (0, support_1.getSupportStatusLabel)(receipt.status) : '',
+        });
     },
     selectReason(event) {
         this.setData({ selectedReason: event.currentTarget.dataset.reason });
@@ -53,7 +57,11 @@ Page({
                 submittedAt: new Date().toISOString(),
             };
             wx.setStorageSync(RECEIPT_KEY, receipt);
-            this.setData({ receipt, consent: false });
+            this.setData({
+                receipt,
+                receiptStatusLabel: (0, support_1.getSupportStatusLabel)(receipt.status),
+                consent: false,
+            });
             wx.showToast({ title: '工单已提交', icon: 'success' });
         }
         catch (error) {
@@ -84,7 +92,10 @@ Page({
             }
             const nextReceipt = { ...receipt, status: body.case.status };
             wx.setStorageSync(RECEIPT_KEY, nextReceipt);
-            this.setData({ receipt: nextReceipt });
+            this.setData({
+                receipt: nextReceipt,
+                receiptStatusLabel: (0, support_1.getSupportStatusLabel)(nextReceipt.status),
+            });
             wx.showToast({ title: '状态已更新', icon: 'none' });
         }
         catch (error) {
