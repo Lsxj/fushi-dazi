@@ -52,6 +52,7 @@ flowchart LR
 ## 工程质量
 
 - **类型安全**：Zod + oRPC 作为 API 契约的单一来源，React 与 Express 不重复维护请求和响应类型。
+- **严格类型边界**：`data/` 与 `utils/` 的确定性规则由根目录 `tsconfig.strict-core.json` 以 `strict` + `noImplicitAny` 独立校验；Contracts、API、React 控制台和 MCP Server 同样使用 strict。历史小程序页面仍采用兼容配置并渐进迁移，不把局部宽松配置描述成整仓 strict。
 - **自动化测试**：Vitest 覆盖规则和 API，MSW 覆盖前端成功与失败路径，Playwright 验证 React→API→规则的真实浏览器链路。
 - **离线可运行**：没有模型密钥时使用明确标注的 mock provider，确定性安全规则、工单流程和固定评估仍可运行。
 - **隐私最小化**：支持工单只上传用户明确授权的结构化诊断信息；Trace 使用 `summary-only` 模式，不保存宝宝姓名、食材明细或自由备注。

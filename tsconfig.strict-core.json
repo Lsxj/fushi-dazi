@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noEmit": true
+  },
+  "include": [
+    "./data/**/*.ts",
+    "./utils/**/*.ts",
+    "./typings/**/*.ts",
+    "./typings/**/*.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}
