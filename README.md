@@ -23,7 +23,7 @@
 
 这条链路让用户不需要离开产品即可报告问题，也让内部人员能够基于应用上下文定位、处理和审计，而不是依赖零散截图或重复沟通。
 
-进一步阅读：[架构决策记录](./docs/adr/README.md) · [产品需求文档](./PRD.md)
+进一步阅读：[AI 数据完整性事故复盘](./docs/postmortem-ai-local-data-overwrite.md) · [架构决策记录](./docs/adr/README.md) · [产品需求文档](./PRD.md)
 
 ## 两个端如何连接
 
