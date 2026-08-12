@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const agentRouting_1 = require("../../utils/agentRouting");
 const safety_1 = require("../../utils/safety");
+const planner_1 = require("../../utils/planner");
 const MAX_HISTORY = 20;
 const AI_CONSENT_KEY = 'aiContextConsent';
 const AI_CONSENT_VERSION = 'local-first-v1';
@@ -196,7 +197,10 @@ Page({
                         console.warn(`ai-chat: skipped empty cloud snapshot for key=${key}`);
                         continue;
                     }
-                    wx.setStorageSync(key, value);
+                    const protectedValue = key === 'weeklyPlan' && Array.isArray(local) && Array.isArray(value)
+                        ? (0, planner_1.preserveLoggedMealFacts)(local, value)
+                        : value;
+                    wx.setStorageSync(key, protectedValue);
                 }
             }
             catch (err) {

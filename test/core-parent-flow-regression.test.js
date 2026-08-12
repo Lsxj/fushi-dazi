@@ -21,7 +21,10 @@ globalThis.wx = {
 const {
   formatDate,
   generateWeeklyPlan,
-  regenerateKeepingLoggedToday,
+  rebuildPlanPreservingLoggedMeals,
+  clearTrialIngredient,
+  attachTrialIngredient,
+  preserveLoggedMealFacts,
 } = require('../utils/planner.js')
 const { checkinMeal } = require('../utils/checkin.js')
 const { addReaction, traceback72h } = require('../utils/reactions.js')
@@ -78,9 +81,12 @@ function main() {
   const initialPlan = generateWeeklyPlan(profile, 7, new Date())
   assert.strictEqual(initialPlan.length, 7, 'profile setup should produce a seven-day menu')
   assert(initialPlan[0].meals.length > 0, 'today should contain at least one planned meal')
-  storage.set('weeklyPlan', initialPlan)
 
   const plannedMeal = initialPlan[0].meals[0]
+  plannedMeal.trialIngredient = plannedMeal.recipe.ingredients[0].name
+  plannedMeal.trialMethod = 'mix'
+  const eatenMenuFact = clone(plannedMeal)
+  storage.set('weeklyPlan', initialPlan)
   const fridge = plannedMeal.recipe.ingredients.map((ingredient) => ({
     name: ingredient.name,
     portions: ingredient.portions + 2,
@@ -97,6 +103,18 @@ function main() {
   assert.strictEqual(checkin.log.recipeId, plannedMeal.recipe.id)
   assertInventoryDeducted(plannedMeal.recipe, beforeInventory)
 
+  const proposedWithoutLoggedMeal = clone(initialPlan)
+  proposedWithoutLoggedMeal[0].meals = proposedWithoutLoggedMeal[0].meals
+    .filter(meal => meal.mealIndex !== plannedMeal.mealIndex)
+  const protectedPlan = preserveLoggedMealFacts(initialPlan, proposedWithoutLoggedMeal)
+  const restoredMissingMeal = protectedPlan[0].meals
+    .find(meal => meal.mealIndex === plannedMeal.mealIndex)
+  assert.deepStrictEqual(
+    restoredMissingMeal,
+    eatenMenuFact,
+    'automatic plan changes must restore a logged meal even when the proposed day omits that meal index'
+  )
+
   const reactionTime = new Date(Date.now() + 60_000).toISOString()
   const traceback = traceback72h(reactionTime)
   assert.strictEqual(traceback.length, 1, 'reaction should trace back to the checked-in meal')
@@ -104,6 +122,10 @@ function main() {
   const suspects = analyzeSuspects(profile, traceback[0].ingredients, reactionTime)
   assert(suspects.length > 0, 'a newly available food should be explainably identified as suspect')
   const suspect = suspects[0]
+  const unloggedTrialMeal = initialPlan[0].meals.find(meal => meal.mealIndex !== plannedMeal.mealIndex)
+  assert(unloggedTrialMeal, 'the regression fixture needs an unlogged meal to verify future safety updates')
+  unloggedTrialMeal.trialIngredient = suspect.name
+  unloggedTrialMeal.trialMethod = 'mix'
   const reactionId = `core-flow-${Date.now()}`
   addReaction({
     id: reactionId,
@@ -125,24 +147,50 @@ function main() {
   storage.set('babyProfile', observedProfile)
   assert.strictEqual(observedProfile.individualExceptions[suspect.name].state, 'observation')
 
-  const recomputedPlan = regenerateKeepingLoggedToday(observedProfile, initialPlan)
-  storage.set('weeklyPlan', recomputedPlan)
+  const recomputedPlan = rebuildPlanPreservingLoggedMeals(observedProfile)
 
   const loggedMeal = recomputedPlan
     .flatMap((day) => day.meals)
     .find((meal) => meal.date === today && meal.mealIndex === plannedMeal.mealIndex)
-  assert.strictEqual(
-    loggedMeal.recipe.id,
-    plannedMeal.recipe.id,
-    'menu recompute must preserve the meal the parent already checked in'
+  assert.deepStrictEqual(
+    loggedMeal,
+    eatenMenuFact,
+    'a safety-state change must preserve the complete menu fact already checked in by the parent'
   )
 
   const unloggedMeals = recomputedPlan
     .flatMap((day) => day.meals)
     .filter((meal) => !(meal.date === today && meal.mealIndex === plannedMeal.mealIndex))
   assert(
-    unloggedMeals.every((meal) => meal.recipe.ingredients.every((item) => item.name !== suspect.name)),
-    'future and unlogged meals must exclude the food placed in observation'
+    unloggedMeals.every((meal) =>
+      meal.trialIngredient !== suspect.name &&
+      meal.recipe.ingredients.every((item) => item.name !== suspect.name)
+    ),
+    'future and unlogged meals must exclude the observed food from recipes and trial add-ons'
+  )
+
+  const afterTrialCleanup = clearTrialIngredient(recomputedPlan, eatenMenuFact.trialIngredient)
+  const loggedMealAfterCleanup = afterTrialCleanup
+    .flatMap((day) => day.meals)
+    .find((meal) => meal.date === today && meal.mealIndex === plannedMeal.mealIndex)
+  assert.deepStrictEqual(
+    loggedMealAfterCleanup,
+    eatenMenuFact,
+    'automatic trial cleanup must not rewrite a logged meal fact'
+  )
+  const afterTrialAttach = attachTrialIngredient(
+    recomputedPlan,
+    today,
+    plannedMeal.mealIndex,
+    '鸡肉'
+  )
+  const loggedMealAfterAttach = afterTrialAttach
+    .flatMap((day) => day.meals)
+    .find((meal) => meal.date === today && meal.mealIndex === plannedMeal.mealIndex)
+  assert.deepStrictEqual(
+    loggedMealAfterAttach,
+    eatenMenuFact,
+    'automatic trial assignment must not attach a new food to a logged meal'
   )
   assert.strictEqual(storage.get('mealJournal').length, 1, 'menu recompute must preserve meal history')
   assert.strictEqual(storage.get('reactions').length, 1, 'menu recompute must preserve reaction history')

@@ -1252,18 +1252,25 @@ Page({
         const targetDate = day === 'today'
             ? this.data.today
             : (0, planner_1.formatDate)(new Date(Date.now() + 86400000));
+        const journal = wx.getStorageSync('mealJournal') || [];
+        if (journal.some(l => l.date === targetDate && l.mealIndex === idx)) {
+            wx.showToast({ title: '这餐已经吃过，只能编辑饮食记录', icon: 'none', duration: 1600 });
+            return;
+        }
         const plan = wx.getStorageSync('weeklyPlan') || [];
         const dayPlan = plan.find(p => p.date === targetDate);
         if (!dayPlan)
             return;
-        const oldRecipe = dayPlan.meals[idx].recipe;
+        const targetMeal = dayPlan.meals.find(m => m.mealIndex === idx);
+        if (!targetMeal)
+            return;
+        const oldRecipe = targetMeal.recipe;
         const fridgeNames = new Set((0, storage_1.getFridge)().map(f => f.name));
         const candidates = (0, planner_1.pickReplacementCandidates)(profile, dayPlan, idx, 3, fridgeNames);
         if (candidates.length === 0) {
             wx.showToast({ title: '暂无营养均衡的其他食谱', icon: 'none' });
             return;
         }
-        const journal = wx.getStorageSync('mealJournal') || [];
         const loggedIdx = new Set(journal.filter(l => l.date === targetDate).map(l => l.mealIndex));
         const swapTargets = dayPlan.meals
             .filter(m => m.mealIndex !== idx && !loggedIdx.has(m.mealIndex))
@@ -1304,6 +1311,13 @@ Page({
         const dayPlan = plan.find(p => p.date === ctx.date);
         if (!dayPlan)
             return;
+        const journal = wx.getStorageSync('mealJournal') || [];
+        const loggedIdx = new Set(journal.filter(l => l.date === ctx.date).map(l => l.mealIndex));
+        if (loggedIdx.has(ctx.idx) || loggedIdx.has(targetIdx)) {
+            wx.showToast({ title: '已吃餐次不能互换', icon: 'none', duration: 1400 });
+            this.closeReplaceSheet();
+            return;
+        }
         const a = dayPlan.meals.find(m => m.mealIndex === ctx.idx);
         const b = dayPlan.meals.find(m => m.mealIndex === targetIdx);
         if (!a || !b)
@@ -1363,22 +1377,31 @@ Page({
         const dayPlan = plan.find(p => p.date === ctx.date);
         if (!dayPlan)
             return;
+        const latestJournal = wx.getStorageSync('mealJournal') || [];
+        if (latestJournal.some(l => l.date === ctx.date && l.mealIndex === ctx.idx)) {
+            wx.showToast({ title: '这餐已经吃过，只能编辑饮食记录', icon: 'none', duration: 1600 });
+            this.closeReplaceSheet();
+            return;
+        }
         const applicable = (0, planner_1.getApplicableRecipes)(profile);
         const newRecipe = applicable.find(r => r.id === recipeId);
         if (!newRecipe) {
             wx.showToast({ title: '食谱不可用', icon: 'none' });
             return;
         }
-        const oldRecipe = dayPlan.meals[ctx.idx].recipe;
+        const targetMeal = dayPlan.meals.find(m => m.mealIndex === ctx.idx);
+        if (!targetMeal)
+            return;
+        const oldRecipe = targetMeal.recipe;
         const tryingFood = (0, planner_1.getTryingFood)(profile);
         const oldUsesTrying = !!(tryingFood && oldRecipe.ingredients.some(i => i.name === tryingFood));
-        const journal = wx.getStorageSync('mealJournal') || [];
+        const journal = latestJournal;
         const todayAlreadyAteTrying = !!(tryingFood && journal.some(l => l.date === ctx.date && (l.ingredients || []).includes(tryingFood)));
-        const otherMealsHaveTrying = !!(tryingFood && dayPlan.meals.some((m, i) => i !== ctx.idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)));
+        const otherMealsHaveTrying = !!(tryingFood && dayPlan.meals.some(m => m.mealIndex !== ctx.idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)));
         const newRecipeHasTrying = !!(tryingFood && newRecipe.ingredients.some(i => i.name === tryingFood));
         const willStillHaveTryingAfter = newRecipeHasTrying || otherMealsHaveTrying;
         const doReplace = () => {
-            dayPlan.meals[ctx.idx].recipe = newRecipe;
+            targetMeal.recipe = newRecipe;
             const stillHasTrying = !!(tryingFood && dayPlan.meals.some(m => m.recipe.ingredients.some(ing => ing.name === tryingFood)));
             if (oldUsesTrying && !todayAlreadyAteTrying && !stillHasTrying && tryingFood) {
                 const tryingCatId = (0, planner_1.getCurrentTryingCategoryId)(profile);

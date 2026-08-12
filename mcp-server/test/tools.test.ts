@@ -264,11 +264,27 @@ async function run(): Promise<void> {
       const parsed = JSON.parse(replaceText)
       const cands = parsed.candidates ?? []
       const ids = new Set(cands.map((c: { recipe: { id: string } }) => c.recipe.id))
-      const ok = cands.length >= 3 && ids.size === cands.length
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const dataDir = path.resolve(new URL('..', import.meta.url).pathname, 'data')
+      fs.writeFileSync(
+        path.join(dataDir, 'mealJournal.json'),
+        JSON.stringify([{ date: todayStr, mealIndex: 0 }]),
+        'utf-8'
+      )
+      const loggedReplace = await client.callTool({
+        name: 'replace_meal',
+        arguments: { date: todayStr, mealIndex: 0, topN: 3 },
+      })
+      fs.writeFileSync(path.join(dataDir, 'mealJournal.json'), '[]', 'utf-8')
+      const loggedBlocked =
+        (loggedReplace as { isError?: boolean }).isError === true &&
+        /already logged/.test(getText(loggedReplace.content) ?? '')
+      const ok = cands.length >= 3 && ids.size === cands.length && loggedBlocked
       results.push(
         ok
-          ? pass('replace_meal', `candidates=${cands.length} distinct=${ids.size}`)
-          : fail('replace_meal', `candidates=${cands.length} distinct=${ids.size}`)
+          ? pass('replace_meal', `candidates=${cands.length} distinct=${ids.size}; logged meal blocked`)
+          : fail('replace_meal', `candidates=${cands.length} distinct=${ids.size} loggedBlocked=${loggedBlocked}`)
       )
     }
 

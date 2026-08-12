@@ -266,7 +266,7 @@ Page({
             }
         }
         wx.setStorageSync('babyProfile', profile);
-        wx.removeStorageSync('weeklyPlan');
+        (0, planner_1.rebuildPlanPreservingLoggedMeals)(profile);
         if (types.includes('gut')) {
             wx.showToast({ title: '已记录,菜单将自动避开海鲜/高纤维', icon: 'none', duration: 2200 });
         }

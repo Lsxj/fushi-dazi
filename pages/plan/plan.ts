@@ -196,14 +196,16 @@ Page({
     }
 
     const tryingFood = getTryingFood(profile)
-    const oldRecipe = day.meals[idx].recipe
+    const targetMeal = day.meals.find(meal => meal.mealIndex === idx)
+    if (!targetMeal) return
+    const oldRecipe = targetMeal.recipe
     const oldUsesTrying = !!(tryingFood && oldRecipe.ingredients.some(i => i.name === tryingFood))
     // 今天是否已经实际吃过 trying food (看 mealJournal): 已吃过 → 排敏天合格, 不弹 modal 不 record
     const todayAlreadyAteTrying = !!(tryingFood && journal.some(l =>
       l.date === date && (l.ingredients || []).includes(tryingFood)
     ))
-    const otherMealsHaveTrying = !!(tryingFood && day.meals.some((m, i) =>
-      i !== idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)
+    const otherMealsHaveTrying = !!(tryingFood && day.meals.some(m =>
+      m.mealIndex !== idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)
     ))
 
     const replacement = pickReplacement(profile, day, idx)
@@ -217,7 +219,7 @@ Page({
     const willStillHaveTryingAfter = newRecipeHasTrying || otherMealsHaveTrying
 
     const doReplace = () => {
-      day.meals[idx].recipe = replacement
+      targetMeal.recipe = replacement
       const stillHasTrying = day.meals.some(m => m.recipe.ingredients.some(ing => ing.name === tryingFood))
 
       if (oldUsesTrying && !todayAlreadyAteTrying && !stillHasTrying && tryingFood) {

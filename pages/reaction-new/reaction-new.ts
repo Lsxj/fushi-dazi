@@ -1,6 +1,6 @@
 import { ReactionType, ReactionSeverity, REACTION_TYPE_LABEL, REACTION_TYPE_EMOJI, addReaction, updateReaction, getReactions, traceback72h, isSeverDirectAllergic, ReactionLog } from '../../utils/reactions'
 import { analyzeSuspects, enterObservation, markAllergic, SuspectFood } from '../../utils/observation'
-import { BabyProfile, getWeekday } from '../../utils/planner'
+import { BabyProfile, getWeekday, rebuildPlanPreservingLoggedMeals } from '../../utils/planner'
 import { getIngredientEmoji } from '../../utils/reviewStats'
 
 const TYPE_OPTIONS = (Object.keys(REACTION_TYPE_LABEL) as ReactionType[]).map(v => ({
@@ -305,7 +305,7 @@ Page({
     }
 
     wx.setStorageSync('babyProfile', profile)
-    wx.removeStorageSync('weeklyPlan')
+    rebuildPlanPreservingLoggedMeals(profile)
 
     if (types.includes('gut')) {
       wx.showToast({ title: '已记录,菜单将自动避开海鲜/高纤维', icon: 'none', duration: 2200 })

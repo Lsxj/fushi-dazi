@@ -49,10 +49,6 @@ const regenerateWeekPlanInput = {
     .max(14)
     .optional()
     .describe('Plan length in days. Default 7.'),
-  keepLoggedToday: z
-    .boolean()
-    .optional()
-    .describe('Preserve today\'s already-logged meals. Default true.'),
 }
 
 export function registerPlanTools(server: McpServer): void {

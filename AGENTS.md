@@ -8,6 +8,7 @@ This repository is a safety-sensitive TypeScript product and an AI engineering p
 - Put shared product rules in `utils/`. Put reusable HTTP contracts in `packages/contracts/`, API orchestration in `apps/api-server/`, the portfolio UI in `apps/web-console/`, MCP orchestration in `mcp-server/src/domain/`, and MCP registration schemas in `mcp-server/src/tools/`.
 - The React console consumes the shared oRPC contract through `OpenAPILink`; do not hand-write duplicate request or response types. Use React Query for server state and Zustand only for local interaction state.
 - Require explicit confirmation for irreversible actions. Preserve an audit record that explains who or what authorized the mutation.
+- Treat every `mealJournal` entry as an immutable historical fact. Automatic rules, profile/status changes, AI/MCP tools, retries, and plan regeneration may change only unlogged meals. A logged menu may change only through an explicit user edit of that meal record; destructive reset/restore flows require their own confirmation and recovery story.
 - Keep MCP resources read-only and make mock/provider state visible to callers.
 - Do not add or upload personal data without updating the product disclosure and deletion story.
 

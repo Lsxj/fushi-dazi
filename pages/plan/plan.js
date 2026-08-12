@@ -158,10 +158,13 @@ Page({
             return;
         }
         const tryingFood = (0, planner_1.getTryingFood)(profile);
-        const oldRecipe = day.meals[idx].recipe;
+        const targetMeal = day.meals.find(meal => meal.mealIndex === idx);
+        if (!targetMeal)
+            return;
+        const oldRecipe = targetMeal.recipe;
         const oldUsesTrying = !!(tryingFood && oldRecipe.ingredients.some(i => i.name === tryingFood));
         const todayAlreadyAteTrying = !!(tryingFood && journal.some(l => l.date === date && (l.ingredients || []).includes(tryingFood)));
-        const otherMealsHaveTrying = !!(tryingFood && day.meals.some((m, i) => i !== idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)));
+        const otherMealsHaveTrying = !!(tryingFood && day.meals.some(m => m.mealIndex !== idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)));
         const replacement = (0, planner_1.pickReplacement)(profile, day, idx);
         if (!replacement) {
             wx.showToast({ title: '暂无其他营养均衡的食谱', icon: 'none', duration: 1400 });
@@ -170,7 +173,7 @@ Page({
         const newRecipeHasTrying = !!(tryingFood && replacement.ingredients.some(i => i.name === tryingFood));
         const willStillHaveTryingAfter = newRecipeHasTrying || otherMealsHaveTrying;
         const doReplace = () => {
-            day.meals[idx].recipe = replacement;
+            targetMeal.recipe = replacement;
             const stillHasTrying = day.meals.some(m => m.recipe.ingredients.some(ing => ing.name === tryingFood));
             if (oldUsesTrying && !todayAlreadyAteTrying && !stillHasTrying && tryingFood) {
                 const tryingCatId = (0, planner_1.getCurrentTryingCategoryId)(profile);

@@ -8,6 +8,7 @@ process.env.LOCAL = '1'
 process.env.LLM_PROVIDER = 'mock'
 
 const chatAi = require('../cloudfunctions/chat-ai/index.js')
+const { RECIPES } = require('../data/recipes.js')
 
 const openid = `history-regression-${Date.now()}`
 const dataDir = path.join(__dirname, '..', 'cloudfunctions', 'chat-ai', '_localdata', openid)
@@ -65,7 +66,7 @@ const originalReactions = [
   },
 ]
 
-async function callChat(question) {
+async function callChat(question, overrides = {}) {
   return chatAi.main({
     _testOpenid: openid,
     question,
@@ -78,6 +79,7 @@ async function callChat(question) {
       fridge: [],
       manualShopList: [],
       customFoods: [],
+      ...overrides,
     },
   }, {})
 }
@@ -107,7 +109,31 @@ async function main() {
     'get_feeding_history must not mutate or clear reactions'
   )
 
-  const menuRes = await callChat('今天吃什么？')
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const loggedRecipe = clone(RECIPES[0])
+  const loggedMealFact = {
+    date: today,
+    mealIndex: 0,
+    recipe: loggedRecipe,
+    trialIngredient: loggedRecipe.ingredients[0].name,
+    trialMethod: 'mix',
+  }
+  const menuJournal = [
+    ...clone(originalMealJournal),
+    {
+      date: today,
+      mealIndex: 0,
+      recipeId: loggedRecipe.id,
+      recipeName: loggedRecipe.name,
+      ingredients: loggedRecipe.ingredients.map((ingredient) => ingredient.name),
+      loggedAt: now.toISOString(),
+    },
+  ]
+  const menuRes = await callChat('今天吃什么？', {
+    mealJournal: menuJournal,
+    weeklyPlan: [{ date: today, meals: [loggedMealFact] }],
+  })
   assert.strictEqual(menuRes.ok, true, 'menu request should succeed')
   assert(
     menuRes.toolCalls.some((tc) => tc.name === 'generate_today_menu' && tc.ok),
@@ -119,9 +145,17 @@ async function main() {
     'menu generation may return only the weeklyPlan delta, never babyProfile or unrelated keys'
   )
   assert(Array.isArray(menuRes.storageSnapshot.weeklyPlan) && menuRes.storageSnapshot.weeklyPlan.length > 0)
+  const loggedAfterAiGeneration = menuRes.storageSnapshot.weeklyPlan
+    .flatMap((day) => day.meals)
+    .find((meal) => meal.date === today && meal.mealIndex === 0)
+  assert.deepStrictEqual(
+    loggedAfterAiGeneration,
+    loggedMealFact,
+    'AI menu generation must preserve the complete menu fact for an already-logged meal'
+  )
   assert.deepStrictEqual(
     readStored('mealJournal'),
-    originalMealJournal,
+    menuJournal,
     'menu generation must preserve existing mealJournal history'
   )
   assert.deepStrictEqual(

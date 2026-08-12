@@ -621,16 +621,20 @@ export function attachTrialIngredient(
   target: string
 ): DailyPlan[] {
   const method = getFirstTryMethod(target)
+  const journal: any[] = wx.getStorageSync('mealJournal') || []
+  const loggedKeys = new Set(journal.map(l => `${l.date}-${l.mealIndex}`))
   return plans.map(p => ({
     ...p,
-    meals: p.meals.map((m, i) => {
+    meals: p.meals.map(m => {
+      const key = `${p.date}-${m.mealIndex}`
+      if (loggedKeys.has(key)) return m
       // 清掉同 target 的旧标记(防止旧排敏 slot 残留)
-      if (m.trialIngredient === target && !(p.date === date && i === mealIdx)) {
+      if (m.trialIngredient === target && !(p.date === date && m.mealIndex === mealIdx)) {
         const { trialIngredient: _t, trialMethod: _m, ...rest } = m
         return rest as PlannedMeal
       }
       // 挂到指定餐次
-      if (p.date === date && i === mealIdx) {
+      if (p.date === date && m.mealIndex === mealIdx) {
         return { ...m, trialIngredient: target, trialMethod: method }
       }
       return m
@@ -640,9 +644,12 @@ export function attachTrialIngredient(
 
 // 排敏结束/中止时清除该 target 的所有加料标记
 export function clearTrialIngredient(plans: DailyPlan[], target: string): DailyPlan[] {
+  const journal: any[] = wx.getStorageSync('mealJournal') || []
+  const loggedKeys = new Set(journal.map(l => `${l.date}-${l.mealIndex}`))
   return plans.map(p => ({
     ...p,
     meals: p.meals.map(m => {
+      if (loggedKeys.has(`${p.date}-${m.mealIndex}`)) return m
       if (m.trialIngredient === target) {
         const { trialIngredient: _t, trialMethod: _m, ...rest } = m
         return rest as PlannedMeal
@@ -929,7 +936,9 @@ export function pickReplacement(
   mealIdx: number
 ): Recipe | null {
   const applicable = getApplicableRecipes(profile)
-  const oldRecipe = dayPlan.meals[mealIdx].recipe
+  const targetPosition = dayPlan.meals.findIndex(meal => meal.mealIndex === mealIdx)
+  if (targetPosition < 0) return null
+  const oldRecipe = dayPlan.meals[targetPosition].recipe
   const candidates = applicable.filter(r => r.id !== oldRecipe.id)
   if (candidates.length === 0) return null
 
@@ -937,7 +946,7 @@ export function pickReplacement(
   const otherCovered = new Set<string>()
   const otherIngredients = new Set<string>()
   for (let i = 0; i < dayPlan.meals.length; i++) {
-    if (i === mealIdx) continue
+    if (i === targetPosition) continue
     const m = dayPlan.meals[i]
     m.recipe.mealCategories.forEach(c => otherCovered.add(c))
     m.recipe.ingredients.forEach(ing => otherIngredients.add(ing.name))
@@ -1002,7 +1011,9 @@ export function pickReplacementCandidates(
   excludeIds?: string[]
 ): ReplacementCandidate[] {
   const applicable = getApplicableRecipes(profile)
-  const oldRecipe = dayPlan.meals[mealIdx].recipe
+  const targetPosition = dayPlan.meals.findIndex(meal => meal.mealIndex === mealIdx)
+  if (targetPosition < 0) return []
+  const oldRecipe = dayPlan.meals[targetPosition].recipe
   let candidates = applicable.filter(r => r.id !== oldRecipe.id)
   if (candidates.length === 0) return []
   // 先 exclude 上次显示过的, 池子不够 topN 时再放回(避免再换一批一直无结果)
@@ -1014,7 +1025,7 @@ export function pickReplacementCandidates(
   const otherCovered = new Set<string>()
   const otherIngredients = new Set<string>()
   for (let i = 0; i < dayPlan.meals.length; i++) {
-    if (i === mealIdx) continue
+    if (i === targetPosition) continue
     const m = dayPlan.meals[i]
     m.recipe.mealCategories.forEach(c => otherCovered.add(c))
     m.recipe.ingredients.forEach(ing => otherIngredients.add(ing.name))
@@ -1184,6 +1195,39 @@ export function regenerateFromToday(profile: BabyProfile, existingPlan: DailyPla
   return [...past, ...newFuturePlan]
 }
 
+/**
+ * Automatic plan changes must treat every logged date+mealIndex as an immutable
+ * historical fact. User-driven meal-log editing is the only supported path for
+ * changing what was actually eaten.
+ */
+export function preserveLoggedMealFacts(
+  existingPlan: DailyPlan[],
+  proposedPlan: DailyPlan[]
+): DailyPlan[] {
+  const journal: any[] = wx.getStorageSync('mealJournal') || []
+  const loggedKeys = new Set(journal.map(l => `${l.date}-${l.mealIndex}`))
+  if (loggedKeys.size === 0) return proposedPlan
+
+  const nextPlan = proposedPlan.map(day => ({ ...day, meals: [...day.meals] }))
+  for (const oldDay of existingPlan) {
+    const loggedMeals = oldDay.meals.filter(meal => loggedKeys.has(`${oldDay.date}-${meal.mealIndex}`))
+    if (loggedMeals.length === 0) continue
+
+    let nextDay = nextPlan.find(day => day.date === oldDay.date)
+    if (!nextDay) {
+      nextDay = { ...oldDay, meals: [] }
+      nextPlan.push(nextDay)
+    }
+    for (const oldMeal of loggedMeals) {
+      const nextIndex = nextDay.meals.findIndex(meal => meal.mealIndex === oldMeal.mealIndex)
+      if (nextIndex >= 0) nextDay.meals[nextIndex] = oldMeal
+      else nextDay.meals.push(oldMeal)
+    }
+    nextDay.meals.sort((left, right) => left.mealIndex - right.mealIndex)
+  }
+  return nextPlan.sort((left, right) => left.date.localeCompare(right.date))
+}
+
 // 「调整明日」专用: 今天及之前的 plan 完全不动 (含未喂的餐), 只重新生成明天及之后
 export function regenerateTomorrowOnward(profile: BabyProfile, existingPlan: DailyPlan[]): DailyPlan[] {
   const today = formatDate(new Date())
@@ -1212,26 +1256,14 @@ export function regenerateTomorrowOnward(profile: BabyProfile, existingPlan: Dai
   return [...keep, ...newFuture]
 }
 
-// 重新生成 plan，但今日已经 logged 的餐保留原食谱不被替换
+// 重新生成 plan，但所有已经 logged 的餐都保留为不可自动改写的历史事实。
+// 函数名保留 Today 仅为兼容现有调用方；保护范围以 mealJournal 的 date+mealIndex 为准。
 export function regenerateKeepingLoggedToday(profile: BabyProfile, existingPlan: DailyPlan[]): DailyPlan[] {
   const today = formatDate(new Date())
   const journal: any[] = wx.getStorageSync('mealJournal') || []
   const loggedIdx = new Set(journal.filter(l => l.date === today).map(l => l.mealIndex))
-
-  const oldTodayPlan = existingPlan.find(p => p.date === today)
-  const newPlan = regenerateFromToday(profile, existingPlan)
+  const newPlan = preserveLoggedMealFacts(existingPlan, regenerateFromToday(profile, existingPlan))
   const todayIdx = newPlan.findIndex(p => p.date === today)
-
-  // 还原 logged 餐
-  if (oldTodayPlan && loggedIdx.size > 0 && todayIdx >= 0) {
-    newPlan[todayIdx].meals = newPlan[todayIdx].meals.map((newMeal, i) => {
-      const oldMeal = oldTodayPlan.meals[i]
-      if (oldMeal && loggedIdx.has(oldMeal.mealIndex)) {
-        return oldMeal
-      }
-      return newMeal
-    })
-  }
 
   // 保留旧 plan 里所有 trialIngredient 标记(按 date+mealIndex 匹配回新 plan)
   for (const oldDay of existingPlan) {
@@ -1239,8 +1271,9 @@ export function regenerateKeepingLoggedToday(profile: BabyProfile, existingPlan:
     if (!newDay) continue
     for (const oldMeal of oldDay.meals) {
       if (!oldMeal.trialIngredient) continue
-      const newMeal = newDay.meals[oldMeal.mealIndex]
-      if (newMeal && !newMeal.trialIngredient) {
+      const newMeal = newDay.meals.find(meal => meal.mealIndex === oldMeal.mealIndex)
+      const stillSafeToTry = isFoodSafeForBaby(oldMeal.trialIngredient, profile).safe
+      if (newMeal && !newMeal.trialIngredient && stillSafeToTry) {
         newMeal.trialIngredient = oldMeal.trialIngredient
         newMeal.trialMethod = oldMeal.trialMethod
       }
@@ -1270,6 +1303,16 @@ export function regenerateKeepingLoggedToday(profile: BabyProfile, existingPlan:
   }
 
   return newPlan
+}
+
+// 安全状态变化后的唯一计划写入入口。已有计划为空时不凭空生成，避免丢失历史菜单来源；
+// 有计划时只重算未打卡餐，并将结果一次性写回。
+export function rebuildPlanPreservingLoggedMeals(profile: BabyProfile): DailyPlan[] {
+  const existingPlan: DailyPlan[] = wx.getStorageSync('weeklyPlan') || []
+  if (existingPlan.length === 0) return existingPlan
+  const nextPlan = regenerateKeepingLoggedToday(profile, existingPlan)
+  wx.setStorageSync('weeklyPlan', nextPlan)
+  return nextPlan
 }
 
 export function formatDate(d: Date): string {

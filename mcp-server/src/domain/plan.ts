@@ -4,7 +4,7 @@
  * Wraps fushi-ditu planner.ts:
  *   - generateWeeklyPlan(days=1)  → generate_today_menu
  *   - pickReplacementCandidates   → replace_meal
- *   - regenerateKeepingLoggedToday / regenerateFromToday → regenerate_week_plan
+ *   - regenerateKeepingLoggedToday → regenerate_week_plan
  *
  * Hard guardrail: every recipe emitted goes through isRecipeApplicable twice
  * (once inside the planner pool filter, once here as a final check). Unsafe
@@ -15,8 +15,8 @@ import { filterApplicableRecipes } from './guardrails.js'
 import {
   generateWeeklyPlan,
   pickReplacementCandidates,
+  preserveLoggedMealFacts,
   regenerateKeepingLoggedToday,
-  regenerateFromToday,
   diagnoseEmptyPlan,
   getTryingFood,
 } from '../../../utils/planner.js'
@@ -142,13 +142,16 @@ export function generateTodayMenu(input: GenerateTodayMenuInput = {}): GenerateT
   // Persist into weeklyPlan
   const week = loadWeeklyPlan()
   const idx = week.findIndex((p) => p.date === dateStr)
-  if (idx >= 0) week[idx] = day
-  else week.push(day)
-  writeJson('weeklyPlan', week)
+  const proposedWeek = [...week]
+  if (idx >= 0) proposedWeek[idx] = day
+  else proposedWeek.push(day)
+  const protectedWeek = preserveLoggedMealFacts(week, proposedWeek)
+  writeJson('weeklyPlan', protectedWeek)
+  const persistedDay = protectedWeek.find((p) => p.date === dateStr) ?? day
 
   return {
     date: dateStr,
-    meals: day.meals.map((m) => ({
+    meals: persistedDay.meals.map((m) => ({
       mealIndex: m.mealIndex,
       recipeId: m.recipe.id,
       recipeName: m.recipe.name,
@@ -195,6 +198,12 @@ export function replaceMeal(input: ReplaceMealInput): ReplaceMealOutput {
       `replace_meal: mealIndex ${input.mealIndex} out of range for date ${input.date} (has ${day.meals.length} meals)`
     )
   }
+  const journal = readJson<Array<{ date: string; mealIndex: number }>>('mealJournal') ?? []
+  if (journal.some((log) => log.date === input.date && log.mealIndex === input.mealIndex)) {
+    throw new Error(
+      `replace_meal: ${input.date} meal ${input.mealIndex} is already logged; edit the meal record explicitly instead`
+    )
+  }
   const fridgeNames = loadFridgeNames()
   const topN = input.topN ?? 3
   const candidates = pickReplacementCandidates(
@@ -218,7 +227,6 @@ export function replaceMeal(input: ReplaceMealInput): ReplaceMealOutput {
 
 export interface RegenerateWeekPlanInput {
   days?: number
-  keepLoggedToday?: boolean
 }
 
 export interface RegenerateWeekPlanOutput {
@@ -228,8 +236,8 @@ export interface RegenerateWeekPlanOutput {
 }
 
 /**
- * Regenerate the week plan. By default keeps today's already-logged meals
- * (so the LLM can re-plan without nuking the user's data).
+ * Regenerate the week plan while always preserving already-logged meals.
+ * Logged menus are historical facts and cannot be changed by an LLM option.
  */
 export function regenerateWeekPlan(
   input: RegenerateWeekPlanInput = {}
@@ -239,10 +247,7 @@ export function regenerateWeekPlan(
   const today = formatYmd(new Date())
   const beforeToday = existing.filter((p) => p.date < today).length
 
-  const newPlan =
-    input.keepLoggedToday === false
-      ? regenerateFromToday(profile, existing)
-      : regenerateKeepingLoggedToday(profile, existing)
+  const newPlan = regenerateKeepingLoggedToday(profile, existing)
 
   writeJson('weeklyPlan', newPlan)
 

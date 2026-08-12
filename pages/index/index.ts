@@ -1432,11 +1432,19 @@ Page({
       ? this.data.today
       : formatDate(new Date(Date.now() + 86400000))
 
+    const journal: any[] = wx.getStorageSync('mealJournal') || []
+    if (journal.some(l => l.date === targetDate && l.mealIndex === idx)) {
+      wx.showToast({ title: '这餐已经吃过，只能编辑饮食记录', icon: 'none', duration: 1600 })
+      return
+    }
+
     const plan: DailyPlan[] = wx.getStorageSync('weeklyPlan') || []
     const dayPlan = plan.find(p => p.date === targetDate)
     if (!dayPlan) return
 
-    const oldRecipe = dayPlan.meals[idx].recipe
+    const targetMeal = dayPlan.meals.find(m => m.mealIndex === idx)
+    if (!targetMeal) return
+    const oldRecipe = targetMeal.recipe
     const fridgeNames = new Set<string>(getFridge().map(f => f.name))
     const candidates = pickReplacementCandidates(profile, dayPlan, idx, 3, fridgeNames)
     if (candidates.length === 0) {
@@ -1445,7 +1453,6 @@ Page({
     }
 
     // 互换候选: 同日其他餐, 已喂的不能换
-    const journal: any[] = wx.getStorageSync('mealJournal') || []
     const loggedIdx = new Set(journal.filter(l => l.date === targetDate).map(l => l.mealIndex))
     const swapTargets = dayPlan.meals
       .filter(m => m.mealIndex !== idx && !loggedIdx.has(m.mealIndex))
@@ -1487,6 +1494,13 @@ Page({
     const plan: DailyPlan[] = wx.getStorageSync('weeklyPlan') || []
     const dayPlan = plan.find(p => p.date === ctx.date)
     if (!dayPlan) return
+    const journal: any[] = wx.getStorageSync('mealJournal') || []
+    const loggedIdx = new Set(journal.filter(l => l.date === ctx.date).map(l => l.mealIndex))
+    if (loggedIdx.has(ctx.idx) || loggedIdx.has(targetIdx)) {
+      wx.showToast({ title: '已吃餐次不能互换', icon: 'none', duration: 1400 })
+      this.closeReplaceSheet()
+      return
+    }
     const a = dayPlan.meals.find(m => m.mealIndex === ctx.idx)
     const b = dayPlan.meals.find(m => m.mealIndex === targetIdx)
     if (!a || !b) return
@@ -1544,6 +1558,12 @@ Page({
     const plan: DailyPlan[] = wx.getStorageSync('weeklyPlan') || []
     const dayPlan = plan.find(p => p.date === ctx.date)
     if (!dayPlan) return
+    const latestJournal: any[] = wx.getStorageSync('mealJournal') || []
+    if (latestJournal.some(l => l.date === ctx.date && l.mealIndex === ctx.idx)) {
+      wx.showToast({ title: '这餐已经吃过，只能编辑饮食记录', icon: 'none', duration: 1600 })
+      this.closeReplaceSheet()
+      return
+    }
 
     // 从最新 applicable 集合里找到选中的食谱
     const applicable = getApplicableRecipes(profile)
@@ -1553,17 +1573,19 @@ Page({
       return
     }
 
-    const oldRecipe = dayPlan.meals[ctx.idx].recipe
+    const targetMeal = dayPlan.meals.find(m => m.mealIndex === ctx.idx)
+    if (!targetMeal) return
+    const oldRecipe = targetMeal.recipe
     const tryingFood = getTryingFood(profile)
     const oldUsesTrying = !!(tryingFood && oldRecipe.ingredients.some(i => i.name === tryingFood))
     // 关键: 今天是否已经实际吃过 trying food (看 mealJournal 而不是 plan)
     // 已经吃过 → 这天排敏天已合格, 替换任何其他餐不影响观察进度, 不弹 modal 不 record
-    const journal: any[] = wx.getStorageSync('mealJournal') || []
+    const journal = latestJournal
     const todayAlreadyAteTrying = !!(tryingFood && journal.some(l =>
       l.date === ctx.date && (l.ingredients || []).includes(tryingFood)
     ))
-    const otherMealsHaveTrying = !!(tryingFood && dayPlan.meals.some((m, i) =>
-      i !== ctx.idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)
+    const otherMealsHaveTrying = !!(tryingFood && dayPlan.meals.some(m =>
+      m.mealIndex !== ctx.idx && m.recipe.ingredients.some(ing => ing.name === tryingFood)
     ))
     // 替换为的新菜本身是否仍含 trying food: 如果是, 这天依然有 trying, 不算作废
     const newRecipeHasTrying = !!(tryingFood && newRecipe.ingredients.some(i => i.name === tryingFood))
@@ -1571,7 +1593,7 @@ Page({
     const willStillHaveTryingAfter = newRecipeHasTrying || otherMealsHaveTrying
 
     const doReplace = () => {
-      dayPlan.meals[ctx.idx].recipe = newRecipe
+      targetMeal.recipe = newRecipe
       const stillHasTrying = !!(tryingFood && dayPlan.meals.some(m =>
         m.recipe.ingredients.some(ing => ing.name === tryingFood)
       ))

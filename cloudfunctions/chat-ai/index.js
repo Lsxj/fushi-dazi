@@ -205,13 +205,14 @@ defineTool({
     }
     // Persist into weeklyPlan so the home / plan page can read it back.
     const week = wx.getStorageSync('weeklyPlan') || []
-    const idx = week.findIndex((p) => p.date === day.date)
-    if (idx >= 0) week[idx] = day
-    else week.push(day)
-    wx.setStorageSync('weeklyPlan', week)
+    const proposed = week.filter((p) => p.date !== day.date)
+    proposed.push(day)
+    const protectedWeek = f.planner.preserveLoggedMealFacts(week, proposed)
+    wx.setStorageSync('weeklyPlan', protectedWeek)
+    const persistedDay = protectedWeek.find((p) => p.date === day.date) || day
     return {
-      date: day.date,
-      meals: day.meals.map((m) => ({
+      date: persistedDay.date,
+      meals: persistedDay.meals.map((m) => ({
         mealIndex: m.mealIndex,
         recipeId: m.recipe.id,
         recipeName: m.recipe.name,

@@ -18,6 +18,7 @@
 
 import { routeAgentRequest } from '../../utils/agentRouting'
 import { checkFoodsSafety } from '../../utils/safety'
+import { DailyPlan, preserveLoggedMealFacts } from '../../utils/planner'
 
 interface ChatMessage {
   id: number
@@ -260,7 +261,10 @@ Page({
             console.warn(`ai-chat: skipped empty cloud snapshot for key=${key}`)
             continue
           }
-          wx.setStorageSync(key as any, value)
+          const protectedValue = key === 'weeklyPlan' && Array.isArray(local) && Array.isArray(value)
+            ? preserveLoggedMealFacts(local as DailyPlan[], value as DailyPlan[])
+            : value
+          wx.setStorageSync(key as any, protectedValue)
         }
       } catch (err) {
         console.warn(`ai-chat: failed to apply cloud snapshot key=${key}:`, err)

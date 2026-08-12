@@ -8,6 +8,7 @@
 | [ADR-0002](./0002-contract-first-typescript-boundary.md) | 使用 Zod + oRPC 建立 contract-first 边界 | Accepted | 增加共享契约维护成本，避免前后端类型漂移 |
 | [ADR-0003](./0003-explicit-consent-and-optimistic-concurrency.md) | 不可逆档案变更采用显式确认、角色授权和乐观并发 | Accepted | 增加操作步骤，避免多人照护中的静默覆盖和误改 |
 | [ADR-0004](./0004-offline-agentic-evaluation.md) | 离线 agentic 评估必须区分 mock、规则结果和线上模型质量 | Accepted | 指标范围更保守，但不会把离线路由准确率包装成模型能力 |
+| [ADR-0005](./0005-logged-meals-are-immutable-history.md) | 已打卡菜单作为不可自动改写的历史事实 | Accepted | 自动调整只能修改未打卡餐，保留可靠的反应回溯与历史解释 |
 
 ## 使用方式
 

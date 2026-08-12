@@ -30,8 +30,10 @@ exports.generateWeeklyPlan = generateWeeklyPlan;
 exports.pickReplacement = pickReplacement;
 exports.pickReplacementCandidates = pickReplacementCandidates;
 exports.regenerateFromToday = regenerateFromToday;
+exports.preserveLoggedMealFacts = preserveLoggedMealFacts;
 exports.regenerateTomorrowOnward = regenerateTomorrowOnward;
 exports.regenerateKeepingLoggedToday = regenerateKeepingLoggedToday;
+exports.rebuildPlanPreservingLoggedMeals = rebuildPlanPreservingLoggedMeals;
 exports.formatDate = formatDate;
 exports.getWeekday = getWeekday;
 exports.getNextRecommendation = getNextRecommendation;
@@ -497,14 +499,19 @@ function getFirstTryMethod(foodName) {
 }
 function attachTrialIngredient(plans, date, mealIdx, target) {
     const method = getFirstTryMethod(target);
+    const journal = wx.getStorageSync('mealJournal') || [];
+    const loggedKeys = new Set(journal.map(l => `${l.date}-${l.mealIndex}`));
     return plans.map(p => ({
         ...p,
-        meals: p.meals.map((m, i) => {
-            if (m.trialIngredient === target && !(p.date === date && i === mealIdx)) {
+        meals: p.meals.map(m => {
+            const key = `${p.date}-${m.mealIndex}`;
+            if (loggedKeys.has(key))
+                return m;
+            if (m.trialIngredient === target && !(p.date === date && m.mealIndex === mealIdx)) {
                 const { trialIngredient: _t, trialMethod: _m, ...rest } = m;
                 return rest;
             }
-            if (p.date === date && i === mealIdx) {
+            if (p.date === date && m.mealIndex === mealIdx) {
                 return { ...m, trialIngredient: target, trialMethod: method };
             }
             return m;
@@ -512,9 +519,13 @@ function attachTrialIngredient(plans, date, mealIdx, target) {
     }));
 }
 function clearTrialIngredient(plans, target) {
+    const journal = wx.getStorageSync('mealJournal') || [];
+    const loggedKeys = new Set(journal.map(l => `${l.date}-${l.mealIndex}`));
     return plans.map(p => ({
         ...p,
         meals: p.meals.map(m => {
+            if (loggedKeys.has(`${p.date}-${m.mealIndex}`))
+                return m;
             if (m.trialIngredient === target) {
                 const { trialIngredient: _t, trialMethod: _m, ...rest } = m;
                 return rest;
@@ -736,14 +747,17 @@ function generateWeeklyPlan(profile, days = 7, startDate) {
 }
 function pickReplacement(profile, dayPlan, mealIdx) {
     const applicable = getApplicableRecipes(profile);
-    const oldRecipe = dayPlan.meals[mealIdx].recipe;
+    const targetPosition = dayPlan.meals.findIndex(meal => meal.mealIndex === mealIdx);
+    if (targetPosition < 0)
+        return null;
+    const oldRecipe = dayPlan.meals[targetPosition].recipe;
     const candidates = applicable.filter(r => r.id !== oldRecipe.id);
     if (candidates.length === 0)
         return null;
     const otherCovered = new Set();
     const otherIngredients = new Set();
     for (let i = 0; i < dayPlan.meals.length; i++) {
-        if (i === mealIdx)
+        if (i === targetPosition)
             continue;
         const m = dayPlan.meals[i];
         m.recipe.mealCategories.forEach(c => otherCovered.add(c));
@@ -776,7 +790,10 @@ function pickReplacement(profile, dayPlan, mealIdx) {
 }
 function pickReplacementCandidates(profile, dayPlan, mealIdx, topN = 3, fridgeNames, excludeIds) {
     const applicable = getApplicableRecipes(profile);
-    const oldRecipe = dayPlan.meals[mealIdx].recipe;
+    const targetPosition = dayPlan.meals.findIndex(meal => meal.mealIndex === mealIdx);
+    if (targetPosition < 0)
+        return [];
+    const oldRecipe = dayPlan.meals[targetPosition].recipe;
     let candidates = applicable.filter(r => r.id !== oldRecipe.id);
     if (candidates.length === 0)
         return [];
@@ -788,7 +805,7 @@ function pickReplacementCandidates(profile, dayPlan, mealIdx, topN = 3, fridgeNa
     const otherCovered = new Set();
     const otherIngredients = new Set();
     for (let i = 0; i < dayPlan.meals.length; i++) {
-        if (i === mealIdx)
+        if (i === targetPosition)
             continue;
         const m = dayPlan.meals[i];
         m.recipe.mealCategories.forEach(c => otherCovered.add(c));
@@ -930,6 +947,32 @@ function regenerateFromToday(profile, existingPlan) {
     const newFuturePlan = generateWeeklyPlan(profile, days, startDate);
     return [...past, ...newFuturePlan];
 }
+function preserveLoggedMealFacts(existingPlan, proposedPlan) {
+    const journal = wx.getStorageSync('mealJournal') || [];
+    const loggedKeys = new Set(journal.map(l => `${l.date}-${l.mealIndex}`));
+    if (loggedKeys.size === 0)
+        return proposedPlan;
+    const nextPlan = proposedPlan.map(day => ({ ...day, meals: [...day.meals] }));
+    for (const oldDay of existingPlan) {
+        const loggedMeals = oldDay.meals.filter(meal => loggedKeys.has(`${oldDay.date}-${meal.mealIndex}`));
+        if (loggedMeals.length === 0)
+            continue;
+        let nextDay = nextPlan.find(day => day.date === oldDay.date);
+        if (!nextDay) {
+            nextDay = { ...oldDay, meals: [] };
+            nextPlan.push(nextDay);
+        }
+        for (const oldMeal of loggedMeals) {
+            const nextIndex = nextDay.meals.findIndex(meal => meal.mealIndex === oldMeal.mealIndex);
+            if (nextIndex >= 0)
+                nextDay.meals[nextIndex] = oldMeal;
+            else
+                nextDay.meals.push(oldMeal);
+        }
+        nextDay.meals.sort((left, right) => left.mealIndex - right.mealIndex);
+    }
+    return nextPlan.sort((left, right) => left.date.localeCompare(right.date));
+}
 function regenerateTomorrowOnward(profile, existingPlan) {
     const today = formatDate(new Date());
     const tomorrowMs = parseLocalDate(today) + 86400000;
@@ -958,18 +1001,8 @@ function regenerateKeepingLoggedToday(profile, existingPlan) {
     const today = formatDate(new Date());
     const journal = wx.getStorageSync('mealJournal') || [];
     const loggedIdx = new Set(journal.filter(l => l.date === today).map(l => l.mealIndex));
-    const oldTodayPlan = existingPlan.find(p => p.date === today);
-    const newPlan = regenerateFromToday(profile, existingPlan);
+    const newPlan = preserveLoggedMealFacts(existingPlan, regenerateFromToday(profile, existingPlan));
     const todayIdx = newPlan.findIndex(p => p.date === today);
-    if (oldTodayPlan && loggedIdx.size > 0 && todayIdx >= 0) {
-        newPlan[todayIdx].meals = newPlan[todayIdx].meals.map((newMeal, i) => {
-            const oldMeal = oldTodayPlan.meals[i];
-            if (oldMeal && loggedIdx.has(oldMeal.mealIndex)) {
-                return oldMeal;
-            }
-            return newMeal;
-        });
-    }
     for (const oldDay of existingPlan) {
         const newDay = newPlan.find(p => p.date === oldDay.date);
         if (!newDay)
@@ -977,8 +1010,9 @@ function regenerateKeepingLoggedToday(profile, existingPlan) {
         for (const oldMeal of oldDay.meals) {
             if (!oldMeal.trialIngredient)
                 continue;
-            const newMeal = newDay.meals[oldMeal.mealIndex];
-            if (newMeal && !newMeal.trialIngredient) {
+            const newMeal = newDay.meals.find(meal => meal.mealIndex === oldMeal.mealIndex);
+            const stillSafeToTry = isFoodSafeForBaby(oldMeal.trialIngredient, profile).safe;
+            if (newMeal && !newMeal.trialIngredient && stillSafeToTry) {
                 newMeal.trialIngredient = oldMeal.trialIngredient;
                 newMeal.trialMethod = oldMeal.trialMethod;
             }
@@ -1004,6 +1038,14 @@ function regenerateKeepingLoggedToday(profile, existingPlan) {
         }
     }
     return newPlan;
+}
+function rebuildPlanPreservingLoggedMeals(profile) {
+    const existingPlan = wx.getStorageSync('weeklyPlan') || [];
+    if (existingPlan.length === 0)
+        return existingPlan;
+    const nextPlan = regenerateKeepingLoggedToday(profile, existingPlan);
+    wx.setStorageSync('weeklyPlan', nextPlan);
+    return nextPlan;
 }
 function formatDate(d) {
     const yy = d.getFullYear();
