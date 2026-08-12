@@ -87,7 +87,7 @@ npm run verify
 pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
-质量门禁会依次完成小程序 TypeScript 构建与隐私回归、pnpm workspace 构建、70 项 API 测试、36 项 React/MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 3 项真实 Chromium E2E。当前 API 行覆盖率为 96.92%，React 控制台行覆盖率为 89.16%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
+质量门禁会依次完成小程序 TypeScript 构建、家长核心流程与隐私回归、pnpm workspace 构建、72 项 API 测试、40 项 React/MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 3 项真实 Chromium E2E。家长核心流程回归覆盖菜单生成、打卡扣库存、72 小时反应回溯、进入观察期，以及菜单重算后保留已打卡餐并排除可疑食材。当前 API 行覆盖率为 96.63%，React 控制台行覆盖率为 89.88%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
 
 ## 工程组成与运行证据
 
