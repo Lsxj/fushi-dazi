@@ -4,7 +4,7 @@
 
 ## What this is
 
-辅食搭子 is a real WeChat mini-program with **127 recipes / 9 taboos / 20 categories / 80+ utility functions**, but it's a pure rule system — no LLM, no agent, no `openai` / `langchain` / `claude` strings anywhere. This server takes that deterministic business logic and exposes it through [Model Context Protocol](https://modelcontextprotocol.io) so Claude Desktop, Cursor, or any MCP client can call it.
+辅食搭子 is a real WeChat mini-program with **127 recipes / 9 taboos / 29 categories / 80+ utility functions**. Its production AI assistant is separate from the deterministic food-safety rules: the rules do not depend on an LLM. This server exposes that shared business logic through [Model Context Protocol](https://modelcontextprotocol.io) so Claude Desktop, Cursor, or any MCP client can call it.
 
 The point isn't "I can call an LLM API" — it's **"I understand the boundary between a rule system and an LLM"**. The hard guardrails stay in the rule system; the LLM is the explainer.
 
@@ -26,7 +26,7 @@ Claude Desktop  ──── stdio ────►  fushi-mcp server  ───�
 - **Domain** — `src/domain/*.ts` is thin orchestration over `fushi-ditu/utils/`. Adds two things: a hard-guarded `consentToBypassSafety` flag, and a per-tool `consentToConfirmIrreversible` literal-true gate for irreversible actions.
 - **Tools** — `src/tools/*.ts` are the MCP handlers, one file per domain. Shared `safeToolCall` helper centralizes error formatting.
 
-The fushi-ditu 主体 code is **not modified** — zero changes to the mini-program source. All 21 tools, 7 static + 3 template resources, and 3 prompts are pure additions.
+The MCP layer reuses the mini-program's shared `data/` and `utils/` rules instead of copying them. Its 23 tools, 7 static + 3 template resources, and 3 prompts remain isolated from real mini-program user storage.
 
 ---
 
@@ -52,13 +52,13 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "fushi-mcp": {
       "command": "npx",
-      "args": ["tsx", "/Users/x7/fushi-ditu/mcp-server/src/index.ts"]
+      "args": ["tsx", "/absolute/path/to/fushi-dazi/mcp-server/src/index.ts"]
     }
   }
 }
 ```
 
-Restart Claude Desktop. The 21 tools / 10 resources / 3 prompts should appear in the tool picker.
+Restart Claude Desktop. The 23 tools / 10 resources / 3 prompts should appear in the tool picker.
 
 ---
 

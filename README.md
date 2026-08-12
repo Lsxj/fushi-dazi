@@ -58,10 +58,34 @@ flowchart LR
 - **隐私最小化**：支持工单只上传用户明确授权的结构化诊断信息；Trace 使用 `summary-only` 模式，不保存宝宝姓名、食材明细或自由备注。
 - **当前边界**：本地运行默认使用单节点文件持久化和演示会话；线上支持工单使用 CloudBase 事务数据库、隔离的用户/管理员 HTTP 云函数和 Access Token 管理员认证，并已完成一条从小程序提交到后台关闭、再由小程序查询状态的真实链路验收。小程序主数据仍以本地缓存为主，尚未实现完整的跨设备双向同步。
 
-## 快速运行运营与安全控制台
+## 5 分钟工程验收
+
+安装依赖后运行快速证据链：
 
 ```bash
 pnpm install
+npm run verify:quick
+```
+
+这条命令依次验证共享规则 strict/noImplicitAny、Contracts + Express/oRPC + React 19 workspace 构建、MCP TypeScript 构建、46 项工具/资源冒烟测试和 11 步有状态集成流程。它不需要模型密钥；mock provider 会明确标记，不会伪装成线上模型。
+
+随后启动 API 与控制台：
+
+```bash
+pnpm run api:dev
+```
+
+另开终端运行 `pnpm run web:dev`，访问 `http://127.0.0.1:4173/`：
+
+1. `/safety`：验证蜂蜜或观察期食材被确定性规则阻断。
+2. `/observability`：查看 provider 状态、summary-only Trace 和固定回归结果。
+3. `/developer`：查看 OpenAPI、MCP 清单、质量门禁和隔离的合成场景。
+
+完整交付验收仍使用 `npm run verify`，它会额外执行覆盖率门槛、React/MSW 和真实 Chromium E2E。
+
+## 快速运行运营与安全控制台
+
+```bash
 pnpm run api:dev
 ```
 
