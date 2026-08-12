@@ -9,8 +9,8 @@
  * Two backends:
  *   - fileShim:    reads/writes JSON files under a directory. Used in local
  *                  dev (`node chat-ai.js --local`) and unit tests.
- *   - cloudDbShim: reads/writes a `user_data` document keyed by openid in the
- *                  WeChat cloud database. Used in production.
+ *   - memoryShim:  request-scoped, non-persistent storage seeded from the
+ *                  mini-program's local snapshot. Used in production.
  *
  * Both shims enforce the 7-key STORAGE_KEYS registry so a typo or a new key
  * fails fast at runtime, not silently returning undefined.
@@ -66,33 +66,16 @@ function installFileShim(dataDir) {
 }
 
 /**
- * Cloud-database shim. Each user (openid) has one document in the
- * `user_data` collection with 7 fields (one per storage key). Lazy load
- * + write-through: the document is cached in memory, written back to
- * the database on every setStorageSync.
- *
- * Usage in a cloud function:
- *   const cloud = require('wx-server-sdk')
- *   cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
- *   const { OPENID } = cloud.getWXContext()
- *   const shim = require('./_shared/wx-shim')
- *   await shim.installCloudDbShim(cloud, OPENID)
- *   // Now any fushi-ditu util that calls wx.getStorageSync works.
+ * Request-scoped memory shim. Production AI calls seed this store from the
+ * mini-program's local snapshot. No values are read from or written to a
+ * database. The cloud function returns a delta for the client to persist
+ * locally after the tool loop finishes.
  */
-async function installCloudDbShim(cloud, openid) {
-  if (!openid) throw new Error('wx-shim cloudDb: openid is required')
-  const db = cloud.database()
-  const _ = db.command
-  const docId = `u_${openid}`
+function installMemoryShim(seed = {}) {
   const cache = {}
-
-  // Load the document once. Missing doc = new user = empty object.
-  try {
-    const res = await db.collection('user_data').doc(docId).get()
-    Object.assign(cache, res.data || {})
-  } catch (err) {
-    // doc doesn't exist yet — start fresh
-    if (err && err.errCode && err.errCode !== 'DATABASE_DOC_NOT_EXIST') throw err
+  for (const [key, value] of Object.entries(seed)) {
+    if (!STORAGE_KEYS.includes(key) || value === undefined) continue
+    cache[key] = cloneValue(value)
   }
 
   globalThis.wx = {
@@ -103,24 +86,13 @@ async function installCloudDbShim(cloud, openid) {
     setStorageSync(key, value) {
       assertKnownKey(key)
       cache[key] = value
-      // Fire-and-forget; we don't await the network write because
-      // fushi-ditu code expects sync semantics. The next setStorageSync
-      // is the durable boundary.
-      db.collection('user_data').doc(docId)
-        .update({ data: { [key]: value, _updatedAt: Date.now() } })
-        .catch((err) => {
-          // If the doc doesn't exist yet (first write for a new user),
-          // create it. Otherwise surface the error.
-          if (err && err.errCode === 'DATABASE_DOC_NOT_EXIST') {
-            db.collection('user_data').doc(docId).set({
-              data: { _openid: openid, [key]: value, _createdAt: Date.now(), _updatedAt: Date.now() },
-            }).catch((e) => console.error('wx-shim cloudDb set failed:', e))
-          } else {
-            console.error('wx-shim cloudDb update failed:', err)
-          }
-        })
     },
   }
 }
 
-module.exports = { STORAGE_KEYS, installFileShim, installCloudDbShim }
+function cloneValue(value) {
+  if (value === null) return null
+  return JSON.parse(JSON.stringify(value))
+}
+
+module.exports = { STORAGE_KEYS, installFileShim, installMemoryShim }

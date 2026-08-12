@@ -16,9 +16,8 @@
 #   默认 env 是线上环境。部署到默认 env 时必须显式确认:
 #   ALLOW_PROD_DEPLOY=1 ./scripts/deploy-chat-ai.sh
 #
-# 上线前备份:
-#   真正 deploy 前默认导出云端 user_data 到 backups/cloud-user-data/。
-#   仅紧急场景可显式跳过: SKIP_PREDEPLOY_BACKUP=1 ./scripts/deploy-chat-ai.sh
+# 用户业务数据边界:
+#   chat-ai 为无状态云函数，不读取或写入 user_data；无需部署前用户数据备份。
 #
 # 推送 env var(可选):
 #   ./scripts/deploy-chat-ai.sh --env-file .env.local
@@ -80,19 +79,6 @@ if [ "$ENV_ID" = "$DEFAULT_ENV_ID" ] && [ "${ALLOW_PROD_DEPLOY:-0}" != "1" ]; th
   echo "  Use: ALLOW_PROD_DEPLOY=1 ./scripts/deploy-chat-ai.sh"
   echo "  For preflight only: ./scripts/deploy-chat-ai.sh --check"
   exit 1
-fi
-
-# --- pre-deploy: backup cloud user data ---
-if [ "${SKIP_PREDEPLOY_BACKUP:-0}" = "1" ]; then
-  echo
-  echo "⚠ SKIP_PREDEPLOY_BACKUP=1, skipping cloud user_data backup"
-else
-  echo
-  echo "→ backing up cloud user_data before deploy"
-  python3 "$SCRIPT_DIR/backup-cloud-user-data.py" \
-    --env-id "$ENV_ID" \
-    --collection user_data \
-    --out-dir "$PROJECT_ROOT/backups/cloud-user-data"
 fi
 
 # --- pre-deploy: mirror fushi-ditu utils/ and data/ into the bundle ---

@@ -4,7 +4,7 @@
  * Production entrypoint for the parent-facing AI assistant. The flow:
  *
  *   1. wx.login → openid (provided by WeChat automatically via cloud.getWXContext)
- *   2. Install wx shim (cloudDB backend) so fushi-ditu utils can call wx.getStorageSync
+ *   2. Install a request-scoped memory shim seeded from local wx.storage
  *   3. Build Anthropic Messages API request:
  *        - system: fushi-ditu business rules + 4 hard guardrails
  *        - tools:   the safe tools (read-only + reversible mutations)
@@ -533,28 +533,25 @@ exports.main = async (event, context) => {
     const openid = (wxContext && wxContext.OPENID) || event._testOpenid || 'test-openid'
     _currentOpenid = openid
 
-    // Install shim. Three paths:
+    // Install shim. Two paths:
     //   1. LOCAL=1: local node run, use __dirname/_localdata (writable on dev machine)
-    //   2. Cloud, no wxContext: manual test invocation, use /tmp (writable inside
-    //      the cloud function sandbox; /var/user/ is read-only)
-    //   3. Cloud, real wxContext: production, use cloudDB
+    //   2. Cloud runtime: request-scoped memory seeded only from this request's
+    //      local snapshot. Production never reads or writes user_data.
     if (process.env.LOCAL === '1') {
       shim.installFileShim(path.join(__dirname, '_localdata', openid))
-    } else if (!wxContext) {
-      shim.installFileShim(path.join('/tmp', 'fushi_localdata', openid))
     } else {
-      // Lazy-require so local node run doesn't pull in wx-server-sdk.
-      const cloud = require('wx-server-sdk')
-      cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
-      await shim.installCloudDbShim(cloud, openid)
+      shim.installMemoryShim(event && event._localBackup)
     }
 
     // Sync storage boundary:
     // - Mini-program pages render from local wx.storage, so the client-visible
-    //   storage snapshot is authoritative at the start of every turn.
-    // - AI tools run against cloudDB, then we return a post-tool snapshot so
-    //   the client mirrors cloud writes back into local wx.storage.
-    if (event._localBackup && typeof event._localBackup === 'object') {
+    //   snapshot is authoritative at the start of every turn.
+    // - Hydrate the cloud shim from that local snapshot before any AI tool runs.
+    // - After the tool loop, return only fields actually changed by a tool.
+    //   Never echo a full cloud snapshot: an empty or partially initialized
+    //   cloud document must not overwrite a complete local allergy profile,
+    //   meal history, or weekly plan.
+    if (process.env.LOCAL === '1' && event._localBackup && typeof event._localBackup === 'object') {
       for (const [key, value] of Object.entries(event._localBackup)) {
         if (value === undefined) continue
         if (!(shim.STORAGE_KEYS || []).includes(key)) continue
@@ -568,9 +565,14 @@ exports.main = async (event, context) => {
         answer: '欢迎使用辅食搭子!我看到你的宝宝档案还没建好,先去「我的」页填一下基本信息(宝宝月龄 + 名字),然后我们就可以开始聊了。',
         toolCalls: [],
         openid,
-        storageSnapshot: collectStorageSnapshot(),
+        storageSnapshot: {},
       }
     }
+
+    // This baseline is captured only after local hydration. It therefore
+    // represents the state the parent already had on this device, not the
+    // potentially empty cloud document loaded when the function started.
+    const preToolSnapshot = collectStorageSnapshot()
 
     // Validate event.
     const question = (event && event.question) || ''
@@ -581,10 +583,8 @@ exports.main = async (event, context) => {
     const safeHistory = history
       .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
       .slice(-MAX_HISTORY_TURNS)
-    // The cloud function test harness doesn't supply wxContext, so
-    // _currentOpenid is undefined and the shim installs at /tmp/fushi_localdata/.
-    // For real wx.cloud.callFunction from the mini-program, wxContext is
-    // populated and the shim routes to cloudDB.
+    // Real and manually invoked cloud requests use only the local snapshot
+    // supplied in this event. No previous cloud state is loaded.
     const messages = [
       ...safeHistory.map((m) => ({ role: m.role, content: m.content })),
       { role: 'user', content: question },
@@ -592,7 +592,16 @@ exports.main = async (event, context) => {
 
     // Drive the tool loop.
     const { answer, toolCalls, provider, model, iterations } = await runToolLoop(messages)
-    return { ok: true, answer, toolCalls, openid, provider, model, iterations, storageSnapshot: collectStorageSnapshot() }
+    return {
+      ok: true,
+      answer,
+      toolCalls,
+      openid,
+      provider,
+      model,
+      iterations,
+      storageSnapshot: collectStorageDelta(preToolSnapshot),
+    }
   } catch (err) {
     console.error('chat-ai fatal:', err)
     return { ok: false, error: err.message || String(err) }
@@ -603,9 +612,28 @@ function collectStorageSnapshot() {
   const out = {}
   for (const key of shim.STORAGE_KEYS || []) {
     const value = wx.getStorageSync(key)
-    if (value !== undefined) out[key] = value
+    if (value !== undefined) out[key] = cloneStorageValue(value)
   }
   return out
+}
+
+function collectStorageDelta(before) {
+  const after = collectStorageSnapshot()
+  const delta = {}
+  for (const key of shim.STORAGE_KEYS || []) {
+    if (!Object.prototype.hasOwnProperty.call(after, key)) continue
+    if (!storageValuesEqual(before[key], after[key])) delta[key] = after[key]
+  }
+  return delta
+}
+
+function cloneStorageValue(value) {
+  if (value === undefined || value === null) return value
+  return JSON.parse(JSON.stringify(value))
+}
+
+function storageValuesEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right)
 }
 
 // ---- Local dev entrypoint ----

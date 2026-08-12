@@ -46,10 +46,10 @@
     </view>
     <view class="privacy-block">
       <view class="privacy-title">使用 AI 搭子时</view>
-      <view class="content">发送问题后，宝宝档案、冰箱、采购清单、饮食记录、不适记录、自定义食物和周计划会同步到微信云数据库，并按微信用户标识隔离保存。</view>
+      <view class="content">发送问题时，宝宝档案、冰箱、采购清单、饮食记录、不适记录、自定义食物和周计划会作为当次请求上下文由云函数临时处理，不保存到用户数据云数据库。</view>
       <view class="content" style="margin-top: 8rpx;">问题、最近对话和回答所需的上下文会由云函数处理，并可能发送给当前配置的 AI 模型服务商生成回答。</view>
     </view>
-    <view class="privacy-warning">清理本地缓存不会自动删除已经同步到云端的数据。如需申请删除云端数据，请在“报告问题”中选择“申请删除云端数据”，由支持人员核验并反馈处理结果。</view>
+    <view class="privacy-warning">AI 返回的数据变更只写回当前设备。清理缓存或更换设备可能导致本地档案、菜单和记录丢失，当前不提供云端备份或跨设备恢复。</view>
     <view class="privacy-block">
       <view class="privacy-title">提交支持工单时</view>
       <view class="content">只有在“报告问题”页明确授权后，才会上传问题类型、客户端版本、发生时间以及可选的 Trace/档案版本标识。工单接口不接收宝宝姓名、自由备注、完整聊天记录、食材清单或联系方式。</view>

@@ -81,7 +81,7 @@ Page({
                     this.appendAssistant(`出错了:${result.error || '未知错误'}`);
                     return;
                 }
-                this.applyCloudSnapshot(result.storageSnapshot);
+                this.applyToolDelta(result.storageSnapshot);
                 if (!this.data.localSynced)
                     this.setData({ localSynced: true });
                 const toolCalls = (result.toolCalls ?? []).map((tc) => ({
@@ -127,7 +127,7 @@ Page({
         }
         return out;
     },
-    applyCloudSnapshot(snapshot) {
+    applyToolDelta(snapshot) {
         if (!snapshot || typeof snapshot !== 'object')
             return;
         for (const [key, value] of Object.entries(snapshot)) {

@@ -120,10 +120,9 @@ Page({
 
     if (cloudAvailable) {
       try {
-        // Always send a local snapshot. babyProfile is edited locally by
-        // profile/review/home pages, while AI tools run in cloudDB. The cloud
-        // function treats babyProfile as client-authoritative and returns a
-        // post-tool snapshot so local wx.storage stays in sync.
+        // Always send a local snapshot. The cloud function uses it only in
+        // request-scoped memory and returns the fields changed by AI tools.
+        // It never initializes the client from cloud persistence.
         const res = await wx.cloud.callFunction({
           name: 'chat-ai',
           data: {
@@ -137,7 +136,7 @@ Page({
           this.appendAssistant(`出错了:${result.error || '未知错误'}`)
           return
         }
-        this.applyCloudSnapshot(result.storageSnapshot)
+        this.applyToolDelta(result.storageSnapshot)
         if (!this.data.localSynced) this.setData({ localSynced: true })
         const toolCalls: ToolCall[] = (result.toolCalls ?? []).map((tc: any) => ({
           name: tc.name,
@@ -188,7 +187,7 @@ Page({
     return out
   },
 
-  applyCloudSnapshot(snapshot?: Record<string, unknown>) {
+  applyToolDelta(snapshot?: Record<string, unknown>) {
     if (!snapshot || typeof snapshot !== 'object') return
     for (const [key, value] of Object.entries(snapshot)) {
       try {

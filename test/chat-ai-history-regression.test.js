@@ -16,22 +16,13 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
+function readStored(key) {
+  return JSON.parse(fs.readFileSync(path.join(dataDir, `${key}.json`), 'utf8'))
+}
+
 function buildProfile() {
-  return {
-    babyName: '宝宝',
-    birthday: '2025-05-10',
-    ageMonths: 14,
-    mealsPerDay: 3,
-    currentStatus: 'normal',
-    categoryAllergies: {
-      rice: { state: 'open', passedDate: '2026-04-01' },
-      leafy: { state: 'open', passedDate: '2026-04-01' },
-      root: { state: 'open', passedDate: '2026-04-01' },
-      redMeat: { state: 'open', passedDate: '2026-04-01' },
-    },
-    individualExceptions: {},
-    recentlyAddedFoods: [],
-  }
+  const fixture = path.join(__dirname, '..', 'mcp-server', 'test', 'fixtures', 'seed-babyProfile.json')
+  return JSON.parse(fs.readFileSync(fixture, 'utf8'))
 }
 
 const originalMealJournal = [
@@ -101,12 +92,17 @@ async function main() {
     'history request should call get_feeding_history successfully'
   )
   assert.deepStrictEqual(
-    historyRes.storageSnapshot.mealJournal,
+    historyRes.storageSnapshot,
+    {},
+    'read-only AI tools must not echo a full cloud snapshot back to local storage'
+  )
+  assert.deepStrictEqual(
+    readStored('mealJournal'),
     originalMealJournal,
     'get_feeding_history must not mutate or clear mealJournal'
   )
   assert.deepStrictEqual(
-    historyRes.storageSnapshot.reactions,
+    readStored('reactions'),
     originalReactions,
     'get_feeding_history must not mutate or clear reactions'
   )
@@ -118,14 +114,47 @@ async function main() {
     'menu request should still call generate_today_menu successfully'
   )
   assert.deepStrictEqual(
-    menuRes.storageSnapshot.mealJournal,
+    Object.keys(menuRes.storageSnapshot),
+    ['weeklyPlan'],
+    'menu generation may return only the weeklyPlan delta, never babyProfile or unrelated keys'
+  )
+  assert(Array.isArray(menuRes.storageSnapshot.weeklyPlan) && menuRes.storageSnapshot.weeklyPlan.length > 0)
+  assert.deepStrictEqual(
+    readStored('mealJournal'),
     originalMealJournal,
     'menu generation must preserve existing mealJournal history'
   )
   assert.deepStrictEqual(
-    menuRes.storageSnapshot.reactions,
+    readStored('reactions'),
     originalReactions,
     'menu generation must preserve existing reaction history'
+  )
+  assert.deepStrictEqual(
+    readStored('babyProfile'),
+    buildProfile(),
+    'menu generation must preserve the complete local allergy profile'
+  )
+
+  const reactionRes = await callChat('宝宝刚刚有点拉稀了')
+  assert.strictEqual(reactionRes.ok, true, 'reaction request should succeed')
+  assert(
+    reactionRes.toolCalls.some((tc) => tc.name === 'record_reaction' && tc.ok),
+    'reaction request should call record_reaction successfully'
+  )
+  assert.deepStrictEqual(
+    Object.keys(reactionRes.storageSnapshot),
+    ['reactions'],
+    'recording a reaction may return only the reactions delta'
+  )
+  assert.strictEqual(
+    reactionRes.storageSnapshot.reactions.length,
+    originalReactions.length + 1,
+    'reaction delta should contain the newly appended reaction'
+  )
+  assert.deepStrictEqual(
+    readStored('babyProfile'),
+    buildProfile(),
+    'recording a reaction must not replace the allergy profile'
   )
 
   fs.rmSync(dataDir, { recursive: true, force: true })

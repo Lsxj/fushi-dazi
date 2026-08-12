@@ -35,12 +35,9 @@ cp cloudfunctions/_shared/wx-shim.js cloudfunctions/chat-ai/wx-shim.js
 3. 复制(只显示一次!)格式:`sk-ant-api03-...`
 4. 默认模型用 `claude-sonnet-4-5`,API key 通用
 
-### 3. 数据库
+### 3. 用户数据存储
 
-1. 云开发控制台 → **数据库** → **+ 集合**
-2. 集合名:**user_data**
-3. 权限:**仅创建者可读写**(防止跨用户数据泄露)
-4. 不需要预定义 schema,代码运行时按需写入字段
+`chat-ai` 不需要 `user_data` 集合。宝宝档案、菜单和记录由小程序随当次请求发送，云函数仅在请求级内存中处理，不读取或写入用户数据数据库。
 
 ---
 
@@ -169,7 +166,7 @@ App<IAppOption>({
 | 真机 → 一直 loading 没回应 | ANTHROPIC_API_KEY 失效 / 网络问题 | 看云函数日志(控制台 → 云函数 → 日志) |
 | 真机 → "AI 没回答" | LLM 工具调用循环卡死(罕见) | 日志看 `iter=N` 是否达到 MAX_TOOL_ITERATIONS=5 |
 | 真机 → 答非所问 | system prompt 漂移 | 检查 chat-ai/index.js 的 SYSTEM_PROMPT 还在 |
-| 真机 → 数据不对(看到别人 profile) | user_data 权限设错 | 数据库权限改"仅创建者可读写" |
+| 真机 → 档案或菜单数据不对 | 本次请求的本地快照缺失或过期 | 检查 `collectLocalBackup` 和本地 `wx.storage` |
 | 真机 → 首次特慢 | 冷启动(云函数首次调用要 init) | 第二次起秒回 |
 
 ---
@@ -177,7 +174,6 @@ App<IAppOption>({
 ## 安全注意
 
 - **ANTHROPIC_API_KEY 只配在云函数环境变量**,不写到任何代码里
-- **数据库权限**必填"仅创建者可读写",否则别人能读你的 baby profile
 - **云函数日志**会显示输入/输出,如果担心隐私可以关掉日志(控制台 → 云函数 → 日志 → 关闭)
 - **不暴露 openid** 到前端(任何人都能看到自己的 openid,但不能拿别人的)
 
