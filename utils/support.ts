@@ -71,8 +71,8 @@ export const SUPPORT_REASON_OPTIONS: Array<{
   },
   {
     value: 'request-cloud-data-deletion',
-    label: '申请删除云端数据',
-    hint: '提交后由支持人员确认处理范围和结果',
+    label: '申请删除支持工单数据',
+    hint: '当前由支持人员核验可删除范围并反馈处理结果',
   },
 ]
 

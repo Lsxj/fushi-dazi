@@ -15,6 +15,7 @@
     "pages/reactions/reactions",
     "pages/recipes/recipes",
     "pages/about/about",
+    "pages/privacy/privacy",
     "pages/ai-chat/ai-chat",
     "pages/support/support"
   ],

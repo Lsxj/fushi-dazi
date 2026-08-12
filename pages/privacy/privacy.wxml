@@ -1,0 +1,66 @@
+<view class="privacy-page">
+  <view class="privacy-hero">
+    <view class="privacy-hero-title">辅食搭子隐私政策</view>
+    <view class="privacy-hero-meta">生效日期：{{effectiveDate}}</view>
+  </view>
+
+  <view class="policy-card intro-card">
+    <view class="policy-copy">本政策说明辅食搭子如何处理你和宝宝的相关数据。辅食搭子由开发者 {{developerName}} 运营，主要面向宝宝家长或其他监护人。请由成年人阅读并决定是否使用相关功能。</view>
+    <view class="policy-warning">辅食搭子提供辅助记录和信息参考，不提供医疗诊断，也不能替代医生意见。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">1. 本地保存的数据</view>
+    <view class="policy-copy">宝宝档案、冰箱、采购清单、饮食记录、不适记录、自定义食物和周计划默认保存在当前设备的微信小程序缓存中，用于生成菜单、管理库存、记录排敏和展示历史。</view>
+    <view class="policy-copy">这些数据不会因为打开小程序而自动上传。清理微信缓存、删除小程序或更换设备可能导致数据丢失；当前不提供云端备份或跨设备恢复。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">2. 使用 AI 搭子</view>
+    <view class="policy-copy">只有在你首次发送真实 AI 问题并明确同意后，问题、最近对话以及回答所需的上述 7 类本地上下文才会发送到辅食搭子云函数。拒绝授权时不会调用云函数，也不会把问题加入聊天记录。</view>
+    <view class="policy-copy">辅食搭子云函数只在当次请求的内存中处理这些业务数据，不读取或写入用户数据云数据库。工具产生的变更以最小字段集合返回，并由当前设备写入本地缓存。</view>
+    <view class="policy-copy">为生成回答，问题、最近对话和必要上下文可能发送给当前 AI 模型服务商 DeepSeek（深度求索）。DeepSeek 对请求数据的处理和保留遵循其自身隐私政策；辅食搭子不能代替该服务商承诺绝不保留。</view>
+    <view class="policy-action" bindtap="copyDeepSeekPolicy">复制 DeepSeek 隐私政策链接</view>
+    <view class="policy-url">{{deepseekPrivacyUrl}}</view>
+    <view class="policy-copy">你可以在 AI 页面撤回授权。撤回后，下一次使用真实 AI 前会重新询问；撤回不会删除当前设备已有的档案、菜单和记录。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">3. 提交支持工单</view>
+    <view class="policy-copy">只有在你明确授权后，支持服务才会接收问题类型、客户端版本、发生时间，以及可选的菜单日期、Trace ID 或档案版本标识。工单接口不接收宝宝姓名、自由备注、完整聊天记录、食材清单或联系方式。</view>
+    <view class="policy-copy">服务端保存工单、状态、处理时间线和 tracking token 的哈希，用于调查问题、防止未授权查询和保留必要审计记录。原始 tracking token 只保存在当前设备。</view>
+    <view class="policy-copy">当前没有自助删除按钮。如需申请删除支持工单等服务端数据，可在“报告问题”中选择“申请删除支持工单数据”，或通过本政策所列邮箱联系。支持人员核验范围后人工处理；法律法规要求继续保留的记录除外。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">4. 数据保存期限</view>
+    <view class="policy-copy">本地业务数据保留到你主动清理缓存、删除相应记录或删除小程序为止。辅食搭子 AI 云函数不将当次业务上下文保存到用户数据云数据库。</view>
+    <view class="policy-copy">支持工单及审计记录在处理问题和保障服务安全所需期间保存。你可以申请删除；当前由支持人员人工处理。第三方模型服务商的保存期限以其隐私政策为准。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">5. 数据接收方</view>
+    <view class="policy-copy">微信与腾讯云 CloudBase 提供小程序运行、云函数、支持接口和工单存储能力；DeepSeek 提供 AI 回答生成能力。除提供上述服务、履行法律义务或保护用户安全所必需外，辅食搭子不会主动出售你的数据。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">6. 你的权利</view>
+    <view class="policy-list">• 在对应页面查看、修改或删除本地档案与记录；</view>
+    <view class="policy-list">• 在 AI 页面撤回 AI 数据授权；</view>
+    <view class="policy-list">• 清理当前设备上的小程序缓存；</view>
+    <view class="policy-list">• 查询支持工单状态，或申请删除支持工单等服务端数据；</view>
+    <view class="policy-list">• 通过联系邮箱询问数据范围、更正不准确说明或提出投诉。</view>
+  </view>
+
+  <view class="policy-card">
+    <view class="policy-title">7. 政策更新</view>
+    <view class="policy-copy">如果数据范围、处理目的或 AI 模型服务商发生实质变化，辅食搭子会更新本政策和应用内说明。AI 授权范围变化时，将升级授权版本并再次征求同意。</view>
+  </view>
+
+  <view class="policy-card contact-card">
+    <view class="policy-title">8. 联系我们</view>
+    <view class="policy-copy">开发者：{{developerName}}</view>
+    <view class="policy-copy">联系邮箱：{{contactEmail}}</view>
+    <view class="policy-action" bindtap="copyEmail">复制联系邮箱</view>
+  </view>
+</view>
