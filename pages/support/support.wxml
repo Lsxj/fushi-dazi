@@ -1,7 +1,7 @@
 <view class="page-bg">
   <view class="container">
     <view class="hero-card">
-      <view class="hero-tag">内测支持 · {{serviceMode}}</view>
+      <view class="hero-tag">正式支持 · {{serviceMode}}</view>
       <view class="hero-title">报告问题</view>
       <view class="hero-desc">选择问题类型并授权上传最小诊断信息。这里不是紧急医疗通道；严重不适请立即就医或拨打 120。</view>
     </view>

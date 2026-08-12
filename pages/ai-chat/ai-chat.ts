@@ -208,11 +208,11 @@ Page({
 
   runMock(question: string) {
     const ANSWERS: Record<string, string> = {
-      generate_today_menu: '当前是本地预览 mock，不会生成或写入真实菜单。连接云函数后可运行确定性菜单工具。',
-      record_reaction: '当前是本地预览 mock，不会写入真实反应记录。连接云函数后可运行反应分析工具。',
-      read_baby_profile: '当前是本地预览 mock，不展示虚构档案；请以「我的」页面中的实际档案为准。',
-      list_recipes: '当前是本地预览 mock，不返回虚构数量；请前往食谱页查看实际适用食谱。',
-      get_feeding_history: '我会先读取已记录的辅食打卡和反应记录,再按时间总结。当前是本地预览 mock,真实数据以云函数返回为准。',
+      generate_today_menu: '当前为离线降级模式，不会生成或写入真实菜单。服务恢复后可运行确定性菜单工具。',
+      record_reaction: '当前为离线降级模式，不会写入真实反应记录。服务恢复后可运行反应分析工具。',
+      read_baby_profile: '当前为离线降级模式，不展示虚构档案；请以「我的」页面中的实际档案为准。',
+      list_recipes: '当前为离线降级模式，不返回虚构数量；请前往食谱页查看实际适用食谱。',
+      get_feeding_history: '我会先读取已记录的辅食打卡和反应记录,再按时间总结。当前为离线降级模式,真实数据以服务恢复后的结果为准。',
     }
     setTimeout(() => {
       const route = routeAgentRequest(question) ?? {

@@ -68,7 +68,7 @@
       <view class="menu-icon icon-yellow">ℹ️</view>
       <view class="menu-info">
         <view class="menu-name">关于辅食搭子</view>
-        <view class="menu-sub">v1.0.4 · 内测中</view>
+        <view class="menu-sub">v1.0.4 · 正式版</view>
       </view>
       <view class="menu-arrow">›</view>
     </navigator>

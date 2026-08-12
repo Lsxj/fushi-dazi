@@ -284,7 +284,7 @@ Page({
       }
     }
 
-    text += `\n— 来自辅食搭子 (内测中)`
+    text += `\n— 来自辅食搭子`
 
     wx.setClipboardData({
       data: text,
