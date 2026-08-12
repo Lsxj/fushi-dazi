@@ -170,6 +170,52 @@
   padding: 24rpx;
 }
 
+.ai-data-notice {
+  margin: 0 24rpx 8rpx;
+  padding: 18rpx 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  border-radius: 20rpx;
+  background: #FFF9F1;
+  border: 1rpx solid #F1D8BD;
+}
+
+.ai-data-copy {
+  min-width: 0;
+}
+
+.ai-data-title {
+  color: var(--text-body, #2D1B0E);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.ai-data-desc {
+  margin-top: 6rpx;
+  color: var(--text-meta, #8A847E);
+  font-size: 21rpx;
+  line-height: 1.45;
+}
+
+.ai-data-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+  flex-shrink: 0;
+}
+
+.ai-data-link {
+  color: var(--orange, #FF6B35);
+  font-size: 23rpx;
+}
+
+.ai-data-link.danger {
+  color: #C84A2F;
+}
+
 .quick-title {
   font-size: 26rpx;
   color: var(--text-secondary, #6E6A65);

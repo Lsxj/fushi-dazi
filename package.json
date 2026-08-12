@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "test": "npm run build && node test/core-parent-flow-regression.test.js && node test/chat-ai-memory-boundary.test.js && node test/chat-ai-history-regression.test.js && node test/chat-ai-agentic-evaluation.test.js && node test/backup-regression.test.js && node test/support-report-regression.test.js",
+    "test": "npm run build && node test/core-parent-flow-regression.test.js && node test/ai-consent-regression.test.js && node test/chat-ai-memory-boundary.test.js && node test/chat-ai-history-regression.test.js && node test/chat-ai-agentic-evaluation.test.js && node test/backup-regression.test.js && node test/support-report-regression.test.js",
     "verify": "npm test && pnpm run workspace:verify && npm --prefix mcp-server run build && npm --prefix mcp-server run test:coverage && npm --prefix mcp-server test && npm --prefix mcp-server run test:integration && pnpm run test:e2e",
     "workspace:build": "pnpm --filter @fushi/contracts build && pnpm --filter @fushi/api-server build && pnpm --filter @fushi/web-console build",
     "workspace:test": "pnpm --filter @fushi/api-server test:coverage && pnpm --filter @fushi/web-console test:coverage",

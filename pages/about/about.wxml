@@ -47,7 +47,7 @@
     <view class="privacy-block">
       <view class="privacy-title">使用 AI 搭子时</view>
       <view class="content">发送问题时，宝宝档案、冰箱、采购清单、饮食记录、不适记录、自定义食物和周计划会作为当次请求上下文由云函数临时处理，不保存到用户数据云数据库。</view>
-      <view class="content" style="margin-top: 8rpx;">问题、最近对话和回答所需的上下文会由云函数处理，并可能发送给当前配置的 AI 模型服务商生成回答。</view>
+      <view class="content" style="margin-top: 8rpx;">问题、最近对话和回答所需的上下文会由云函数处理，并可能发送给当前线上 AI 模型服务商 DeepSeek（深度求索）生成回答；更换服务商时必须同步更新本说明和授权版本。</view>
     </view>
     <view class="privacy-warning">AI 返回的数据变更只写回当前设备。清理缓存或更换设备可能导致本地档案、菜单和记录丢失，当前不提供云端备份或跨设备恢复。</view>
     <view class="privacy-block">

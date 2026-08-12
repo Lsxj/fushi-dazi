@@ -62,6 +62,17 @@
     </view>
   </scroll-view>
 
+  <view class="ai-data-notice">
+    <view class="ai-data-copy">
+      <view class="ai-data-title">{{aiConsentGranted ? '已允许本次设备使用 AI 上下文' : '发送前会询问 AI 数据授权'}}</view>
+      <view class="ai-data-desc">本地档案仅作为当次请求上下文，经云函数交给 DeepSeek 处理，不保存到用户数据云数据库</view>
+    </view>
+    <view class="ai-data-actions">
+      <text class="ai-data-link" bindtap="openDataNotice">数据说明</text>
+      <text wx:if="{{aiConsentGranted}}" class="ai-data-link danger" bindtap="revokeAiConsent">撤回</text>
+    </view>
+  </view>
+
   <!-- Quick replies (shown when no messages yet) -->
   <view wx:if="{{messages.length === 0 && !loading}}" class="quick">
     <view class="quick-title">试试问我</view>

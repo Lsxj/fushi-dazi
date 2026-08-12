@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const agentRouting_1 = require("../../utils/agentRouting");
 const safety_1 = require("../../utils/safety");
 const MAX_HISTORY = 20;
+const AI_CONSENT_KEY = 'aiContextConsent';
+const AI_CONSENT_VERSION = 'local-first-v1';
 let nextId = 1;
 let cloudAvailable = false;
 Page({
@@ -13,9 +15,18 @@ Page({
         scrollIntoView: '',
         backendMode: 'init',
         localSynced: false,
+        aiConsentGranted: false,
+        consentPrompting: false,
     },
     onLoad() {
+        this.loadAiConsent();
         this.initBackend();
+    },
+    loadAiConsent() {
+        const saved = wx.getStorageSync(AI_CONSENT_KEY);
+        this.setData({
+            aiConsentGranted: !!saved && saved.version === AI_CONSENT_VERSION && typeof saved.grantedAt === 'string',
+        });
     },
     initBackend() {
         if (!wx.cloud) {
@@ -54,6 +65,53 @@ Page({
         }
         if (this.data.loading)
             return;
+        if (cloudAvailable && !this.data.aiConsentGranted) {
+            this.requestAiConsent(question);
+            return;
+        }
+        await this.sendQuestion(question);
+    },
+    requestAiConsent(question) {
+        if (this.data.consentPrompting)
+            return;
+        this.setData({ consentPrompting: true });
+        wx.showModal({
+            title: '允许 AI 使用本机辅食数据？',
+            content: '为回答当前问题，会将宝宝档案、库存、采购清单、饮食与反应记录、自定义食物和周计划交给云函数临时处理，并可能发送给当前线上 AI 模型服务商 DeepSeek。数据不保存到用户数据云数据库，也不用于跨设备恢复。',
+            confirmText: '同意并发送',
+            cancelText: '暂不使用',
+            success: (result) => {
+                this.setData({ consentPrompting: false });
+                if (result.confirm) {
+                    wx.setStorageSync(AI_CONSENT_KEY, {
+                        version: AI_CONSENT_VERSION,
+                        grantedAt: new Date().toISOString(),
+                    });
+                    this.setData({ aiConsentGranted: true });
+                    void this.sendQuestion(question);
+                }
+            },
+        });
+    },
+    revokeAiConsent() {
+        wx.showModal({
+            title: '撤回 AI 数据授权？',
+            content: '撤回后，下一次使用真实 AI 前会再次询问。已保存在本机的档案、菜单和记录不会被删除。',
+            confirmText: '确认撤回',
+            confirmColor: '#C84A2F',
+            success: (result) => {
+                if (!result.confirm)
+                    return;
+                wx.removeStorageSync(AI_CONSENT_KEY);
+                this.setData({ aiConsentGranted: false });
+                wx.showToast({ title: '已撤回授权', icon: 'none' });
+            },
+        });
+    },
+    openDataNotice() {
+        wx.navigateTo({ url: '/pages/about/about' });
+    },
+    async sendQuestion(question) {
         const userMsg = { id: nextId++, role: 'user', content: question, contentHtml: renderMarkdown(question) };
         const messages = [...this.data.messages, userMsg];
         this.setData({
