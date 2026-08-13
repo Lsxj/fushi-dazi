@@ -1,6 +1,8 @@
 import type { CheckFoodSafetyInput } from '@fushi/contracts'
 import { create } from 'zustand'
 
+import { displayFood, foodInputToRuleValue } from '../i18n'
+
 export type ScenarioId = 'daily' | 'post-vaccine' | 'allergy'
 
 type Scenario = {
@@ -37,8 +39,8 @@ const openedCategories = {
 export const scenarios: Scenario[] = [
   {
     id: 'daily',
-    label: '日常已确认',
-    description: '10 月龄，检查已通过食材与搭配提醒',
+    label: 'Established daily foods',
+    description: '10 months old · validates established foods and pairing guidance',
     foods: ['菠菜', '豆腐'],
     profile: {
       ageMonths: 10,
@@ -50,8 +52,8 @@ export const scenarios: Scenario[] = [
   },
   {
     id: 'post-vaccine',
-    label: '疫苗后保护',
-    description: '只允许档案中已确认稳定的食材',
+    label: 'Post-vaccination protection',
+    description: 'Allows only foods already established in the child profile',
     foods: ['菠菜', '鸡蛋'],
     profile: {
       ageMonths: 10,
@@ -64,8 +66,8 @@ export const scenarios: Scenario[] = [
   },
   {
     id: 'allergy',
-    label: '个体过敏拦截',
-    description: '个体例外优先于通用品类开放状态',
+    label: 'Individual allergy block',
+    description: 'Individual exceptions override a category-wide open state',
     foods: ['蛋黄', '高铁米粉'],
     profile: {
       ageMonths: 10,
@@ -74,7 +76,7 @@ export const scenarios: Scenario[] = [
       individualExceptions: {
         蛋黄: {
           state: 'allergic',
-          note: '演示档案：历史反应已确认',
+          note: 'Demo profile: historical reaction confirmed',
           enteredAt: '2026-07-12',
         },
       },
@@ -95,16 +97,16 @@ const initialScenario = scenarios[0]
 
 export const useSafetyLabStore = create<SafetyLabState>((set) => ({
   scenarioId: initialScenario.id,
-  foodsText: initialScenario.foods.join('、'),
+  foodsText: initialScenario.foods.map(displayFood).join(', '),
   selectScenario: (id) => {
     const scenario = scenarios.find((item) => item.id === id) ?? initialScenario
-    set({ scenarioId: scenario.id, foodsText: scenario.foods.join('、') })
+    set({ scenarioId: scenario.id, foodsText: scenario.foods.map(displayFood).join(', ') })
   },
   setFoodsText: (foodsText) => set({ foodsText }),
   reset: () =>
     set({
       scenarioId: initialScenario.id,
-      foodsText: initialScenario.foods.join('、'),
+      foodsText: initialScenario.foods.map(displayFood).join(', '),
     }),
 }))
 
@@ -112,8 +114,8 @@ export function parseFoods(value: string): string[] {
   return [
     ...new Set(
       value
-        .split(/[、,，\s]+/)
-        .map((food) => food.trim())
+        .split(/[、,，\n]+/)
+        .map(foodInputToRuleValue)
         .filter(Boolean)
     ),
   ].slice(0, 10)

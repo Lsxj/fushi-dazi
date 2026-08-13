@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 
 import { apiClient } from '../api/client'
 import { Icon } from '../components/Icon'
+import { displayText } from '../i18n'
 
 function percent(value: number): string {
   return `${Math.round(value * 100)}%`
@@ -47,11 +48,11 @@ export function ObservabilityPage() {
             AI quality & safety assurance
           </div>
           <h1 className="text-4xl font-black tracking-[-0.045em] text-[#183f35] sm:text-6xl">
-            AI 质量与安全评估
+            AI Quality & Safety
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-[#68756e]">
-            追踪规则执行状态、延迟与汇总结果，并用固定回归集判断候选版本是否可以进入人工发布审核。
-            provider 状态始终可见，不把离线规则或 mock 结果包装成线上模型能力。
+            Track rule outcomes, latency, and aggregate results. Fixed regression suites determine whether a candidate may enter manual release review.
+            Provider status remains visible, so offline rules and mock results are never presented as live model capabilities.
           </p>
         </div>
         <button
@@ -65,13 +66,13 @@ export function ObservabilityPage() {
           type="button"
         >
           <Icon name="spark" size={16} />
-          刷新数据
+          Refresh data
         </button>
       </div>
 
       <div className="mt-8 rounded-2xl border border-[#cfb770]/35 bg-[#fff8de] p-4 text-sm leading-6 text-[#705d24]">
-        <strong>隐私模式：summary-only。</strong>
-        Trace 仅保留数量、状态与结果计数，不保存食材名、宝宝姓名或备注；服务重启后内存记录会清空。
+        <strong>Privacy mode: summary-only. </strong>
+        Traces retain only counts, status, and outcome totals—never food names, child names, or notes. In-memory records are cleared when the service restarts.
       </div>
 
       {isPending && (
@@ -87,9 +88,9 @@ export function ObservabilityPage() {
 
       {isError && (
         <div className="mt-8 rounded-3xl border border-[#d87b5d]/25 bg-[#fff0e8] p-6">
-          <h2 className="font-black text-[#8a452d]">观测数据加载失败</h2>
+          <h2 className="font-black text-[#8a452d]">Unable to load observability data</h2>
           <p className="mt-2 text-sm text-[#8a604f]">
-            请确认 API Server 已启动，再刷新数据。
+            Start the API server, then refresh the data.
           </p>
         </div>
       )}
@@ -97,20 +98,20 @@ export function ObservabilityPage() {
       {traces.data && evaluation.data && agenticEvaluation.data && (
         <>
           <section
-            aria-label="运行指标"
+            aria-label="Runtime metrics"
             className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
           >
             {[
               [
                 'Observed executions',
                 String(traces.data.summary.total),
-                `${traces.data.persistenceMode} · ${traces.data.retentionDays} 天保留`,
+                `${traces.data.persistenceMode} · retained for ${traces.data.retentionDays} days`,
               ],
-              ['Blocked rate', percent(blockedRate), '规则阻断占比'],
+              ['Blocked rate', percent(blockedRate), 'Share blocked by deterministic rules'],
               [
                 'Average latency',
                 `${traces.data.summary.averageDurationMs.toFixed(2)} ms`,
-                '规则执行耗时',
+                'Rule execution time',
               ],
               [
                 'Evaluation pass rate',
@@ -140,7 +141,7 @@ export function ObservabilityPage() {
                   <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#91cdbb]">
                     Live traces
                   </span>
-                  <h2 className="mt-1 text-xl font-black">最近规则执行</h2>
+                  <h2 className="mt-1 text-xl font-black">Recent rule executions</h2>
                 </div>
                 <span className="rounded-full bg-white/[.07] px-3 py-1.5 font-mono text-[10px] text-white/60">
                   provider: none
@@ -149,15 +150,15 @@ export function ObservabilityPage() {
 
               {traces.data.traces.length === 0 ? (
                 <div className="px-6 py-16 text-center">
-                  <p className="font-bold">还没有可观测执行</p>
+                  <p className="font-bold">No observable executions yet</p>
                   <p className="mt-2 text-sm text-white/50">
-                    先运行一次安全检查，再回来查看 trace。
+                    Run a safety check, then return here to inspect its trace.
                   </p>
                   <Link
                     className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#91cdbb]"
                     to="/safety"
                   >
-                    前往规则验证 <Icon name="arrow" size={16} />
+                    Go to Rule Validation <Icon name="arrow" size={16} />
                   </Link>
                 </div>
               ) : (
@@ -195,7 +196,7 @@ export function ObservabilityPage() {
                           {trace.outputSummary.blockedCount} blocked
                         </span>
                         <span className="block">
-                          {new Date(trace.timestamp).toLocaleString('zh-CN')}
+                          {new Date(trace.timestamp).toLocaleString('en-US')}
                         </span>
                       </div>
                     </article>
@@ -211,7 +212,7 @@ export function ObservabilityPage() {
                     Regression suite
                   </span>
                   <h2 className="mt-1 text-xl font-black text-[#183f35]">
-                    安全规则评测
+                    Safety rule evaluation
                   </h2>
                 </div>
                 <span className="rounded-full bg-[#e4ece6] px-3 py-1.5 text-xs font-black text-[#315f52]">
@@ -219,7 +220,7 @@ export function ObservabilityPage() {
                 </span>
               </div>
               <p className="mt-3 text-xs leading-5 text-[#7a867f]">
-                {evaluation.data.suiteId} · 固定案例，不生成线上 trace
+                {evaluation.data.suiteId} · fixed cases; does not create live traces
               </p>
               <div className="mt-5 space-y-3">
                 {evaluation.data.cases.map((evaluationCase) => (
@@ -229,7 +230,7 @@ export function ObservabilityPage() {
                   >
                     <div>
                       <h3 className="text-sm font-bold text-[#183f35]">
-                        {evaluationCase.label}
+                        {displayText(evaluationCase.label)}
                       </h3>
                       <p className="mt-1 font-mono text-[10px] text-[#879189]">
                         expected:{' '}
@@ -262,12 +263,12 @@ export function ObservabilityPage() {
                   Agentic regression suite
                 </span>
                 <h2 className="mt-1 text-xl font-black text-[#183f35]">
-                  AI 工具编排评测
+                  AI tool orchestration evaluation
                 </h2>
                 <p className="mt-2 max-w-3xl text-xs leading-5 text-[#7a867f]">
-                  {agenticEvaluation.data.suiteId} · 离线固定问题集 · provider:{' '}
-                  {agenticEvaluation.data.provider}。工具选择使用 mock 路由策略，
-                  安全结论仍由确定性规则真实执行，不调用模型。
+                  {agenticEvaluation.data.suiteId} · fixed offline question set · provider:{' '}
+                  {agenticEvaluation.data.provider}. Tool selection uses a mock routing policy;
+                  safety decisions still execute deterministic rules and never call a model.
                 </p>
               </div>
               <span className="w-fit rounded-full bg-[#e4ece6] px-3 py-1.5 text-xs font-black text-[#315f52]">
@@ -310,8 +311,8 @@ export function ObservabilityPage() {
             </div>
 
             <div className="mt-5 rounded-2xl border border-[#cfb770]/30 bg-[#fff8de] p-4 text-xs leading-5 text-[#705d24]">
-              <strong>Grounding proxy 不是回答事实准确率。</strong>
-              它验证回答前是否选择了正确的数据来源工具；线上模型回答质量仍需单独采样评测。
+              <strong>Grounding proxy is not factual-answer accuracy. </strong>
+              It checks whether the workflow selected the right data-source tool before answering. Live model responses still require separate sampled evaluation.
             </div>
 
             <div className="mt-5 grid gap-3 lg:grid-cols-2">
@@ -322,10 +323,10 @@ export function ObservabilityPage() {
                 >
                   <div>
                     <h3 className="text-sm font-bold text-[#183f35]">
-                      {evaluationCase.label}
+                      {displayText(evaluationCase.label)}
                     </h3>
                     <p className="mt-1 text-xs text-[#7a867f]">
-                      “{evaluationCase.question}”
+                      “{displayText(evaluationCase.question)}”
                     </p>
                     <p className="mt-2 font-mono text-[10px] text-[#879189]">
                       {evaluationCase.actualTool ?? 'no-tool'} · evidence:{' '}

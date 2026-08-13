@@ -5,15 +5,15 @@ test('blocks an individual allergy through the real React and API boundary', asy
 }) => {
   await page.goto('/safety')
 
-  await page.getByRole('button', { name: /个体过敏拦截/ }).click()
-  await expect(page.getByLabel('待检查食材')).toHaveValue('蛋黄、高铁米粉')
+  await page.getByRole('button', { name: /Individual allergy block/ }).click()
+  await expect(page.getByLabel('Foods to validate')).toHaveValue('Egg yolk, Iron-fortified rice cereal')
 
   const responsePromise = page.waitForResponse(
     (response) =>
       response.url().includes('/api/v1/safety/check') &&
       response.request().method() === 'POST'
   )
-  await page.getByRole('button', { name: '运行规则验证' }).click()
+  await page.getByRole('button', { name: 'Run Rule Validation' }).click()
   const response = await responsePromise
   const payload = (await response.json()) as {
     safe: boolean
@@ -25,10 +25,10 @@ test('blocks an individual allergy through the real React and API boundary', asy
     decisionSource: 'deterministic-rules',
   })
   await expect(
-    page.getByRole('heading', { name: '已触发安全拦截' })
+    page.getByRole('heading', { name: 'Blocked by a safety rule' })
   ).toBeVisible()
-  await expect(page.getByText('蛋黄已标记过敏')).toBeVisible()
-  await expect(page.getByText('BLOCK')).toBeVisible()
+  await expect(page.getByText('Egg yolk is marked as an allergy')).toBeVisible()
+  await expect(page.getByText('BLOCK', { exact: true })).toBeVisible()
   await expect(page.getByText('deterministic-rules')).toBeVisible()
 })
 
@@ -38,45 +38,45 @@ test('requires owner confirmation before changing the profile and menu', async (
   await page.goto('/developer/scenarios/collaboration')
 
   await expect(
-    page.getByRole('heading', { name: '谁正在操作？' })
+    page.getByRole('heading', { name: 'Who is acting?' })
   ).toBeVisible()
-  await expect(page.getByText('鳕鱼蔬菜粥').first()).toBeVisible()
+  await expect(page.getByText('Cod and vegetable porridge').first()).toBeVisible()
 
-  await page.getByRole('button', { name: /只读家人/ }).click()
-  await page.getByRole('button', { name: /提交变更申请/ }).click()
-  await expect(page.getByText('申请未提交')).toBeVisible()
+  await page.getByRole('button', { name: /View-only Member/ }).click()
+  await page.getByRole('button', { name: /Submit change request/ }).click()
+  await expect(page.getByText('Request not submitted')).toBeVisible()
   await expect(
-    page.getByText(/只读家人不能提交档案变更 · 审计记录/)
+    page.getByText(/View-only members cannot request profile changes · audit record/)
   ).toBeVisible()
-  await expect(page.getByText('已确认正常')).toBeVisible()
+  await expect(page.getByText('Established food')).toBeVisible()
 
-  await page.getByRole('button', { name: /共同照护人/ }).click()
-  await page.getByRole('button', { name: /提交变更申请/ }).click()
+  await page.getByRole('button', { name: /^Caregiver/ }).click()
+  await page.getByRole('button', { name: /Submit change request/ }).click()
   await expect(
-    page.getByText('等待主照护人确认', { exact: true })
+    page.getByText('Waiting for primary-caregiver approval', { exact: true })
   ).toBeVisible()
-  await expect(page.getByText('鳕鱼蔬菜粥').first()).toBeVisible()
+  await expect(page.getByText('Cod and vegetable porridge').first()).toBeVisible()
 
   await page
-    .getByRole('button', { name: '切换为主照护人审核' })
+    .getByRole('button', { name: 'Switch to Primary Caregiver' })
     .click()
   const confirmButton = page.getByRole('button', {
-    name: '确认并更新安全档案',
+    name: 'Confirm and update safety profile',
   })
   await expect(confirmButton).toBeDisabled()
 
   await page
-    .getByRole('checkbox', { name: /我已核对 reaction-demo-001/ })
+    .getByRole('checkbox', { name: /I reviewed reaction-demo-001/ })
     .check()
   await expect(confirmButton).toBeEnabled()
   await confirmButton.click()
 
-  await expect(page.getByText('安全档案已更新')).toBeVisible()
-  await expect(page.getByText(/安全档案已经更新 · 档案版本 v2/)).toBeVisible()
-  await expect(page.getByText('永久过敏', { exact: true })).toBeVisible()
-  await expect(page.getByText('牛肉土豆粥')).toBeVisible()
-  await expect(page.getByText('已排除：鳕鱼蔬菜粥')).toBeVisible()
-  await expect(page.getByText(/关联确认凭证：是/)).toBeVisible()
+  await expect(page.getByText('Safety profile updated')).toBeVisible()
+  await expect(page.getByText(/The safety profile has been updated · profile version v2/)).toBeVisible()
+  await expect(page.getByText('Permanent allergy', { exact: true })).toBeVisible()
+  await expect(page.getByText('Beef and potato porridge')).toBeVisible()
+  await expect(page.getByText('Excluded: Cod and vegetable porridge')).toBeVisible()
+  await expect(page.getByText(/Confirmation evidence attached: Yes/)).toBeVisible()
 })
 
 test('turns an explicitly consented family report into an audited safety case', async ({
@@ -101,23 +101,23 @@ test('turns an explicitly consented family report into an audited safety case', 
 
   await page.goto('/support')
   await expect(
-    page.getByRole('heading', { name: '家庭支持工单' })
+    page.getByRole('heading', { name: 'Household Support Cases' })
   ).toBeVisible()
-  await page.getByRole('button', { name: '使用支持人员身份登录' }).click()
-  await expect(page.getByText('菜单出现疑似不安全食材').first()).toBeVisible()
-  await page.getByRole('button', { name: '认领并开始调查' }).click()
-  await expect(page.getByText('调查中', { exact: true }).first()).toBeVisible()
-  await page.getByRole('button', { name: '保存调查结论' }).click()
-  await expect(page.getByText('已保存：确认产品缺陷')).toBeVisible()
-  await page.getByRole('button', { name: '升级安全审核' }).click()
-  await expect(page.getByText('安全升级', { exact: true }).first()).toBeVisible()
-  await page.getByRole('button', { name: '退出登录' }).click()
-  await page.getByRole('button', { name: '使用安全审核人身份登录' }).click()
-  await page.getByRole('button', { name: '安全复核并解决' }).click()
-  await page.getByRole('button', { name: '全部' }).click()
+  await page.getByRole('button', { name: 'Sign in as Support Agent' }).click()
+  await expect(page.getByText('Potentially unsafe food appeared in a menu').first()).toBeVisible()
+  await page.getByRole('button', { name: 'Assign to me' }).click()
+  await expect(page.getByText('Investigating', { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Save finding' }).click()
+  await expect(page.getByText('Saved: Confirmed product defect')).toBeVisible()
+  await page.getByRole('button', { name: 'Escalate for safety review' }).click()
+  await expect(page.getByText('Safety review', { exact: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.getByRole('button', { name: 'Sign in as Safety Reviewer' }).click()
+  await page.getByRole('button', { name: 'Complete safety review' }).click()
+  await page.getByRole('button', { name: 'All', exact: true }).click()
 
-  await expect(page.getByText('已解决').first()).toBeVisible()
-  await expect(page.getByText('记录解决结论')).toBeVisible()
-  await page.getByRole('button', { name: '关闭工单' }).click()
-  await expect(page.getByText('已关闭').first()).toBeVisible()
+  await expect(page.getByText('Resolved').first()).toBeVisible()
+  await expect(page.getByText('Resolution recorded')).toBeVisible()
+  await page.getByRole('button', { name: 'Close case' }).click()
+  await expect(page.getByText('Closed').first()).toBeVisible()
 })

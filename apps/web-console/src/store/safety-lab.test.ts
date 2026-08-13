@@ -5,7 +5,7 @@ import { getScenario, parseFoods, scenarios } from './safety-lab'
 describe('safety lab state helpers', () => {
   it('normalizes, deduplicates, and limits food input', () => {
     const foods = parseFoods(
-      '菠菜、菠菜,豆腐 鸡蛋 燕麦 苹果 梨 南瓜 西兰花 鳕鱼 虾 牛奶'
+      'Spinach, Spinach, Tofu, Egg, Oats, Apple, Pear, Pumpkin, Broccoli, Cod, Shrimp, Milk'
     )
 
     expect(foods).toHaveLength(10)

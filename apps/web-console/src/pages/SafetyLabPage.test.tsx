@@ -13,13 +13,13 @@ describe('SafetyLabPage', () => {
     renderApp(<SafetyLabPage />, '/safety')
 
     await user.click(
-      screen.getByRole('button', { name: /运行规则验证/ })
+      screen.getByRole('button', { name: /Run Rule Validation/ })
     )
 
-    expect(await screen.findByText('可以进入后续编排')).toBeInTheDocument()
+    expect(await screen.findByText('Safe to continue orchestration')).toBeInTheDocument()
     expect(screen.getByText('deterministic-rules')).toBeInTheDocument()
-    expect(screen.getByText('搭配提醒')).toBeInTheDocument()
-    expect(screen.getByText(/菠菜先焯水 30 秒/)).toBeInTheDocument()
+    expect(screen.getByText('Food-pairing guidance')).toBeInTheDocument()
+    expect(screen.getByText(/Blanch spinach for 30 seconds/)).toBeInTheDocument()
     expect(screen.getAllByText('PASS')).toHaveLength(2)
   })
 
@@ -28,33 +28,33 @@ describe('SafetyLabPage', () => {
     renderApp(<SafetyLabPage />, '/safety')
 
     await user.click(
-      screen.getByRole('button', { name: /个体过敏拦截/ })
+      screen.getByRole('button', { name: /Individual allergy block/ })
     )
     await user.click(
-      screen.getByRole('button', { name: /运行规则验证/ })
+      screen.getByRole('button', { name: /Run Rule Validation/ })
     )
 
-    expect(await screen.findByText('已触发安全拦截')).toBeInTheDocument()
-    expect(screen.getByText('蛋黄已标记过敏')).toBeInTheDocument()
+    expect(await screen.findByText('Blocked by a safety rule')).toBeInTheDocument()
+    expect(screen.getByText('Egg yolk is marked as an allergy')).toBeInTheDocument()
     expect(screen.getByText('BLOCK')).toBeInTheDocument()
-    expect(screen.getByText('10 月龄')).toBeInTheDocument()
+    expect(screen.getByText('10 months old')).toBeInTheDocument()
   })
 
   it('disables empty submissions, parses separators, and resets the lab', async () => {
     const user = userEvent.setup()
     renderApp(<SafetyLabPage />, '/safety')
 
-    const input = screen.getByLabelText('待检查食材')
-    const submit = screen.getByRole('button', { name: /运行规则验证/ })
+    const input = screen.getByLabelText('Foods to validate')
+    const submit = screen.getByRole('button', { name: /Run Rule Validation/ })
 
     await user.clear(input)
     expect(submit).toBeDisabled()
 
-    await user.type(input, '菠菜, 菠菜 豆腐')
+    await user.type(input, 'Spinach, Spinach, Tofu')
     expect(screen.getByText('2/10')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '重置' }))
-    expect(input).toHaveValue('菠菜、豆腐')
+    await user.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(input).toHaveValue('Spinach, Tofu')
   })
 
   it('shows a recoverable connection error and retries successfully', async () => {
@@ -65,16 +65,16 @@ describe('SafetyLabPage', () => {
     renderApp(<SafetyLabPage />, '/safety')
 
     await user.click(
-      screen.getByRole('button', { name: /运行规则验证/ })
+      screen.getByRole('button', { name: /Run Rule Validation/ })
     )
 
-    expect(await screen.findByText('检查未完成')).toBeInTheDocument()
-    expect(screen.getByText(/无法连接规则服务/)).toBeInTheDocument()
+    expect(await screen.findByText('Validation did not complete')).toBeInTheDocument()
+    expect(screen.getByText(/Unable to reach the rule service/)).toBeInTheDocument()
 
     server.resetHandlers()
-    await user.click(screen.getByRole('button', { name: '重新运行' }))
+    await user.click(screen.getByRole('button', { name: 'Run again' }))
     await waitFor(() =>
-      expect(screen.getByText('可以进入后续编排')).toBeInTheDocument()
+      expect(screen.getByText('Safe to continue orchestration')).toBeInTheDocument()
     )
   })
 })

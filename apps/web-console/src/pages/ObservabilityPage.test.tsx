@@ -12,19 +12,19 @@ describe('ObservabilityPage', () => {
     renderApp(<ObservabilityPage />, '/observability')
 
     expect(
-      await screen.findByRole('heading', { name: '最近规则执行' })
+      await screen.findByRole('heading', { name: 'Recent rule executions' })
     ).toBeInTheDocument()
     expect(screen.getByText('50%')).toBeInTheDocument()
     expect(screen.getByText('1.14 ms')).toBeInTheDocument()
     expect(screen.getByText('provider: none')).toBeInTheDocument()
     expect(screen.getByText(/summary-only/)).toBeInTheDocument()
-    expect(screen.getByText('process-memory · 30 天保留')).toBeInTheDocument()
-    expect(screen.getByText('未知食材必须阻断')).toBeInTheDocument()
-    expect(screen.getByText('AI 工具编排评测')).toBeInTheDocument()
+    expect(screen.getByText('process-memory · retained for 30 days')).toBeInTheDocument()
+    expect(screen.getByText('Unknown food must be blocked')).toBeInTheDocument()
+    expect(screen.getByText('AI tool orchestration evaluation')).toBeInTheDocument()
     expect(screen.getByText('Tool selection')).toBeInTheDocument()
     expect(screen.getByText('Safety block recall')).toBeInTheDocument()
-    expect(screen.getByText(/Grounding proxy 不是回答事实准确率/)).toBeInTheDocument()
-    expect(screen.getByText('锁定品类试吃必须被规则阻断')).toBeInTheDocument()
+    expect(screen.getByText(/Grounding proxy is not factual-answer accuracy/)).toBeInTheDocument()
+    expect(screen.getByText('Trials from a locked category must be blocked')).toBeInTheDocument()
     expect(screen.getAllByText('PASS')).toHaveLength(6)
     expect(screen.queryByText('鳕鱼')).not.toBeInTheDocument()
   })
@@ -49,10 +49,10 @@ describe('ObservabilityPage', () => {
     renderApp(<ObservabilityPage />, '/observability')
 
     expect(
-      await screen.findByText('还没有可观测执行')
+      await screen.findByText('No observable executions yet')
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /前往规则验证/ })
+      screen.getByRole('link', { name: /Go to Rule Validation/ })
     ).toHaveAttribute('href', '/safety')
   })
 
@@ -66,14 +66,14 @@ describe('ObservabilityPage', () => {
     renderApp(<ObservabilityPage />, '/observability')
 
     expect(
-      await screen.findByText('观测数据加载失败')
+      await screen.findByText('Unable to load observability data')
     ).toBeInTheDocument()
 
     server.resetHandlers()
-    await user.click(screen.getByRole('button', { name: /刷新数据/ }))
+    await user.click(screen.getByRole('button', { name: /Refresh data/ }))
 
     await waitFor(() =>
-      expect(screen.getByText('最近规则执行')).toBeInTheDocument()
+      expect(screen.getByText('Recent rule executions')).toBeInTheDocument()
     )
   })
 })

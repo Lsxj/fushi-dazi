@@ -5,11 +5,11 @@ import { Icon } from './Icon'
 import { isCloudBaseConsole } from '../auth/cloudbase'
 
 const navigation = [
-  { to: '/', label: '运营总览', end: true },
-  { to: '/safety', label: '规则验证', end: false },
-  { to: '/observability', label: 'AI 质量', end: false },
-  { to: '/support', label: '支持工单', end: false },
-  { to: '/developer', label: '开发者工具', end: false },
+  { to: '/', label: 'Operations', end: true },
+  { to: '/safety', label: 'Rule Validation', end: false },
+  { to: '/observability', label: 'AI Quality', end: false },
+  { to: '/support', label: 'Support Cases', end: false },
+  { to: '/developer', label: 'Developer Tools', end: false },
 ]
 
 export function AppShell() {
@@ -23,7 +23,7 @@ export function AppShell() {
       <header className="sticky top-0 z-50 border-b border-black/8 bg-[#f4f4ef]/90 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8">
           <NavLink
-            aria-label="返回运营总览"
+            aria-label="Back to operations overview"
             className="flex items-center gap-3"
             to="/"
           >
@@ -32,7 +32,7 @@ export function AppShell() {
             </span>
             <span>
               <span className="block text-sm font-bold tracking-tight">
-                辅食搭子
+                Fushi Dazi
               </span>
               <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-[#68756e]">
                 Operations & Safety
@@ -69,7 +69,7 @@ export function AppShell() {
           </a>
           <button
             aria-expanded={menuOpen}
-            aria-label="切换导航"
+            aria-label="Toggle navigation"
             className="grid size-10 place-items-center rounded-xl border border-black/10 md:hidden"
             onClick={() => setMenuOpen((open) => !open)}
             type="button"
@@ -104,8 +104,8 @@ export function AppShell() {
 
       <footer className="border-t border-black/8 px-5 py-8">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 text-xs text-[#68756e] sm:flex-row">
-          <span>辅食搭子 · 内部运营与安全控制台</span>
-          <span>后台不替代家庭授权，规则不让位于模型判断。</span>
+          <span>Fushi Dazi · Internal Operations & Safety Console</span>
+          <span>Family consent stays in control. Models never override safety rules.</span>
         </div>
       </footer>
     </div>

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 
 import { apiClient } from '../api/client'
 import { Icon } from '../components/Icon'
+import { displayFood, displayText } from '../i18n'
 import {
   getScenario,
   parseFoods,
@@ -12,9 +13,9 @@ import {
 
 export function readableError(error: Error): string {
   if (/fetch|network|invalid url/i.test(error.message)) {
-    return '无法连接规则服务。请确认 API Server 已在 3000 端口启动。'
+    return 'Unable to reach the rule service. Confirm that the API server is running on port 3000.'
   }
-  return error.message || '规则服务暂时不可用，请稍后重试。'
+  return displayText(error.message) || 'The rule service is temporarily unavailable. Try again later.'
 }
 
 export function SafetyLabPage() {
@@ -52,16 +53,16 @@ export function SafetyLabPage() {
             Pre-release rule verification
           </div>
           <h1 className="text-4xl font-black tracking-[-0.045em] text-[#183f35] sm:text-6xl">
-            安全规则验证
+            Safety Rule Validation
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[#68756e]">
-            在规则或内容发布前，用代表性档案验证食材是否被正确放行或阻断。
-            结果来自确定性规则，即使没有模型 API Key 也能执行。
+            Before publishing a rule or content change, validate representative profiles to confirm that foods are allowed or blocked correctly.
+            Results come from deterministic rules and run without a model API key.
           </p>
         </div>
         <div className="rounded-2xl border border-[#d7a58f]/40 bg-[#fff0e8] px-4 py-3 text-xs leading-5 text-[#8a452d]">
-          <strong className="block font-bold">演示声明</strong>
-          仅展示软件决策边界，不构成医疗建议。
+          <strong className="block font-bold">Demo notice</strong>
+          Demonstrates software decision boundaries only; not medical advice.
         </div>
       </div>
 
@@ -79,7 +80,7 @@ export function SafetyLabPage() {
                 className="mt-1 text-2xl font-black tracking-tight text-[#183f35]"
                 id="input-title"
               >
-                构造检查场景
+                Configure a test scenario
               </h2>
             </div>
             <button
@@ -90,13 +91,13 @@ export function SafetyLabPage() {
               }}
               type="button"
             >
-              重置
+              Reset
             </button>
           </div>
 
           <fieldset>
             <legend className="mb-3 text-xs font-bold uppercase tracking-[0.13em] text-[#68756e]">
-              宝宝档案
+              Child profile
             </legend>
             <div className="grid gap-2">
               {scenarios.map((item) => {
@@ -141,7 +142,7 @@ export function SafetyLabPage() {
               className="mb-3 block text-xs font-bold uppercase tracking-[0.13em] text-[#68756e]"
               htmlFor="foods"
             >
-              待检查食材
+              Foods to validate
             </label>
             <textarea
               aria-describedby="foods-help"
@@ -152,11 +153,11 @@ export function SafetyLabPage() {
                 checkSafety.reset()
                 setFoodsText(event.target.value)
               }}
-              placeholder="例如：菠菜、豆腐"
+              placeholder="For example: Spinach, Tofu"
               value={foodsText}
             />
             <p className="mt-2 flex justify-between text-[11px] text-[#8b948d]" id="foods-help">
-              <span>使用顿号、逗号或空格分隔，最多 10 种</span>
+              <span>Separate foods with commas or line breaks; maximum 10</span>
               <span>{foods.length}/10</span>
             </p>
             <button
@@ -167,11 +168,11 @@ export function SafetyLabPage() {
               {checkSafety.isPending ? (
                 <>
                   <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  正在执行规则…
+                  Running rules…
                 </>
               ) : (
                 <>
-                  运行规则验证 <Icon name="arrow" size={17} />
+                  Run Rule Validation <Icon name="arrow" size={17} />
                 </>
               )}
             </button>
@@ -191,7 +192,7 @@ export function SafetyLabPage() {
                   Decision
                 </span>
                 <h2 className="mt-1 text-2xl font-black" id="result-title">
-                  验证结果
+                  Validation result
                 </h2>
               </div>
               <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[.06] px-3 py-1.5 font-mono text-[10px] text-white/65">
@@ -206,9 +207,9 @@ export function SafetyLabPage() {
                   <div className="mx-auto grid size-16 place-items-center rounded-3xl border border-white/10 bg-white/[.06] text-[#91cdbb]">
                     <Icon name="code" size={28} />
                   </div>
-                  <h3 className="mt-6 text-lg font-bold">等待一次发布前验证</h3>
+                  <h3 className="mt-6 text-lg font-bold">Ready for a pre-release check</h3>
                   <p className="mt-2 text-sm leading-6 text-white/50">
-                    提交后将显示逐食材判断、规则原因、搭配提醒与决策来源。
+                    Submit to see the decision for each food, rule rationale, pairing guidance, and decision source.
                   </p>
                 </div>
               </div>
@@ -230,7 +231,7 @@ export function SafetyLabPage() {
                 <div className="flex items-start gap-3">
                   <Icon className="mt-0.5 shrink-0 text-[#ffab8e]" name="warning" />
                   <div>
-                    <h3 className="font-bold text-[#ffd1c1]">检查未完成</h3>
+                    <h3 className="font-bold text-[#ffd1c1]">Validation did not complete</h3>
                     <p className="mt-2 text-sm leading-6 text-white/65">
                       {readableError(checkSafety.error)}
                     </p>
@@ -239,7 +240,7 @@ export function SafetyLabPage() {
                       onClick={() => checkSafety.mutate()}
                       type="button"
                     >
-                      重新运行
+                      Run again
                     </button>
                   </div>
                 </div>
@@ -270,10 +271,10 @@ export function SafetyLabPage() {
                     </span>
                     <div>
                       <span className="text-xs font-semibold text-white/55">
-                        总体结论
+                        Overall decision
                       </span>
                       <h3 className="text-xl font-black">
-                        {checkSafety.data.safe ? '可以进入后续编排' : '已触发安全拦截'}
+                        {checkSafety.data.safe ? 'Safe to continue orchestration' : 'Blocked by a safety rule'}
                       </h3>
                     </div>
                   </div>
@@ -290,10 +291,11 @@ export function SafetyLabPage() {
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="font-bold">{result.food}</h3>
+                          <h3 className="font-bold">{displayFood(result.food)}</h3>
                           <p className="mt-1 text-xs leading-5 text-white/55">
-                            {result.reason ??
-                              `${result.categoryId ?? '免排敏食材'} · 已通过档案校验`}
+                            {result.reason
+                              ? displayText(result.reason)
+                              : `${result.categoryId ?? 'non-trial food'} · profile checks passed`}
                           </p>
                         </div>
                         <span
@@ -314,15 +316,15 @@ export function SafetyLabPage() {
                   <div className="mt-5 rounded-2xl border border-[#eccf82]/20 bg-[#d8ad3d]/10 p-4">
                     <h3 className="flex items-center gap-2 text-sm font-bold text-[#f5d980]">
                       <Icon name="warning" size={17} />
-                      搭配提醒
+                      Food-pairing guidance
                     </h3>
                     {checkSafety.data.tabooWarnings.map((warning) => (
                       <p
                         className="mt-2 text-xs leading-5 text-white/60"
                         key={warning.foods.join('-')}
                       >
-                        {warning.foods.join(' + ')}：{warning.reason}；
-                        {warning.mitigation}
+                        {warning.foods.map(displayFood).join(' + ')}: {displayText(warning.reason)}
+                        {warning.mitigation ? `. ${displayText(warning.mitigation)}` : ''}
                       </p>
                     ))}
                   </div>
@@ -330,18 +332,18 @@ export function SafetyLabPage() {
 
                 <div className="mt-6 grid gap-3 border-t border-white/10 pt-5 text-xs text-white/50 sm:grid-cols-3">
                   <div>
-                    <span className="block">档案快照</span>
+                    <span className="block">Profile snapshot</span>
                     <strong className="mt-1 block text-sm text-white/85">
-                      {checkSafety.data.profileSnapshot.ageMonths} 月龄
+                      {checkSafety.data.profileSnapshot.ageMonths} months old
                     </strong>
                   </div>
                   <div>
-                    <span className="block">当前状态</span>
+                    <span className="block">Current status</span>
                     <strong className="mt-1 block text-sm text-white/85">
                       {checkSafety.data.profileSnapshot.currentStatus ===
                       'postVaccine'
-                        ? '疫苗后'
-                        : '日常'}
+                        ? 'Post-vaccination'
+                        : 'Normal'}
                     </strong>
                   </div>
                   <div>

@@ -12,17 +12,17 @@ describe('HouseholdSupportPage', () => {
     renderApp(<HouseholdSupportPage />, '/support')
 
     expect(
-      await screen.findByRole('heading', { name: '家庭支持工单' })
+      await screen.findByRole('heading', { name: 'Household Support Cases' })
     ).toBeInTheDocument()
     expect(screen.getByText('metadata-only')).toBeInTheDocument()
     expect(
-      (await screen.findAllByText('菜单出现疑似不安全食材')).length
+      (await screen.findAllByText('Potentially unsafe food appeared in a menu')).length
     ).toBeGreaterThan(0)
-    expect(screen.getByRole('heading', { name: '处理时间线' })).toBeInTheDocument()
-    expect(screen.getByText('家长提交工单')).toBeInTheDocument()
-    expect(screen.getAllByText('SLA 已超时').length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Case timeline' })).toBeInTheDocument()
+    expect(screen.getByText('Case submitted by parent')).toBeInTheDocument()
+    expect(screen.getAllByText('SLA breached').length).toBeGreaterThan(0)
     expect(
-      screen.queryByRole('button', { name: /确认并更新安全档案/ })
+      screen.queryByRole('button', { name: /Confirm and update safety profile/ })
     ).not.toBeInTheDocument()
   })
 
@@ -30,17 +30,17 @@ describe('HouseholdSupportPage', () => {
     const user = userEvent.setup()
     renderApp(<HouseholdSupportPage />, '/support')
 
-    expect(await screen.findByText('显示 1 条')).toBeInTheDocument()
+    expect(await screen.findByText('Showing 1')).toBeInTheDocument()
 
-    await user.selectOptions(screen.getByLabelText('严重级别'), 'medium')
-    expect(screen.getByRole('heading', { name: '没有符合条件的工单' })).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Severity'), 'medium')
+    expect(screen.getByRole('heading', { name: 'No matching cases' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '清除筛选' }))
-    expect(await screen.findByText('显示 1 条')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(await screen.findByText('Showing 1')).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('搜索工单'), '不存在的客户端版本')
-    expect(screen.getByRole('heading', { name: '没有符合条件的工单' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '认领并开始调查' })).not.toBeInTheDocument()
+    await user.type(screen.getByLabelText('Search cases'), 'missing-client-version')
+    expect(screen.getByRole('heading', { name: 'No matching cases' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Assign to me' })).not.toBeInTheDocument()
   })
 
   it('requires safety review before resolving a critical family report', async () => {
@@ -48,23 +48,23 @@ describe('HouseholdSupportPage', () => {
     renderApp(<HouseholdSupportPage />, '/support')
 
     await user.click(
-      await screen.findByRole('button', { name: '认领并开始调查' })
+      await screen.findByRole('button', { name: 'Assign to me' })
     )
-    await user.click(await screen.findByRole('button', { name: '保存调查结论' }))
-    await user.click(await screen.findByRole('button', { name: '升级安全审核' }))
-    await user.click(screen.getByRole('button', { name: '退出登录' }))
-    await user.click(await screen.findByRole('button', { name: '使用安全审核人身份登录' }))
-    await user.selectOptions(screen.getByLabelText('解决结论'), 'guidance-provided')
-    await user.click(screen.getByRole('button', { name: '安全复核并解决' }))
-    expect((await screen.findAllByText('已解决')).length).toBeGreaterThan(0)
-    expect(screen.getByText('记录解决结论')).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Save finding' }))
+    await user.click(await screen.findByRole('button', { name: 'Escalate for safety review' }))
+    await user.click(screen.getByRole('button', { name: 'Sign out' }))
+    await user.click(await screen.findByRole('button', { name: 'Sign in as Safety Reviewer' }))
+    await user.selectOptions(screen.getByLabelText('Resolution'), 'guidance-provided')
+    await user.click(screen.getByRole('button', { name: 'Complete safety review' }))
+    expect((await screen.findAllByText('Resolved')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Resolution recorded')).toBeInTheDocument()
     expect(screen.queryByText(/guidance-provided/)).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '关闭工单' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close case' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '关闭工单' }))
-    expect(await screen.findByRole('heading', { name: '没有符合条件的工单' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '全部' }))
-    expect((await screen.findAllByText('已关闭')).length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('button', { name: 'Close case' }))
+    expect(await screen.findByRole('heading', { name: 'No matching cases' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect((await screen.findAllByText('Closed')).length).toBeGreaterThan(0)
   })
 
   it('fails closed when support data cannot be loaded', async () => {
@@ -74,9 +74,9 @@ describe('HouseholdSupportPage', () => {
     renderApp(<HouseholdSupportPage />, '/support')
 
     expect(
-      await screen.findByRole('heading', { name: '支持工单加载失败' })
+      await screen.findByRole('heading', { name: 'Unable to load support cases' })
     ).toBeInTheDocument()
-    expect(screen.queryByText('未关闭队列')).not.toBeInTheDocument()
+    expect(screen.queryByText('Open queue')).not.toBeInTheDocument()
   })
 
   it('requires a server session before loading the internal queue', async () => {
@@ -92,10 +92,10 @@ describe('HouseholdSupportPage', () => {
     renderApp(<HouseholdSupportPage />, '/support')
 
     expect(
-      await screen.findByRole('heading', { name: '登录内部运营工作台' })
+      await screen.findByRole('heading', { name: 'Sign in to the operations workspace' })
     ).toBeInTheDocument()
-    expect(screen.queryByText('未关闭队列')).not.toBeInTheDocument()
-    expect(screen.getByText(/前端不能在工单请求中伪造 actor/)).toBeInTheDocument()
+    expect(screen.queryByText('Open queue')).not.toBeInTheDocument()
+    expect(screen.getByText(/case requests cannot forge an actor in the browser/)).toBeInTheDocument()
   })
 
   it('shows real CloudBase credentials without allowing a client-selected role', async () => {
@@ -111,18 +111,18 @@ describe('HouseholdSupportPage', () => {
     )
     renderApp(<HouseholdSupportPage />, '/support')
 
-    expect(await screen.findByLabelText('管理员邮箱或用户名')).toBeInTheDocument()
-    expect(screen.getByLabelText('密码')).toHaveAttribute('type', 'password')
-    expect(screen.getByRole('button', { name: '登录后台' })).toBeInTheDocument()
-    expect(screen.queryByText('使用安全审核人身份登录')).not.toBeInTheDocument()
-    expect(screen.getByText(/前端不能自行选择角色/)).toBeInTheDocument()
+    expect(await screen.findByLabelText('Administrator email or username')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password')
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+    expect(screen.queryByText('Sign in as Safety Reviewer')).not.toBeInTheDocument()
+    expect(screen.getByText(/roles cannot be selected in the browser/)).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('管理员邮箱或用户名'), 'operator@example.com')
-    await user.type(screen.getByLabelText('密码'), 'password123')
-    await user.click(screen.getByRole('button', { name: '登录后台' }))
+    await user.type(screen.getByLabelText('Administrator email or username'), 'operator@example.com')
+    await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(
-      await screen.findByText('CloudBase 管理员登录尚未配置')
+      await screen.findByText('CloudBase administrator sign-in is not configured')
     ).toBeInTheDocument()
   })
 
@@ -141,11 +141,11 @@ describe('HouseholdSupportPage', () => {
     )
     renderApp(<HouseholdSupportPage />, '/support')
 
-    await user.click(await screen.findByRole('button', { name: '认领并开始调查' }))
+    await user.click(await screen.findByRole('button', { name: 'Assign to me' }))
 
-    expect(screen.getByText('系统自动带入可核验证据')).toBeInTheDocument()
-    expect(screen.queryByText('安全 Trace 引用')).not.toBeInTheDocument()
-    expect(screen.getByText('基础诊断上下文')).toBeInTheDocument()
-    expect(screen.getByText(/当前运行实例中未找到对应摘要/)).toBeInTheDocument()
+    expect(screen.getByText('Verifiable evidence added automatically')).toBeInTheDocument()
+    expect(screen.queryByText('Safety trace reference')).not.toBeInTheDocument()
+    expect(screen.getByText('Diagnostic context')).toBeInTheDocument()
+    expect(screen.getByText(/no matching summary exists in this runtime/)).toBeInTheDocument()
   })
 })

@@ -6,26 +6,26 @@ const capabilities = [
   {
     icon: 'shield' as const,
     label: 'Rule-first safety',
-    value: '确定性规则',
-    detail: '过敏、观察期与搭配禁忌不交给模型猜测',
+    value: 'Deterministic rules',
+    detail: 'Allergies, trial windows, and food-pairing restrictions are never left for a model to guess.',
   },
   {
     icon: 'code' as const,
     label: 'Contract-first API',
-    value: '端到端类型安全',
-    detail: 'Zod + oRPC 让输入、输出与 OpenAPI 保持一致',
+    value: 'End-to-end type safety',
+    detail: 'Zod and oRPC keep inputs, outputs, and the OpenAPI specification aligned.',
   },
   {
     icon: 'layers' as const,
     label: 'Agentic workflow',
     value: '23 MCP tools',
-    detail: '面向计划、库存、记录与反应回溯的工具层',
+    detail: 'A tool layer for meal planning, inventory, meal records, and reaction analysis.',
   },
   {
     icon: 'shield' as const,
     label: 'Multi-caregiver safety',
-    value: '家庭协作',
-    detail: '反应记录、变更申请、主照护人确认与档案追溯',
+    value: 'Caregiver collaboration',
+    detail: 'Reaction records, change requests, primary-caregiver approval, and profile history.',
   },
 ]
 
@@ -33,26 +33,26 @@ const layers = [
   {
     no: '01',
     name: 'Experience',
-    tech: '微信小程序 · React Console',
-    note: '真实用户产品与可讲解的工程演示面',
+    tech: 'WeChat Mini Program · React Console',
+    note: 'A production user experience paired with an inspectable engineering console.',
   },
   {
     no: '02',
     name: 'AI Orchestration',
     tech: 'MCP · Skills · Provider Adapter',
-    note: '把自然语言意图转为可审计的工具调用',
+    note: 'Turns natural-language intent into auditable tool calls.',
   },
   {
     no: '03',
     name: 'Safety Boundary',
     tech: 'Zod · oRPC · Deterministic Rules',
-    note: '先校验、再决策；模型不能绕过硬规则',
+    note: 'Validate first, decide second; models cannot bypass hard safety rules.',
   },
   {
     no: '04',
     name: 'Quality & Delivery',
     tech: 'Vitest · MSW · GitHub Actions',
-    note: '离线可测、覆盖率门禁、双版本 Node CI',
+    note: 'Offline tests, coverage gates, and CI across two Node.js versions.',
   },
 ]
 
@@ -69,26 +69,27 @@ export function OverviewPage() {
               Developer tools · architecture evidence
             </div>
             <h1 className="max-w-4xl text-[clamp(3rem,7.2vw,6.8rem)] font-black leading-[0.92] tracking-[-0.065em] text-[#183f35]">
-              工程架构与
+              Engineering architecture,
               <br />
-              <span className="text-[#df5c34]">可运行证据。</span>
+              <span className="text-[#df5c34]">backed by working evidence.</span>
             </h1>
             <p className="mt-8 max-w-2xl text-base leading-8 text-[#59675f] sm:text-lg">
-              本专区面向开发者和技术评审，集中展示 contract-first API、确定性安全边界、
-              MCP 工作流与质量门禁；内部运营人员无需理解这些实现细节。
+              Built for developers and technical reviewers, this area brings together the contract-first API,
+              deterministic safety boundaries, MCP workflows, and quality gates. Operations teams do not need
+              to work with these implementation details.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 className="inline-flex items-center gap-3 rounded-full bg-[#183f35] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(24,63,53,.18)] transition hover:-translate-y-0.5 hover:bg-[#245949]"
                 to="/safety"
               >
-                打开规则验证 <Icon name="arrow" size={17} />
+                Open Rule Validation <Icon name="arrow" size={17} />
               </Link>
               <Link
                 className="inline-flex items-center gap-3 rounded-full border border-black/12 bg-white/70 px-6 py-3.5 text-sm font-bold text-[#183f35] transition hover:bg-white"
                 to="/observability"
               >
-                查看 AI 质量 <Icon name="arrow" size={16} />
+                View AI Quality <Icon name="arrow" size={16} />
               </Link>
               <a
                 className="inline-flex items-center gap-3 rounded-full border border-black/12 bg-white/70 px-6 py-3.5 text-sm font-bold text-[#183f35] transition hover:bg-white"
@@ -96,7 +97,7 @@ export function OverviewPage() {
                 rel="noreferrer"
                 target="_blank"
               >
-                查看 OpenAPI <Icon name="external" size={16} />
+                View OpenAPI <Icon name="external" size={16} />
               </a>
             </div>
           </div>
@@ -201,7 +202,7 @@ export function OverviewPage() {
               Solution blueprint
             </span>
             <h2 className="mt-4 text-4xl font-black tracking-[-0.04em] text-[#183f35] sm:text-5xl">
-              从用户问题到可审计决策
+              From user need to auditable decision
             </h2>
           </div>
           <div className="overflow-hidden rounded-[1.8rem] border border-black/8 bg-[#f7f7f3]">

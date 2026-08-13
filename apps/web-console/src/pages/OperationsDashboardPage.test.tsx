@@ -12,11 +12,11 @@ describe('OperationsDashboardPage', () => {
     renderApp(<OperationsDashboardPage />)
 
     expect(
-      await screen.findByRole('heading', { name: '发布前安全门禁' })
+      await screen.findByRole('heading', { name: 'Pre-release safety gate' })
     ).toBeInTheDocument()
     expect(screen.getByText('READY FOR REVIEW')).toBeInTheDocument()
-    expect(screen.getByText('1 条关键安全问题')).toBeInTheDocument()
-    expect(screen.getByText('mock-policy · 离线评估')).toBeInTheDocument()
+    expect(screen.getByText('1 critical safety issues')).toBeInTheDocument()
+    expect(screen.getByText('mock-policy · offline evaluation')).toBeInTheDocument()
   })
 
   it('does not render a stale release decision when one source fails', async () => {
@@ -26,7 +26,7 @@ describe('OperationsDashboardPage', () => {
     renderApp(<OperationsDashboardPage />)
 
     expect(
-      await screen.findByRole('heading', { name: '运营状态加载失败' })
+      await screen.findByRole('heading', { name: 'Unable to load operations status' })
     ).toBeInTheDocument()
     expect(screen.queryByText('READY FOR REVIEW')).not.toBeInTheDocument()
   })
@@ -36,22 +36,22 @@ describe('OperationsDashboardPage', () => {
     renderApp(<OperationsDashboardPage />)
 
     await user.click(
-      await screen.findByRole('button', { name: '生成审核候选' })
+      await screen.findByRole('button', { name: 'Create review candidate' })
     )
     expect(await screen.findByText('v1.0.5-rc.1')).toBeInTheDocument()
-    const approve = screen.getByRole('button', { name: '批准进入人工发布' })
+    const approve = screen.getByRole('button', { name: 'Approve for manual release' })
     expect(approve).toBeDisabled()
 
     await user.click(
       screen.getByRole('checkbox', {
-        name: /我已核对安全阻断召回/,
+        name: /I reviewed safety block recall/,
       })
     )
     await user.click(approve)
 
     expect(await screen.findByText('approved')).toBeInTheDocument()
     expect(
-      screen.getByText(/已核对自动检查证据，批准进入人工发布步骤/)
+      screen.getByText(/Automated evidence reviewed; approved for the manual release stage/)
     ).toBeInTheDocument()
   })
 })

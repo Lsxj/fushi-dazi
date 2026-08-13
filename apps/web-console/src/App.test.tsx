@@ -11,14 +11,14 @@ describe('operations console navigation', () => {
     renderApp(<App />)
 
     expect(
-      await screen.findByRole('heading', { name: '运营与安全总览' })
+      await screen.findByRole('heading', { name: 'Operations & Safety Overview' })
     ).toBeInTheDocument()
-    expect(await screen.findByText('发布前安全门禁')).toBeInTheDocument()
+    expect(await screen.findByText('Pre-release safety gate')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('link', { name: /运行规则验证/ }))
+    await user.click(screen.getByRole('link', { name: /Run rule validation/i }))
 
     expect(
-      screen.getByRole('heading', { name: '安全规则验证' })
+      screen.getByRole('heading', { name: 'Safety Rule Validation' })
     ).toBeInTheDocument()
   })
 
@@ -26,17 +26,17 @@ describe('operations console navigation', () => {
     const user = userEvent.setup()
     renderApp(<App />)
 
-    const toggle = screen.getByRole('button', { name: '切换导航' })
+    const toggle = screen.getByRole('button', { name: 'Toggle navigation' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
 
     await user.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
 
-    const labLinks = screen.getAllByRole('link', { name: '规则验证' })
+    const labLinks = screen.getAllByRole('link', { name: 'Rule Validation' })
     fireEvent.click(labLinks.at(-1)!)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(
-      screen.getByRole('heading', { name: '安全规则验证' })
+      screen.getByRole('heading', { name: 'Safety Rule Validation' })
     ).toBeInTheDocument()
   })
 
@@ -44,11 +44,11 @@ describe('operations console navigation', () => {
     const user = userEvent.setup()
     renderApp(<App />)
 
-    await screen.findByText('发布前安全门禁')
-    await user.click(screen.getByRole('link', { name: /查看失败案例与 trace/ }))
+    await screen.findByText('Pre-release safety gate')
+    await user.click(screen.getByRole('link', { name: /Review failures and traces/ }))
 
     expect(
-      await screen.findByRole('heading', { name: 'AI 质量与安全评估' })
+      await screen.findByRole('heading', { name: 'AI Quality & Safety' })
     ).toBeInTheDocument()
   })
 
@@ -57,7 +57,7 @@ describe('operations console navigation', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: '家庭支持工单',
+        name: 'Household Support Cases',
       })
     ).toBeInTheDocument()
   })
@@ -66,7 +66,7 @@ describe('operations console navigation', () => {
     renderApp(<App />, '/developer')
 
     expect(
-      screen.getByRole('heading', { name: /工程架构与/ })
+      screen.getByRole('heading', { name: /Engineering architecture/ })
     ).toBeInTheDocument()
     expect(screen.getByText('23 MCP tools')).toBeInTheDocument()
   })

@@ -13,57 +13,57 @@ describe('CollaborationPage', () => {
     renderApp(<CollaborationPage />, '/collaboration')
 
     expect(
-      await screen.findByRole('heading', { name: '谁正在操作？' })
+      await screen.findByRole('heading', { name: 'Who is acting?' })
     ).toBeInTheDocument()
-    expect(screen.getByText('合成家庭数据')).toBeInTheDocument()
-    expect(screen.getByText('已确认正常')).toBeInTheDocument()
-    expect(screen.getByText('鳕鱼蔬菜粥')).toBeInTheDocument()
+    expect(screen.getByText('Synthetic household data')).toBeInTheDocument()
+    expect(screen.getByText('Established food')).toBeInTheDocument()
+    expect(screen.getByText('Cod and vegetable porridge')).toBeInTheDocument()
     expect(
-      screen.getByText('当前候选均通过家庭安全档案校验。')
+      screen.getByText('Every current candidate passes the household safety-profile checks.')
     ).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /只读家人/ }))
-    await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
+    await user.click(screen.getByRole('button', { name: /View-only Member/ }))
+    await user.click(screen.getByRole('button', { name: /Submit change request/ }))
 
-    expect(await screen.findByText('申请未提交')).toBeInTheDocument()
-    expect(screen.getByText(/只读家人不能提交档案变更/)).toBeInTheDocument()
-    expect(screen.getByText('已确认正常')).toBeInTheDocument()
+    expect(await screen.findByText('Request not submitted')).toBeInTheDocument()
+    expect(screen.getByText(/View-only members cannot request profile changes/)).toBeInTheDocument()
+    expect(screen.getByText('Established food')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /共同照护人/ }))
-    expect(screen.queryByText('申请未提交')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Caregiver/ }))
+    expect(screen.queryByText('Request not submitted')).not.toBeInTheDocument()
   })
 
   it('moves a caregiver request to primary-caregiver confirmation', async () => {
     const user = userEvent.setup()
     renderApp(<CollaborationPage />, '/collaboration')
 
-    await screen.findByRole('heading', { name: '谁正在操作？' })
-    await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
+    await screen.findByRole('heading', { name: 'Who is acting?' })
+    await user.click(screen.getByRole('button', { name: /Submit change request/ }))
 
-    expect(await screen.findByText('等待主照护人确认')).toBeInTheDocument()
-    expect(screen.getByText('鳕鱼蔬菜粥')).toBeInTheDocument()
+    expect(await screen.findByText('Waiting for primary-caregiver approval')).toBeInTheDocument()
+    expect(screen.getByText('Cod and vegetable porridge')).toBeInTheDocument()
     await user.click(
-      screen.getByRole('button', { name: '切换为主照护人审核' })
+      screen.getByRole('button', { name: 'Switch to Primary Caregiver' })
     )
 
     const confirm = screen.getByRole('button', {
-      name: '确认并更新安全档案',
+      name: 'Confirm and update safety profile',
     })
     expect(confirm).toBeDisabled()
     await user.click(
       screen.getByRole('checkbox', {
-        name: /我已核对 reaction-demo-001/,
+        name: /I reviewed reaction-demo-001/,
       })
     )
     expect(confirm).toBeEnabled()
     await user.click(confirm)
 
-    expect(await screen.findByText('安全档案已更新')).toBeInTheDocument()
-    expect(screen.getByText(/安全档案已经更新 · 档案版本 v2/)).toBeInTheDocument()
-    expect(await screen.findByText('永久过敏')).toBeInTheDocument()
-    expect(await screen.findByText('牛肉土豆粥')).toBeInTheDocument()
-    expect(screen.getByText('已排除：鳕鱼蔬菜粥')).toBeInTheDocument()
-    expect(screen.getByText(/鳕鱼已标记过敏/)).toBeInTheDocument()
+    expect(await screen.findByText('Safety profile updated')).toBeInTheDocument()
+    expect(screen.getByText(/The safety profile has been updated · profile version v2/)).toBeInTheDocument()
+    expect(await screen.findByText('Permanent allergy')).toBeInTheDocument()
+    expect(await screen.findByText('Beef and potato porridge')).toBeInTheDocument()
+    expect(screen.getByText('Excluded: Cod and vegetable porridge')).toBeInTheDocument()
+    expect(screen.getByText(/Cod is marked as an allergy/)).toBeInTheDocument()
   })
 
   it('shows household service loading failures', async () => {
@@ -79,7 +79,7 @@ describe('CollaborationPage', () => {
     renderApp(<CollaborationPage />, '/collaboration')
 
     expect(
-      await screen.findByText('家庭协作服务加载失败')
+      await screen.findByText('Unable to load the household collaboration service')
     ).toBeInTheDocument()
   })
 
@@ -93,11 +93,11 @@ describe('CollaborationPage', () => {
     )
     renderApp(<CollaborationPage />, '/collaboration')
 
-    await screen.findByRole('heading', { name: '谁正在操作？' })
-    await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
+    await screen.findByRole('heading', { name: 'Who is acting?' })
+    await user.click(screen.getByRole('button', { name: /Submit change request/ }))
 
     expect(
-      await screen.findByText('变更申请暂时无法提交，请重试。')
+      await screen.findByText('The change request could not be submitted. Try again.')
     ).toBeInTheDocument()
   })
 
@@ -119,24 +119,24 @@ describe('CollaborationPage', () => {
     )
     renderApp(<CollaborationPage />, '/collaboration')
 
-    await screen.findByRole('heading', { name: '谁正在操作？' })
-    await user.click(screen.getByRole('button', { name: /提交变更申请/ }))
+    await screen.findByRole('heading', { name: 'Who is acting?' })
+    await user.click(screen.getByRole('button', { name: /Submit change request/ }))
     await user.click(
-      await screen.findByRole('button', { name: '切换为主照护人审核' })
+      await screen.findByRole('button', { name: 'Switch to Primary Caregiver' })
     )
     await user.click(
       screen.getByRole('checkbox', {
-        name: /我已核对 reaction-demo-001/,
+        name: /I reviewed reaction-demo-001/,
       })
     )
     await user.click(
-      screen.getByRole('button', { name: '确认并更新安全档案' })
+      screen.getByRole('button', { name: 'Confirm and update safety profile' })
     )
 
-    expect(await screen.findByText('档案未改变')).toBeInTheDocument()
+    expect(await screen.findByText('Profile unchanged')).toBeInTheDocument()
     expect(
-      screen.getByText(/安全档案已被其他照护人更新，请重新核对/)
+      screen.getByText(/Another caregiver updated the profile/)
     ).toBeInTheDocument()
-    expect(screen.getByText('鳕鱼蔬菜粥')).toBeInTheDocument()
+    expect(screen.getByText('Cod and vegetable porridge')).toBeInTheDocument()
   })
 })

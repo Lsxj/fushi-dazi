@@ -12,7 +12,7 @@ function percent(value: number): string {
 export function OperationsDashboardPage() {
   const [version, setVersion] = useState('1.0.5-rc.1')
   const [reviewerId, setReviewerId] = useState('safety-reviewer')
-  const [reviewNote, setReviewNote] = useState('已核对自动检查证据，批准进入人工发布步骤')
+  const [reviewNote, setReviewNote] = useState('Automated evidence reviewed; approved for the manual release stage')
   const [evidenceConfirmed, setEvidenceConfirmed] = useState(false)
   const supportCases = useQuery({
     queryKey: ['support', 'cases'],
@@ -66,7 +66,7 @@ export function OperationsDashboardPage() {
   const reviewCandidate = useMutation({
     mutationFn: (decision: 'approved' | 'blocked') => {
       if (!latestCandidate || !evidenceConfirmed) {
-        throw new Error('请先确认已核对自动检查证据')
+        throw new Error('Confirm that you reviewed the automated evidence first')
       }
       return apiClient.releases.reviewCandidate({
         candidateId: latestCandidate.candidateId,
@@ -91,10 +91,10 @@ export function OperationsDashboardPage() {
             Internal operations workspace
           </div>
           <h1 className="text-4xl font-black tracking-[-0.045em] text-[#183f35] sm:text-6xl">
-            运营与安全总览
+            Operations & Safety Overview
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-[#68756e]">
-            聚合待处理家庭事项、安全回归和 AI 工作流质量，帮助内部人员判断今天要处理什么、当前版本能否安全发布。
+            Review household support work, safety regressions, and AI workflow quality in one place—so the team knows what needs attention today and whether a release candidate is safe to review.
           </p>
         </div>
         <button
@@ -103,13 +103,13 @@ export function OperationsDashboardPage() {
           onClick={refresh}
           type="button"
         >
-          <Icon name="spark" size={16} /> 刷新状态
+          <Icon name="spark" size={16} /> Refresh status
         </button>
       </header>
 
       <div className="mt-8 rounded-2xl border border-[#cfb770]/35 bg-[#fff8de] p-4 text-sm leading-6 text-[#705d24]">
-        <strong>当前环境：本地合成数据。</strong>
-        控制台用于验证内部工作流，不读取真实宝宝信息；家庭安全档案只能由家长端授权流程修改。
+        <strong>Environment: local synthetic data. </strong>
+        This console validates internal workflows and does not read real child data. Household safety profiles can only be changed through a parent-authorized flow.
       </div>
 
       {isPending && (
@@ -122,9 +122,9 @@ export function OperationsDashboardPage() {
 
       {isError && (
         <section className="mt-8 rounded-3xl border border-[#d87b5d]/25 bg-[#fff0e8] p-6">
-          <h2 className="font-black text-[#8a452d]">运营状态加载失败</h2>
+          <h2 className="font-black text-[#8a452d]">Unable to load operations status</h2>
           <p className="mt-2 text-sm text-[#8a604f]">
-            请确认 API Server 已启动后刷新；加载失败时不展示过期发布结论。
+            Start the API server and refresh. Stale release decisions are hidden when loading fails.
           </p>
         </section>
       )}
@@ -135,26 +135,26 @@ export function OperationsDashboardPage() {
         agenticEvaluation.data &&
         releaseCandidates.data && (
           <>
-            <section aria-label="关键运营指标" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <section aria-label="Key operations metrics" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">待认领工单</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">Unassigned cases</span>
                 <strong className="mt-3 block text-3xl font-black text-[#183f35]">{supportCases.data.summary.unassigned}</strong>
-                <span className="mt-2 block text-xs text-[#7a867f]">{supportCases.data.summary.criticalOpen} 条关键安全问题</span>
+                <span className="mt-2 block text-xs text-[#7a867f]">{supportCases.data.summary.criticalOpen} critical safety issues</span>
               </article>
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">安全回归</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">Safety regression</span>
                 <strong className="mt-3 block text-3xl font-black text-[#183f35]">{safetyEvaluation.data.passCount}/{safetyEvaluation.data.datasetSize}</strong>
-                <span className="mt-2 block text-xs text-[#7a867f]">阻断召回 {percent(safetyEvaluation.data.safetyBlockRecall)}</span>
+                <span className="mt-2 block text-xs text-[#7a867f]">Block recall {percent(safetyEvaluation.data.safetyBlockRecall)}</span>
               </article>
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">AI 工作流回归</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">AI workflow regression</span>
                 <strong className="mt-3 block text-3xl font-black text-[#183f35]">{agenticEvaluation.data.passCount}/{agenticEvaluation.data.datasetSize}</strong>
-                <span className="mt-2 block text-xs text-[#7a867f]">{agenticEvaluation.data.provider} · 离线评估</span>
+                <span className="mt-2 block text-xs text-[#7a867f]">{agenticEvaluation.data.provider} · offline evaluation</span>
               </article>
               <article className="rounded-3xl border border-black/8 bg-white/70 p-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">规则执行</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7a867f]">Rule executions</span>
                 <strong className="mt-3 block text-3xl font-black text-[#183f35]">{traces.data.summary.total}</strong>
-                <span className="mt-2 block text-xs text-[#7a867f]">summary-only · 无宝宝姓名和食材名</span>
+                <span className="mt-2 block text-xs text-[#7a867f]">summary-only · no child or food names</span>
               </article>
             </section>
 
@@ -163,8 +163,8 @@ export function OperationsDashboardPage() {
                 <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#91cdbb]">Release gate</span>
                 <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-black">发布前安全门禁</h2>
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">只有固定安全回归和离线 Agent workflow 同时通过，当前候选版本才进入下一步人工审核。</p>
+                    <h2 className="text-2xl font-black">Pre-release safety gate</h2>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">A candidate reaches manual review only after both the fixed safety suite and offline agent workflow pass.</p>
                   </div>
                   <span className={`rounded-full px-3 py-1.5 text-xs font-black ${releaseReady ? 'bg-[#78d5b9]/15 text-[#9de4cf]' : 'bg-[#ff7b50]/15 text-[#ffb398]'}`}>
                     {releaseReady ? 'READY FOR REVIEW' : 'BLOCKED'}
@@ -172,20 +172,20 @@ export function OperationsDashboardPage() {
                 </div>
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   <Link className="rounded-2xl border border-white/10 bg-white/[.06] p-4 transition hover:bg-white/[.1]" to="/safety">
-                    <strong className="block text-sm">运行规则验证</strong>
-                    <span className="mt-1 block text-xs text-white/45">复查具体档案与食材组合</span>
+                    <strong className="block text-sm">Run rule validation</strong>
+                    <span className="mt-1 block text-xs text-white/45">Check a specific profile and food combination</span>
                   </Link>
                   <Link className="rounded-2xl border border-white/10 bg-white/[.06] p-4 transition hover:bg-white/[.1]" to="/observability">
-                    <strong className="block text-sm">查看失败案例与 trace</strong>
-                    <span className="mt-1 block text-xs text-white/45">区分规则、工具和数据来源问题</span>
+                    <strong className="block text-sm">Review failures and traces</strong>
+                    <span className="mt-1 block text-xs text-white/45">Separate rule, tool, and data-source issues</span>
                   </Link>
                 </div>
                 <div className="mt-6 border-t border-white/10 pt-6">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-black">发布候选审核</h3>
+                      <h3 className="font-black">Release candidate review</h3>
                       <p className="mt-1 text-xs leading-5 text-white/50">
-                        固化本次评测证据并留存人工结论；批准不会自动部署。
+                        Capture this evaluation evidence and the reviewer decision. Approval does not deploy automatically.
                       </p>
                     </div>
                     <span className="rounded-full bg-white/8 px-3 py-1 font-mono text-[10px] text-white/55">
@@ -202,7 +202,7 @@ export function OperationsDashboardPage() {
                       }}
                     >
                       <label className="flex-1 text-xs font-bold text-white/65">
-                        候选版本
+                        Candidate version
                         <input
                           className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-[#78d5b9]"
                           onChange={(event) => setVersion(event.target.value)}
@@ -216,7 +216,7 @@ export function OperationsDashboardPage() {
                         disabled={createCandidate.isPending || !releaseReady}
                         type="submit"
                       >
-                        {createCandidate.isPending ? '正在固化…' : '生成审核候选'}
+                        {createCandidate.isPending ? 'Capturing…' : 'Create review candidate'}
                       </button>
                     </form>
                   )}
@@ -227,7 +227,7 @@ export function OperationsDashboardPage() {
                         <div>
                           <span className="font-mono text-base font-black">v{latestCandidate.version}</span>
                           <p className="mt-1 text-xs text-white/45">
-                            {latestCandidate.evidence.safetyPassCount}/{latestCandidate.evidence.safetyDatasetSize} 安全用例 · {latestCandidate.evidence.agenticPassCount}/{latestCandidate.evidence.agenticDatasetSize} AI 工作流
+                            {latestCandidate.evidence.safetyPassCount}/{latestCandidate.evidence.safetyDatasetSize} safety cases · {latestCandidate.evidence.agenticPassCount}/{latestCandidate.evidence.agenticDatasetSize} AI workflows
                           </p>
                         </div>
                         <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#9de4cf]">
@@ -239,7 +239,7 @@ export function OperationsDashboardPage() {
                         <div className="mt-4 grid gap-3">
                           <div className="grid gap-3 sm:grid-cols-2">
                             <label className="text-xs font-bold text-white/65">
-                              审核人标识
+                              Reviewer ID
                               <input
                                 className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none"
                                 onChange={(event) => setReviewerId(event.target.value)}
@@ -247,7 +247,7 @@ export function OperationsDashboardPage() {
                               />
                             </label>
                             <label className="text-xs font-bold text-white/65">
-                              审核说明
+                              Review note
                               <input
                                 className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none"
                                 onChange={(event) => setReviewNote(event.target.value)}
@@ -262,7 +262,7 @@ export function OperationsDashboardPage() {
                               onChange={(event) => setEvidenceConfirmed(event.target.checked)}
                               type="checkbox"
                             />
-                            我已核对安全阻断召回、完整回归结果和 mock-policy 边界。
+                            I reviewed safety block recall, the full regression results, and the mock-policy boundary.
                           </label>
                           <div className="flex flex-wrap gap-2">
                             <button
@@ -271,7 +271,7 @@ export function OperationsDashboardPage() {
                               onClick={() => reviewCandidate.mutate('approved')}
                               type="button"
                             >
-                              批准进入人工发布
+                              Approve for manual release
                             </button>
                             <button
                               className="rounded-xl border border-[#ff9b78]/30 px-4 py-2 text-xs font-black text-[#ffb398] disabled:opacity-40"
@@ -279,7 +279,7 @@ export function OperationsDashboardPage() {
                               onClick={() => reviewCandidate.mutate('blocked')}
                               type="button"
                             >
-                              阻断候选版本
+                              Block candidate
                             </button>
                           </div>
                         </div>
@@ -294,7 +294,7 @@ export function OperationsDashboardPage() {
 
                   {(createCandidate.isError || reviewCandidate.isError) && (
                     <p className="mt-3 text-xs text-[#ffb398]">
-                      操作失败，请检查输入和 API 连接后重试。
+                      Action failed. Check the input and API connection, then try again.
                     </p>
                   )}
                 </div>
@@ -302,18 +302,18 @@ export function OperationsDashboardPage() {
 
               <section className="rounded-[1.8rem] border border-black/8 bg-white/75 p-6">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#df5c34]">Operations queue</span>
-                <h2 className="mt-1 text-2xl font-black text-[#183f35]">今日处理队列</h2>
+                <h2 className="mt-1 text-2xl font-black text-[#183f35]">Today's queue</h2>
                 <div className="mt-5 space-y-3">
                   <Link className="flex items-center justify-between rounded-2xl border border-black/8 bg-[#f8f8f5] p-4" to="/support">
-                    <div><strong className="block text-sm text-[#183f35]">家庭支持工单</strong><span className="mt-1 block text-xs text-[#7a867f]">{supportCases.data.summary.unassigned} 条待认领 · {supportCases.data.summary.criticalOpen} 条关键安全</span></div>
+                    <div><strong className="block text-sm text-[#183f35]">Household support cases</strong><span className="mt-1 block text-xs text-[#7a867f]">{supportCases.data.summary.unassigned} unassigned · {supportCases.data.summary.criticalOpen} critical safety</span></div>
                     <Icon name="arrow" size={17} />
                   </Link>
                   <Link className="flex items-center justify-between rounded-2xl border border-black/8 bg-[#f8f8f5] p-4" to="/observability">
-                    <div><strong className="block text-sm text-[#183f35]">AI 质量与安全评估</strong><span className="mt-1 block text-xs text-[#7a867f]">检查固定回归和执行摘要</span></div>
+                    <div><strong className="block text-sm text-[#183f35]">AI quality & safety</strong><span className="mt-1 block text-xs text-[#7a867f]">Review fixed regressions and execution summaries</span></div>
                     <Icon name="arrow" size={17} />
                   </Link>
                   <Link className="flex items-center justify-between rounded-2xl border border-black/8 bg-[#f8f8f5] p-4" to="/developer">
-                    <div><strong className="block text-sm text-[#183f35]">开发者工具</strong><span className="mt-1 block text-xs text-[#7a867f]">架构、OpenAPI、MCP 与合成场景</span></div>
+                    <div><strong className="block text-sm text-[#183f35]">Developer tools</strong><span className="mt-1 block text-xs text-[#7a867f]">Architecture, OpenAPI, MCP, and synthetic scenarios</span></div>
                     <Icon name="arrow" size={17} />
                   </Link>
                 </div>

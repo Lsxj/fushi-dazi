@@ -63,7 +63,7 @@ function getApp(): Promise<CloudBaseApp | undefined> {
 
 async function requireAuth() {
   const app = await getApp()
-  if (!app) throw new Error('CloudBase 管理员登录尚未配置')
+  if (!app) throw new Error('CloudBase administrator sign-in is not configured')
   return app.auth()
 }
 
@@ -90,22 +90,22 @@ function safeCloudBaseLoginError(error: unknown): Error {
       : String(error ?? '').toLowerCase()
 
   if (/not.?enabled|disabled|未开启|未启用/.test(providerText)) {
-    return new Error('当前 CloudBase 环境未启用邮箱或用户名密码登录')
+    return new Error('Email or username/password sign-in is not enabled for this CloudBase environment')
   }
   if (/unverified|not.?verified|未验证|未激活/.test(providerText)) {
-    return new Error('邮箱尚未完成验证，请先通过验证邮件激活')
+    return new Error('This email address has not been verified. Use the verification email to activate it first')
   }
   if (/network|timeout|fetch|unavailable|网络|超时/.test(providerText)) {
-    return new Error('CloudBase 认证服务暂时不可用，请稍后重试')
+    return new Error('CloudBase authentication is temporarily unavailable. Try again later')
   }
   if (
     /invalid|credential|password|not.?found|user.?not|账号|密码|用户不存在/.test(
       providerText
     )
   ) {
-    return new Error('账号或密码无效，请确认使用的是 CloudBase 应用用户凭据')
+    return new Error('Invalid credentials. Use a valid CloudBase application account')
   }
-  return new Error('CloudBase 身份验证失败，请检查登录方式和账号配置')
+  return new Error('CloudBase authentication failed. Check the sign-in method and account configuration')
 }
 
 export async function getCloudBaseAccessToken(): Promise<string | undefined> {
@@ -143,7 +143,7 @@ export async function restoreCloudBaseOperatorSession(
     }
     return {
       ...unauthenticatedCloudBaseSession,
-      recoveryNotice: '上次管理员会话已失效，请重新登录。',
+      recoveryNotice: 'Your previous administrator session has expired. Sign in again.',
     }
   }
 }
@@ -154,7 +154,7 @@ export async function signInCloudBaseOperator(
 ): Promise<void> {
   const normalizedIdentifier = identifier.trim()
   if (!normalizedIdentifier || !password) {
-    throw new Error('请输入管理员账号和密码')
+    throw new Error('Enter your administrator account and password')
   }
   const auth = await requireAuth()
   try {
@@ -164,7 +164,7 @@ export async function signInCloudBaseOperator(
   }
   const token = await auth.getAccessToken()
   if (!token.accessToken) {
-    throw new Error('CloudBase 登录已通过，但未返回有效访问令牌')
+    throw new Error('CloudBase sign-in succeeded but did not return a valid access token')
   }
 }
 

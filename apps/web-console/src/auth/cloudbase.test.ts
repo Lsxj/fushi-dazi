@@ -50,7 +50,7 @@ describe('CloudBase browser authentication boundary', () => {
     await expect(cloudbase.getCloudBaseAccessToken()).resolves.toBeUndefined()
     await expect(
       cloudbase.signInCloudBaseOperator('operator@example.com', 'secret')
-    ).rejects.toThrow('CloudBase 管理员登录尚未配置')
+    ).rejects.toThrow('CloudBase administrator sign-in is not configured')
     await expect(cloudbase.signOutCloudBaseOperator()).resolves.toBeUndefined()
   })
 
@@ -58,7 +58,7 @@ describe('CloudBase browser authentication boundary', () => {
     const cloudbase = await loadCloudBase(true)
 
     await expect(cloudbase.signInCloudBaseOperator('', '')).rejects.toThrow(
-      '请输入管理员账号和密码'
+      'Enter your administrator account and password'
     )
     expect(cloudbaseMocks.init).not.toHaveBeenCalled()
   })
@@ -122,7 +122,7 @@ describe('CloudBase browser authentication boundary', () => {
       authenticated: false,
       identityMode: 'cloudbase-access-token',
       sessionTransport: 'bearer-access-token',
-      recoveryNotice: '上次管理员会话已失效，请重新登录。',
+      recoveryNotice: 'Your previous administrator session has expired. Sign in again.',
     })
     expect(cloudbaseMocks.auth.signOut).toHaveBeenCalledOnce()
   })
@@ -157,7 +157,7 @@ describe('CloudBase browser authentication boundary', () => {
 
     await expect(
       cloudbase.signInCloudBaseOperator('administrator', 'wrong')
-    ).rejects.toThrow('账号或密码无效')
+    ).rejects.toThrow('Invalid credentials')
 
     cloudbaseMocks.auth.signIn.mockRejectedValueOnce({
       code: 'PROVIDER_NOT_ENABLED',
@@ -165,7 +165,7 @@ describe('CloudBase browser authentication boundary', () => {
     })
     await expect(
       cloudbase.signInCloudBaseOperator('administrator', 'secret')
-    ).rejects.toThrow('未启用邮箱或用户名密码登录')
+    ).rejects.toThrow('Email or username/password sign-in is not enabled')
 
     cloudbaseMocks.auth.signIn.mockRejectedValueOnce({
       code: 'EMAIL_NOT_VERIFIED',
@@ -173,7 +173,7 @@ describe('CloudBase browser authentication boundary', () => {
     })
     await expect(
       cloudbase.signInCloudBaseOperator('operator@example.com', 'secret')
-    ).rejects.toThrow('邮箱尚未完成验证')
+    ).rejects.toThrow('email address has not been verified')
   })
 
   it('reports a distinct failure when authentication returns no token', async () => {
@@ -186,7 +186,7 @@ describe('CloudBase browser authentication boundary', () => {
     })
     await expect(
       cloudbase.signInCloudBaseOperator('administrator', 'secret')
-    ).rejects.toThrow('登录已通过，但未返回有效访问令牌')
+    ).rejects.toThrow('sign-in succeeded but did not return a valid access token')
   })
 
   it('revokes the CloudBase session on logout', async () => {
