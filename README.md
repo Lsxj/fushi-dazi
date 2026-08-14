@@ -1,210 +1,208 @@
-# 辅食搭子
+# 辅食搭子（Fushi Dazi）
 
-辅食搭子是一套面向 4–24 月龄宝宝家庭的辅食辅助决策产品，由家长使用的微信小程序和内部人员使用的 Web 管理后台组成。项目用一条真实业务链路展示：AI 如何参与日常帮助、确定性规则如何保护安全、用户问题如何进入后台并被追踪处理。
+辅食搭子是一套面向 4–24 月龄宝宝家庭的辅食辅助决策产品，由家长使用的微信小程序和内部人员使用的 Web Console 组成。产品把菜单规划、排敏、饮食记录、AI 问答和问题反馈串成一条真实链路，并用确定性规则守住食物安全边界。
 
-产品范围、当前完成度和发布门槛见 [PRD.md](./PRD.md)。
+微信小程序 v1.0.3 已正式上线，截至 2026 年 8 月累计用户超过 300 人。仓库同时包含尚未随正式版发布的下一版本功能；具体范围与发布门槛见 [PRD](./PRD.md)。
 
-## 先看产品：两个端分别做什么
+[线上管理后台](https://cloud1-d8g02cdnld86f3823-1451658149.tcloudbaseapp.com/admin/) · [架构决策记录](./docs/adr/README.md) · [AI 数据事故复盘](./docs/postmortem-ai-local-data-overwrite.md)
 
-| 产品端 | 谁使用 | 解决的问题 | 主要能力 |
+## 产品由两个端组成
+
+| 产品端 | 使用者 | 主要场景 | 核心能力 |
 |---|---|---|---|
-| 微信小程序 | 宝宝家长和实际照护者 | 每天吃什么、如何排敏、库存是否够、吃完后如何记录，以及出现反应后怎么办 | 建档、菜单与周计划、食谱、库存、饮食打卡、排敏、反应记录、AI 问答和问题上报 |
-| Web 管理后台 | 产品运营、安全支持和工程人员 | 当 AI 回答、菜单结果或数据状态出现疑问时，如何定位原因、人工复核并留下处理记录 | 工单处理、安全规则验证、AI 质量与 Trace、发布前评测、审计和开发者工具 |
+| 微信小程序 | 宝宝家长和实际照护者 | 今天吃什么、如何排敏、库存是否够、吃完如何记录、出现不适后怎么办 | 建档、菜单与周计划、食谱、库存、饮食打卡、排敏、反应记录、AI 问答和问题上报 |
+| Web Console | 产品运营、安全支持和工程人员 | 用户反馈后如何定位问题、复核安全事件、观察 AI 质量并留下处理记录 | 支持工单、安全规则验证、Trace、离线评测、审计和开发者工具 |
 
-小程序负责家庭每天真正发生的使用场景；后台负责产品出现问题后的支持、安全和质量闭环。后台不会代替家长修改宝宝的永久过敏档案。
+小程序承载家庭每天真正发生的操作；Web Console 是内部运营与安全工具，不是家长端的网页版，也没有代替家长修改永久过敏档案的入口。控制台界面使用英文，方便直接展示工程架构、运行证据和操作边界。
 
-## 一条完整的用户故事
+## 关键页面
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="./docs/assets/web-console-safety-validation.jpg" alt="Rule Validation 页面展示确定性过敏阻断结果" />
+      <br /><sub><strong>Rule Validation</strong>：用隔离的合成档案验证过敏、观察期和食物适用性规则。</sub>
+    </td>
+    <td width="50%">
+      <img src="./docs/assets/web-console-developer-tools.jpg" alt="Developer Tools 页面展示端到端工程架构" />
+      <br /><sub><strong>Developer Tools</strong>：集中展示契约、AI 编排、安全边界和质量门禁。</sub>
+    </td>
+  </tr>
+</table>
+
+截图只使用合成数据和工程指标，不包含真实家庭档案、工单内容或管理员身份信息。
+
+## 一条完整的产品链路
 
 1. 家长在小程序建立宝宝档案，记录已吃食材、排敏状态和家庭库存。
-2. 系统结合档案和确定性食物安全规则生成菜单；AI 可以回答问题、查食谱或调用工具，但不能越过规则推荐不安全食材。
-3. 如果家长发现菜单疑似包含不安全食材，或 AI 回答缺少安全提醒，可以在小程序中选择问题类型并明确同意上传最小诊断信息。
-4. 工单进入 Web 管理后台。支持人员查看问题、关联的规则 Trace、档案版本和菜单日期，记录调查结论。
-5. 普通问题由支持人员解决；关键安全问题必须升级给安全审核人。每次成功或被拒绝的操作都会进入处理时间线。
+2. 系统结合档案和确定性规则生成菜单；AI 可以理解问题、查找食谱和调用受限工具，但不能越过规则推荐不安全食材。
+3. 家长发现菜单或 AI 回答存在疑问时，可在小程序选择问题类型，并明确同意上传最小诊断信息。
+4. 工单进入 Web Console。支持人员查看问题、结构化证据、规则 Trace 和处理时间线。
+5. 普通问题由支持人员解决；关键安全问题必须升级给安全审核人。成功和被拒绝的状态变更都会留下审计记录。
+6. 工单关闭后，小程序可以查询最新状态；后台不能直接改写家长设备上的档案或历史饮食记录。
 
-这条链路让用户不需要离开产品即可报告问题，也让内部人员能够基于应用上下文定位、处理和审计，而不是依赖零散截图或重复沟通。
-
-进一步阅读：[AI 数据完整性事故复盘](./docs/postmortem-ai-local-data-overwrite.md) · [架构决策记录](./docs/adr/README.md) · [产品需求文档](./PRD.md)
-
-## 两个端如何连接
+## 端到端架构
 
 ```mermaid
 flowchart LR
-    FAMILY["家长｜微信小程序"] -->|"建档、菜单、记录、AI 问答"| MINI["家长端业务流程"]
-    MINI --> RULES["共享食物安全规则"]
-    MINI -->|"明确授权后提交问题"| API["TypeScript API｜Express + oRPC"]
-    AI["LLM / MCP Agent"] -->|"调用受限工具"| RULES
-    API --> CASES["工单、Trace 与审计"]
-    ADMIN["支持与安全人员｜React 后台"] --> API
-    CASES --> ADMIN
+    subgraph Family["家庭端 · 微信小程序"]
+        UI["菜单 · 排敏 · 库存 · 记录"]
+        LOCAL[("本地权威数据")]
+        AIUI["AI 搭子"]
+        REPORT["问题上报"]
+        UI <--> LOCAL
+        AIUI -->|"请求级上下文"| AIFN["AI 云函数"]
+    end
+
+    subgraph Rules["确定性安全边界"]
+        SAFETY["食物安全 · 适用性 · 排敏窗口"]
+        DELTA["只返回受约束 delta"]
+    end
+
+    subgraph Platform["CloudBase 后端"]
+        SUPPORT["用户工单云函数"]
+        DB[("工单与审计")]
+        ADMINAPI["管理员 API"]
+        PROVIDER["DeepSeek Provider"]
+        SUPPORT --> DB
+        ADMINAPI <--> DB
+        AIFN --> PROVIDER
+    end
+
+    subgraph Console["内部端 · React Web Console"]
+        CASES["Support Cases"]
+        VALIDATE["Rule Validation"]
+        QUALITY["AI Quality"]
+        DEV["Developer Tools"]
+    end
+
+    LOCAL --> SAFETY
+    SAFETY --> UI
+    AIFN --> SAFETY
+    SAFETY --> DELTA
+    DELTA --> AIUI
+    REPORT -->|"明确授权的最小诊断信息"| SUPPORT
+    ADMINAPI --> CASES
+    SAFETY --> VALIDATE
+    ADMINAPI --> QUALITY
+    ADMINAPI --> DEV
 ```
 
-共享规则是两个端之间最重要的边界：小程序用它约束菜单和 AI 工具，后台用它复现和解释当时为什么放行或阻断。
+这套架构有两个关键约束：
 
-## 技术实现为什么这样设计
+- **规则先于模型**：LLM 负责理解意图、选择工具和解释结果；能否食用、食谱是否适用、排敏状态如何变化由 TypeScript 确定性规则判断。
+- **本地数据是家庭主数据的唯一权威副本**：AI 云函数只处理当次请求，不从空的云端状态初始化或覆盖菜单、排敏档案和历史记录。已打卡餐次是不可变历史事实，除非用户明确编辑该条记录。
 
-- **AI 与规则分工**：LLM 负责理解自然语言、选择工具和解释结果；能否食用、食谱是否适用、排敏状态如何变化由 TypeScript 确定性规则判断。这让高风险结果可解释、可测试，也能在没有模型密钥时运行。
-- **AI 数据授权**：真实云端发送前列明本地上下文范围、DeepSeek 服务商和请求级非持久化边界；拒绝时不会调用云函数，授权保存在本机并可撤回。
-- **前后端共享契约**：`packages/contracts/` 用 Zod 定义输入输出，再由 oRPC 同时服务 Express API 和 React 客户端，避免后台页面和服务端各写一套类型。
-- **服务端状态与页面状态分开**：React Query 管理工单、Trace 和评测等服务端数据；Zustand 只管理页面内的实验输入，减少状态来源混乱。
-- **安全操作可追踪**：家长上传诊断信息需要明确同意；后台写入携带版本号；关键安全工单需要安全审核角色；所有允许和拒绝结果都有审计记录。
-- **AI 开发流程可以复用**：MCP Server、项目 Skill 和 `AGENTS.md` 不只是演示名词，它们把查档案、检查安全、生成菜单和安全变更检查等重复工作固化为团队可复用工具。
+## 哪些是真实能力，哪些是合成验证
 
-## 工程质量
+| 范围 | 当前状态 | 边界 |
+|---|---|---|
+| 微信小程序 v1.0.3 | 已正式上线 | 正式版包含家庭核心流程和线上 AI；仓库中的 v1.0.4 尚未发布 |
+| AI Provider | CloudBase 云函数连接 DeepSeek | 请求前展示数据范围；模型不能绕过确定性安全规则 |
+| 支持工单 | 已完成“小程序提交 → 后台处理 → 小程序查询关闭状态”的线上验收 | 只上传用户明确授权的结构化诊断信息 |
+| 管理员认证与工单存储 | CloudBase Access Token、UID 白名单和事务数据库 | 浏览器不保存管理员密码，也不能自行切换角色 |
+| Operations、Rule Validation、AI Quality | 本地可运行的工程与运营验证面 | 代表性档案、发布候选和评测输入为隔离的合成数据 |
+| Mock provider / mock-policy 评测 | 无模型密钥即可重复运行 | 用于验证工具路由、安全阻断和失败路径，不代表线上模型准确率或容量 |
+| MCP Server | 可运行的开发者工具层 | 与正式小程序用户档案隔离，不读取真实家庭数据 |
 
-- **类型安全**：Zod + oRPC 作为 API 契约的单一来源，React 与 Express 不重复维护请求和响应类型。
-- **严格类型边界**：`data/` 与 `utils/` 的确定性规则由根目录 `tsconfig.strict-core.json` 以 `strict` + `noImplicitAny` 独立校验；Contracts、API、React 控制台和 MCP Server 同样使用 strict。历史小程序页面仍采用兼容配置并渐进迁移，不把局部宽松配置描述成整仓 strict。
-- **自动化测试**：Vitest 覆盖规则和 API，MSW 覆盖前端成功与失败路径，Playwright 验证 React→API→规则的真实浏览器链路。
-- **离线可运行**：没有模型密钥时使用明确标注的 mock provider，确定性安全规则、工单流程和固定评估仍可运行。
-- **隐私最小化**：支持工单只上传用户明确授权的结构化诊断信息；Trace 使用 `summary-only` 模式，不保存宝宝姓名、食材明细或自由备注。
-- **用户可见政策**：未发布下一版本在“关于”页提供完整隐私政策入口，仅公开开发者名称 `Lsxj` 与联系邮箱；政策明确本地权威、DeepSeek 第三方处理、支持工单保存与人工删除申请。正式 v1.0.3 尚未包含该页面。
-- **当前边界**：本地运行默认使用单节点文件持久化和演示会话；线上支持工单使用 CloudBase 事务数据库、隔离的用户/管理员 HTTP 云函数和 Access Token 管理员认证，并已完成一条从小程序提交到后台关闭、再由小程序查询状态的真实链路验收。v1.0.3 的计划、打卡扣库存、反应、观察期和菜单重算也已完成真机抽查。小程序主数据仍以本地缓存为主，尚未实现完整的跨设备双向同步。
+## 技术设计
 
-## 5 分钟工程验收
+- **Contract-first API**：`packages/contracts/` 用 Zod 定义输入输出，oRPC 同时服务 Express API 与 React 客户端，OpenAPI 由同一契约生成。
+- **清晰的状态边界**：TanStack Query 管理服务端数据，Zustand 只管理页面内交互状态；加载失败时不展示旧工单，也不允许执行状态变更。
+- **可审计的高风险操作**：后台写入携带版本号，关键安全工单需要安全审核角色，所有允许和拒绝结果均进入时间线。
+- **隐私最小化**：Trace 使用 `summary-only` 模式；支持工单只接收经用户同意的最小诊断信息。
+- **可复用的 AI 工程流程**：MCP Server、项目 Skill、ADR 和 `AGENTS.md` 把安全检查、工具调用、负向测试与交付门禁固化为可复用流程。
+- **严格类型边界**：共享规则、Contracts、API、React Console 和 MCP Server 均启用 TypeScript strict；历史小程序页面采用兼容配置并渐进迁移。
 
-安装依赖后运行快速证据链：
+## 快速开始
+
+### 1. 安装与快速验收
 
 ```bash
 pnpm install
 npm run verify:quick
 ```
 
-这条命令依次验证共享规则 strict/noImplicitAny、Contracts + Express/oRPC + React 19 workspace 构建、MCP TypeScript 构建、46 项工具/资源冒烟测试和 11 步有状态集成流程。它不需要模型密钥；mock provider 会明确标记，不会伪装成线上模型。
+`verify:quick` 会验证共享规则 strict/noImplicitAny、workspace 构建、MCP TypeScript、46 项工具/资源冒烟测试和 11 步有状态集成流程。它不需要模型密钥，mock provider 会被明确标记。
 
-随后启动 API 与控制台：
+### 2. 运行 Web Console
 
-```bash
-pnpm run api:dev
-```
-
-另开终端运行 `pnpm run web:dev`，访问 `http://127.0.0.1:4173/`：
-
-1. `/safety`：验证蜂蜜或观察期食材被确定性规则阻断。
-2. `/observability`：查看 provider 状态、summary-only Trace 和固定回归结果。
-3. `/developer`：查看 OpenAPI、MCP 清单、质量门禁和隔离的合成场景。
-
-完整交付验收仍使用 `npm run verify`，它会额外执行覆盖率门槛、React/MSW 和真实 Chromium E2E。
-
-## 快速运行运营与安全控制台
+打开两个终端：
 
 ```bash
 pnpm run api:dev
 ```
-
-另开一个终端：
 
 ```bash
 pnpm run web:dev
 ```
 
-访问 `http://127.0.0.1:4173/`，建议依次查看运营总览、`/safety` 规则验证、`/observability` AI 质量、`/support` 家庭支持和 `/developer` 开发者工具。
+访问 `http://127.0.0.1:4173/`，可依次查看：
 
-线上支持工单后台部署在 [CloudBase `/admin`](https://cloud1-d8g02cdnld86f3823-1451658149.tcloudbaseapp.com/admin/)，仅接受已加入服务端 UID 白名单的管理员账号。线上构建不会暴露本地合成开发者场景。
+- `/safety`：验证蜂蜜、个体过敏或观察期食材被确定性规则阻断。
+- `/observability`：查看 provider 状态、summary-only Trace 和固定回归结果。
+- `/support`：体验工单认领、升级、安全复核与关闭流程。
+- `/developer`：查看 OpenAPI、MCP 清单、架构和质量门禁。
 
-## 本地质量门禁
+线上构建只开放真实支持工单流程，不暴露本地合成开发者场景。管理员账号需要先加入服务端 UID 白名单。
 
-无需 GitHub Actions 或付费服务，在项目根目录执行：
+### 3. 运行微信小程序
+
+1. 安装[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)。
+2. 选择“小程序” → “导入项目”，目录选择本仓库根目录。
+3. AppID 会从 `project.config.json` 读取；点击“预览”可生成真机二维码。
+
+正式用户通过欢迎流程创建宝宝档案；请勿用真实用户数据运行开发者合成场景或测试脚本。
+
+## 质量门禁与运行证据
+
+提交前运行完整质量门禁：
 
 ```bash
 npm run verify
 ```
 
-首次运行浏览器测试前执行：
+首次运行浏览器测试前安装 Chromium：
 
 ```bash
 pnpm --filter @fushi/web-console exec playwright install chromium
 ```
 
-质量门禁会依次完成小程序 TypeScript 构建、家长核心流程与隐私回归、pnpm workspace 构建、72 项 API 测试、40 项 React/MSW 测试、MCP Server 构建与测试、46 项冒烟测试、11 步集成流程和 3 项真实 Chromium E2E。家长核心流程回归覆盖菜单生成、打卡扣库存、72 小时反应回溯、进入观察期，以及菜单重算后保留已打卡餐并排除可疑食材。当前 API 行覆盖率为 96.63%，React 控制台行覆盖率为 89.88%。本项目以本地可重复证据为验收标准，不把未运行的远程 CI 当作交付结果。
+完整门禁覆盖小程序构建与回归、Contracts、72 项 API 测试、43 项 React/MSW 测试、MCP 构建与覆盖率、46 项冒烟测试、11 步集成流程以及 3 项 Chromium E2E。家长核心回归覆盖菜单生成、打卡扣库存、72 小时反应回溯、进入观察期，以及菜单重算后保留已打卡餐并排除可疑食材。
 
-## 工程组成与运行证据
-
-- [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，展示 rule-first / LLM-second 的 agentic workflow；固定离线评估集量化工具选择、安全阻断、grounding 代理和端到端成功率。
-- [Contract-first API](./apps/api-server/README.md)：pnpm workspace、Zod、oRPC、Express 与 OpenAPI，复用同一套确定性安全规则。
-- [React 运营与安全控制台](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS 与 MSW；主界面服务支持工单、内部运营和安全验证，架构证据与可变更的家庭合成流程隔离在开发者专区。
-- [辅食安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：把安全敏感功能的契约、实现、负向测试和交付检查固化为可复用流程。
-- [AGENTS.md](./AGENTS.md)：定义代码分层、AI 决策边界、质量门禁和 Git 协作规范。
-- [Architecture Decision Records](./docs/adr/README.md)：记录规则边界、contract-first、不可逆确认与离线评估的关键取舍。
-- Mock provider：无模型密钥也能离线演示，且调用方可以明确识别 mock / live 状态。
-
-## 怎么打开它
-
-1. 下载安装**微信开发者工具**(stable版):
-   https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
-
-2. 打开微信开发者工具 → 选择"小程序" → "导入项目"
-
-3. 项目目录选 `~/fushi-ditu`,AppID 自动识别(`wx622c566b469247cc`)
-
-4. 点"确定"即可看到效果
-
-## 真机调试(扫码到手机看)
-
-1. 在开发者工具点击右上角"预览" → 生成二维码
-2. 用本人微信(注册AppID的那个号)扫码
-3. 直接在手机上看小程序运行效果
-
-## 当前能做什么
-
-- ✅ 首次建档:宝宝信息 / 已吃食材 / 初始冰箱
-- ✅ 今日:菜单 / 单餐替换 / 实际饮食打卡 / 明日预处理 / 排敏下一步
-- ✅ 计划:生成与重排 / 采购清单 / 计划预览与复制
-- ✅ 冰箱:添加 / 搜索筛选 / 临期与低库存 / 批量处理 / 自动扣减与恢复
-- ✅ 记录:饮食与反应时间流 / 7日摘要 / 搜索筛选 / 补记编辑 / 文本导出
-- ✅ 排敏:品类与单食材状态 / 尝试窗口 / 观察期 / 过敏与个体例外
-- ✅ 食谱库:127 道食谱,支持搜索、分类与详情
-- ✅ AI 搭子:线上云函数使用 DeepSeek 正式 provider；安全工具、拒绝路径以及已发布 v1.0.3 的真机完整链路均已通过验收
+- [MCP Server](./mcp-server/README.md)：23 个工具、10 个资源、3 个提示词，以及固定离线评估集。
+- [Contract-first API](./apps/api-server/README.md)：Zod、oRPC、Express、OpenAPI 与确定性安全规则。
+- [React Web Console](./apps/web-console/README.md)：React 19、React Router、TanStack Query、Zustand、Tailwind CSS、MSW 与 Playwright。
+- [安全变更 Skill](./skills/fushi-safety-change/SKILL.md)：安全敏感变更的契约、实现、负向测试和交付检查。
+- [Architecture Decision Records](./docs/adr/README.md)：记录规则边界、不可逆确认、contract-first 和离线评测取舍。
 
 ## 当前内容规模
 
-- 食物分类:29 个
-- 基础食材:32 种
-- 食谱:127 道
-- 搭配禁忌:9 条
-
-正式用户通过欢迎流程创建宝宝档案；MCP Server 的测试档案与小程序数据相互隔离。
+- 29 个食物分类
+- 32 种基础食材
+- 127 道食谱
+- 9 条食材搭配禁忌
 
 ## 项目结构
 
-```
+```text
 fushi-ditu/
 ├── apps/
 │   ├── api-server/             # Express + oRPC contract-first API
 │   └── web-console/            # React operations, safety and developer console
-├── packages/
-│   └── contracts/              # 共享 Zod/oRPC 输入输出契约
-├── app.ts                    # 入口,云能力与档案结构初始化
-├── app.json                  # 小程序配置
-├── app.wxss                  # 全局样式
-├── project.config.json       # 项目配置(含 AppID)
-├── data/
-│   ├── categories.ts         # 食物分类(28类)
-│   ├── ingredients.ts        # 食材属性库(32种)
-│   ├── recipes.ts            # 食谱库(127道)
-│   └── taboos.ts             # 食材搭配禁忌(9条)
-├── utils/
-│   ├── planner.ts            # 计划与排敏核心规则
-│   ├── menuPreview.ts        # 基于共享安全规则的稳定菜单预览
-│   ├── journal.ts            # 饮食记录
-│   ├── reactions.ts          # 反应记录与回溯
-│   └── storage.ts            # 冰箱存储管理
-├── cloudfunctions/chat-ai/   # 小程序 AI 云函数
-├── docs/                     # ADR、运行说明与端到端演示步骤
-├── mcp-server/               # 开发者演示用 MCP Server
-└── pages/
-    ├── index/                # 今日
-    ├── plan/                 # 计划
-    ├── ai-chat/              # AI 搭子
-    ├── review/               # 饮食与反应记录
-    └── me/                   # 我的
+├── packages/contracts/         # 共享 Zod/oRPC 输入输出契约
+├── cloudfunctions/             # AI、用户工单与管理员 API 云函数
+├── data/                       # 食材、食谱、分类与搭配禁忌
+├── utils/                      # 计划、记录、反应和安全规则
+├── pages/                      # 微信小程序页面
+├── mcp-server/                 # MCP 工具、资源、提示词与评估
+├── skills/                     # 项目安全变更流程
+└── docs/                       # ADR、复盘与运行说明
 ```
 
-## 当前限制与发布前待办
+## 当前限制
 
-- 🚫 小程序主数据仍以本地缓存为主,没有完整的跨设备双向同步
-- ⚠️ AI 调用会把本地 7 类业务数据作为当次请求上下文交给云函数和模型处理，但不保存到 `user_data`；当前不提供云端备份或跨设备恢复
-- 🛡️ 本地数据是唯一权威副本：云函数只使用请求级内存，只读问答不回写，写工具仅通过 delta 返回实际修改字段，云端不会初始化或覆盖排敏档案、菜单和记录
-- ✅ 小程序与 MCP Server TypeScript 构建均通过
-- ✅ MCP 冒烟测试 46/46,集成测试 11/11
-- [x] 完成线上 AI 云函数与正式模型 provider 的受控核验
-- [x] 在已发布 v1.0.3 完成 `本地快照 → 云函数 → 小程序 UI` 真机验收
-- [ ] 发布下一版本前统一应用内版本标记；当前仓库 v1.0.4 尚未发布
+- 小程序家庭主数据仍以本地缓存为主，不提供完整的跨设备同步、云端备份或恢复。
+- AI 调用会把页面列明的本地业务数据作为当次请求上下文交给云函数和模型处理；云函数不保存到 `user_data`，也不会用云端空状态覆盖本地数据。
+- 后台质量页中的固定评测和发布候选是工程验证证据，不等同于生产监控平台、真实模型 SLA 或自动部署系统。
+- 仓库当前版本标记为 v1.0.4，尚未随已上线的 v1.0.3 发布。
