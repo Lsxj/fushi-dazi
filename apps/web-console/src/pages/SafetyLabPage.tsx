@@ -153,7 +153,7 @@ export function SafetyLabPage() {
                 checkSafety.reset()
                 setFoodsText(event.target.value)
               }}
-              placeholder="For example: Spinach, Tofu"
+              placeholder="例如：菠菜、豆腐"
               value={foodsText}
             />
             <p className="mt-2 flex justify-between text-[11px] text-[#8b948d]" id="foods-help">

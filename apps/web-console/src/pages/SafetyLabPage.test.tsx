@@ -50,11 +50,11 @@ describe('SafetyLabPage', () => {
     await user.clear(input)
     expect(submit).toBeDisabled()
 
-    await user.type(input, 'Spinach, Spinach, Tofu')
+    await user.type(input, '菠菜、菠菜、豆腐')
     expect(screen.getByText('2/10')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Reset' }))
-    expect(input).toHaveValue('Spinach, Tofu')
+    expect(input).toHaveValue('菠菜、豆腐')
   })
 
   it('shows a recoverable connection error and retries successfully', async () => {

@@ -6,7 +6,7 @@ test('blocks an individual allergy through the real React and API boundary', asy
   await page.goto('/safety')
 
   await page.getByRole('button', { name: /Individual allergy block/ }).click()
-  await expect(page.getByLabel('Foods to validate')).toHaveValue('Egg yolk, Iron-fortified rice cereal')
+  await expect(page.getByLabel('Foods to validate')).toHaveValue('蛋黄、高铁米粉')
 
   const responsePromise = page.waitForResponse(
     (response) =>

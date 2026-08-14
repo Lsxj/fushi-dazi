@@ -1,7 +1,7 @@
 import type { CheckFoodSafetyInput } from '@fushi/contracts'
 import { create } from 'zustand'
 
-import { displayFood, foodInputToRuleValue } from '../i18n'
+import { foodInputToRuleValue } from '../i18n'
 
 export type ScenarioId = 'daily' | 'post-vaccine' | 'allergy'
 
@@ -95,18 +95,22 @@ type SafetyLabState = {
 
 const initialScenario = scenarios[0]
 
+function formatFoodsInput(foods: string[]): string {
+  return foods.join('、')
+}
+
 export const useSafetyLabStore = create<SafetyLabState>((set) => ({
   scenarioId: initialScenario.id,
-  foodsText: initialScenario.foods.map(displayFood).join(', '),
+  foodsText: formatFoodsInput(initialScenario.foods),
   selectScenario: (id) => {
     const scenario = scenarios.find((item) => item.id === id) ?? initialScenario
-    set({ scenarioId: scenario.id, foodsText: scenario.foods.map(displayFood).join(', ') })
+    set({ scenarioId: scenario.id, foodsText: formatFoodsInput(scenario.foods) })
   },
   setFoodsText: (foodsText) => set({ foodsText }),
   reset: () =>
     set({
       scenarioId: initialScenario.id,
-      foodsText: initialScenario.foods.map(displayFood).join(', '),
+      foodsText: formatFoodsInput(initialScenario.foods),
     }),
 }))
 
